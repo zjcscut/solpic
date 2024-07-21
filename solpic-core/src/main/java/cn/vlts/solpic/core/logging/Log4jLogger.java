@@ -1,0 +1,120 @@
+package cn.vlts.solpic.core.logging;
+
+import org.apache.log4j.Level;
+
+import java.util.Objects;
+
+/**
+ * Log4j logger.
+ *
+ * @author throwable
+ * @since 2024/7/20 23:56
+ */
+public class Log4jLogger implements Logger {
+
+    private final org.apache.log4j.Logger logger;
+
+    public Log4jLogger(org.apache.log4j.Logger logger) {
+        this.logger = logger;
+    }
+
+    @Override
+    public boolean isTraceEnabled() {
+        return logger.isEnabledFor(Level.TRACE);
+    }
+
+    @Override
+    public void trace(String msg) {
+        logger.trace(msg);
+    }
+
+    @Override
+    public void trace(Throwable e) {
+        logger.trace(Objects.isNull(e) ? null : e.getMessage(), e);
+    }
+
+    @Override
+    public void trace(String msg, Throwable e) {
+        logger.trace(msg, e);
+    }
+
+    @Override
+    public boolean isDebugEnabled() {
+        return logger.isEnabledFor(Level.DEBUG);
+    }
+
+    @Override
+    public void debug(String msg) {
+        logger.debug(msg);
+    }
+
+    @Override
+    public void debug(Throwable e) {
+        logger.debug(Objects.isNull(e) ? null : e.getMessage(), e);
+    }
+
+    @Override
+    public void debug(String msg, Throwable e) {
+        logger.debug(msg, e);
+    }
+
+    @Override
+    public boolean isInfoEnabled() {
+        return logger.isEnabledFor(Level.INFO);
+    }
+
+    @Override
+    public void info(String msg) {
+        logger.info(msg);
+    }
+
+    @Override
+    public void info(Throwable e) {
+        logger.info(Objects.isNull(e) ? null : e.getMessage(), e);
+    }
+
+    @Override
+    public void info(String msg, Throwable e) {
+        logger.info(msg, e);
+    }
+
+    @Override
+    public boolean isWarnEnabled() {
+        return logger.isEnabledFor(Level.WARN);
+    }
+
+    @Override
+    public void warn(String msg) {
+        logger.warn(msg);
+    }
+
+    @Override
+    public void warn(Throwable e) {
+        logger.warn(Objects.isNull(e) ? null : e.getMessage(), e);
+    }
+
+    @Override
+    public void warn(String msg, Throwable e) {
+        logger.warn(msg, e);
+    }
+
+    @Override
+    public boolean isErrorEnabled() {
+        return logger.isEnabledFor(Level.ERROR);
+    }
+
+    @Override
+    public void error(String msg) {
+        logger.error(msg);
+    }
+
+    @Override
+    public void error(Throwable e) {
+        logger.error(Objects.isNull(e) ? null : e.getMessage(), e);
+    }
+
+    @Override
+    public void error(String msg, Throwable e) {
+        logger.error(msg, e);
+    }
+}

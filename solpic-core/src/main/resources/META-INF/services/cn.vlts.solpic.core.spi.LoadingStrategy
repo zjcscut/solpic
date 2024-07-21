@@ -1,0 +1,3 @@
+cn.vlts.solpic.core.spi.InternalLoadingStrategy
+cn.vlts.solpic.core.spi.DefaultLoadingStrategy
+cn.vlts.solpic.core.spi.ServicesLoadingStrategy
