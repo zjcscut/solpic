@@ -1,5 +1,7 @@
 package cn.vlts.solpic.core.http.impl;
 
+import cn.vlts.solpic.core.common.HttpHeaderConstants;
+import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpHeader;
 import cn.vlts.solpic.core.http.HttpMessage;
 import cn.vlts.solpic.core.http.HttpVersion;
@@ -140,6 +142,41 @@ public abstract class HttpMessageSupport implements HttpMessage {
     @Override
     public void clearHeaders() {
         this.headers.clear();
+    }
+
+    @Override
+    public void setContentLength(long contentLength) {
+        setHeader(HttpHeaderConstants.CONTENT_LENGTH, String.valueOf(contentLength));
+    }
+
+    @Override
+    public long getContentLength() {
+        return Optional.ofNullable(getFirstHeaderValue(HttpHeaderConstants.CONTENT_LENGTH)).map(Long::parseLong)
+                .orElse(0L);
+    }
+
+    @Override
+    public void setContentTypeValue(String contentType) {
+        setHeader(HttpHeaderConstants.CONTENT_TYPE, contentType);
+    }
+
+    @Override
+    public String getContentTypeValue() {
+        return getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE);
+    }
+
+    @Override
+    public void setContentType(ContentType contentType) {
+        setHeader(HttpHeaderConstants.CONTENT_TYPE, contentType.getValue());
+    }
+
+    @Override
+    public ContentType getContentType() {
+        String contentTypeValue = getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE);
+        if (Objects.nonNull(contentTypeValue)) {
+            return ContentType.parse(contentTypeValue);
+        }
+        return null;
     }
 
     public void addHeader0(String name, String value) {

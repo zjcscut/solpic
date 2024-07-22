@@ -11,4 +11,30 @@ public interface Pair {
     String name();
 
     String value();
+
+    static Pair of(String name, String value) {
+        return new BasicPair(name, value);
+    }
+
+    class BasicPair implements Pair {
+
+        private final String name;
+
+        private final String value;
+
+        BasicPair(String name, String value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public String value() {
+            return value;
+        }
+    }
 }

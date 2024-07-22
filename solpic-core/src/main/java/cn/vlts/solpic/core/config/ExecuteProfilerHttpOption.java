@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.config;
 
 import cn.vlts.solpic.core.http.support.ExecuteProfiler;
+import cn.vlts.solpic.core.util.ReflectionUtils;
 import lombok.Builder;
 
 /**
@@ -56,6 +57,12 @@ public class ExecuteProfilerHttpOption implements HttpOption<ExecuteProfiler> {
 
     @Override
     public ExecuteProfiler parseValueFromString(String content) {
+        if (ReflectionUtils.X.isClassPresent(content)) {
+            Class<?> clazz = ReflectionUtils.X.forName(content);
+            if (clazz.isAssignableFrom(ExecuteProfiler.class)) {
+                return (ExecuteProfiler) ReflectionUtils.X.createInstance(clazz);
+            }
+        }
         return null;
     }
 }

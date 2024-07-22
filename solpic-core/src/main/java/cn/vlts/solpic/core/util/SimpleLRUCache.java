@@ -4,9 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * Simple LRU cache impl.
+ *
  * @author throwable
- * @version v1
- * @description
  * @since 2024/7/19 星期五 11:27
  */
 public class SimpleLRUCache<K, V> extends LinkedHashMap<K, V> {

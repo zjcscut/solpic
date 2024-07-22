@@ -48,4 +48,16 @@ public interface HttpMessage {
     boolean containsHeader(HttpHeader header);
 
     void clearHeaders();
+
+    void setContentLength(long contentLength);
+
+    long getContentLength();
+
+    void setContentTypeValue(String contentType);
+
+    String getContentTypeValue();
+
+    void setContentType(ContentType contentType);
+
+    ContentType getContentType();
 }

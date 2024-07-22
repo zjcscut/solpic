@@ -12,9 +12,7 @@ public class Cis {
 
     private static final String EMPTY = "";
 
-    private static final int CACHE_CAPACITY = 64;
-
-    private static final SimpleLRUCache<String, Cis> CACHE = new SimpleLRUCache<>(CACHE_CAPACITY);
+    private static final SimpleLRUCache<String, Cis> CACHE = new SimpleLRUCache<>(64);
 
     private final String value;
 
