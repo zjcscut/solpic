@@ -1,3 +1,2 @@
 default=cn.vlts.solpic.core.concurrent.DefaultThreadPool
 common=cn.vlts.solpic.core.concurrent.CommonThreadPool
-cn.vlts.solpic.core.concurrent.DefaultThreadPool

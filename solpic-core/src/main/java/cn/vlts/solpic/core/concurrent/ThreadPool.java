@@ -3,6 +3,7 @@ package cn.vlts.solpic.core.concurrent;
 import cn.vlts.solpic.core.spi.Spi;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
@@ -11,8 +12,8 @@ import java.util.concurrent.Future;
  * @author throwable
  * @since 2024/7/19 星期五 16:10
  */
-@Spi(value = "default")
-public interface ThreadPool {
+@Spi(value = ThreadPool.DEFAULT)
+public interface ThreadPool extends Executor, ListenableThreadPool {
 
     String COMMON = "common";
 
@@ -20,6 +21,7 @@ public interface ThreadPool {
 
     String name();
 
+    @Override
     void execute(Runnable command);
 
     <V> Future<V> submit(Callable<V> task);

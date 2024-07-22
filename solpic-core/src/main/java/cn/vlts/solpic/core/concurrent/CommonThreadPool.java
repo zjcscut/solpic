@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author throwable
  * @since 2024/7/21 21:47
  */
-public class CommonThreadPool implements ThreadPool, InitialingBean {
+public class CommonThreadPool extends AbstractListenableThreadPool implements ThreadPool, InitialingBean {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 

@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author throwable
  * @since 2024/7/21 21:47
  */
-public class DefaultThreadPool implements ThreadPool, InitialingBean, DisposableBean {
+public class DefaultThreadPool extends AbstractListenableThreadPool implements ThreadPool, InitialingBean, DisposableBean {
 
     private static final String WORKER_PREFIX = "solpic-default-worker-";
 

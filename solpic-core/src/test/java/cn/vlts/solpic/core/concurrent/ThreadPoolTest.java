@@ -6,6 +6,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * ThreadPoolTest
@@ -39,5 +41,22 @@ public class ThreadPoolTest {
     public void testLoadCommon() {
         ThreadPool commonPool = loader.getService("common");
         Assert.assertNotNull(commonPool);
+    }
+
+
+    @Test
+    public void testListenableTask() {
+        ThreadPool threadPool = loader.getDefaultService();
+        ListenableFuture<String> future = threadPool.submit(() -> "helloWorld", new AbstractFutureListener<String>() {
+            @Override
+            protected void onSuccess(String result) {
+                System.out.println("Result callback => " + result);
+            }
+        });
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ignore) {
+
+        }
     }
 }
