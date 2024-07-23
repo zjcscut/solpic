@@ -1,7 +1,7 @@
 package cn.vlts.solpic.core.spi;
 
 /**
- * InitialingBean.
+ * Initialing bean.
  *
  * @author throwable
  * @since 2024/7/20 00:22

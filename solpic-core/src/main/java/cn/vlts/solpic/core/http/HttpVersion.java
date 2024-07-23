@@ -3,6 +3,8 @@ package cn.vlts.solpic.core.http;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Objects;
+
 /**
  * HTTP protocol version.
  *
@@ -31,5 +33,13 @@ public enum HttpVersion {
 
     public static HttpVersion defaultVersion() {
         return HTTP_1_1;
+    }
+
+    public boolean isSameAs(HttpVersion otherVersion) {
+        return Objects.nonNull(otherVersion) && this.major == otherVersion.major && this.minor == otherVersion.minor;
+    }
+
+    public String getValue() {
+        return String.format("%s/%d.%d", protocol, major, minor);
     }
 }

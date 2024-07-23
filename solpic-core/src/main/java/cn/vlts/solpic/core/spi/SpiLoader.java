@@ -200,13 +200,13 @@ public class SpiLoader<T> {
         try {
             T instance = (T) instanceFactory.newInstance(serviceType);
             for (SpiPostProcessor postProcessor : postProcessorList) {
-                postProcessor.postProcessBeforeInitialization(instance, serviceName);
+                instance = (T) postProcessor.postProcessBeforeInitialization(instance, serviceName);
             }
             if (instance instanceof InitialingBean) {
                 ((InitialingBean) instance).init();
             }
             for (SpiPostProcessor postProcessor : postProcessorList) {
-                postProcessor.postProcessAfterInitialization(instance, serviceName);
+                instance = (T) postProcessor.postProcessAfterInitialization(instance, serviceName);
             }
             return instance;
         } catch (ReflectiveOperationException e) {
