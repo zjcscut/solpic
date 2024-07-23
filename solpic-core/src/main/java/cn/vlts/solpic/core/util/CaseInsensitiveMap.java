@@ -1,16 +1,16 @@
 package cn.vlts.solpic.core.util;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Key Case Insensitive HashMap.
+ * Key Case Insensitive map, use LinkedHashMap.
  *
  * @author throwable
  * @since 2024/7/19 星期五 10:44
  */
 @SuppressWarnings("unchecked")
-public class CaseInsensitiveMap<K extends Cis, V> extends HashMap<K, V> {
+public class CaseInsensitiveMap<K extends Cis, V> extends LinkedHashMap<K, V> {
 
     public CaseInsensitiveMap(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);

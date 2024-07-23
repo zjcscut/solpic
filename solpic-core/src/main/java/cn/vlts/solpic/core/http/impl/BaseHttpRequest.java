@@ -14,7 +14,7 @@ import java.util.Objects;
  * @author throwable
  * @since 2024/7/23 星期二 19:57
  */
-public class BaseHttpRequest extends HttpMessageSupport implements HttpRequest {
+public abstract class BaseHttpRequest extends HttpMessageSupport implements HttpRequest {
 
     private final HttpMethod method;
 

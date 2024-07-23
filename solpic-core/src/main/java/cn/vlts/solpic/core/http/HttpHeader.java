@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.http.impl.BasicHttpHeader;
 import cn.vlts.solpic.core.util.Pair;
 
 /**
@@ -11,4 +12,8 @@ import cn.vlts.solpic.core.util.Pair;
 public interface HttpHeader extends Pair {
 
     boolean isSensitive();
+
+    static HttpHeader of(String name, String value) {
+        return BasicHttpHeader.of(name, value);
+    }
 }

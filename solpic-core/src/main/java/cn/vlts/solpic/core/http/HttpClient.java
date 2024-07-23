@@ -1,9 +1,5 @@
 package cn.vlts.solpic.core.http;
 
-import cn.vlts.solpic.core.config.HttpOption;
-
-import java.util.List;
-
 /**
  * HTTP client.
  *
@@ -12,13 +8,4 @@ import java.util.List;
  */
 public interface HttpClient {
 
-    List<HttpVersion> availableHttpVersions();
-
-    boolean supportHttpVersion(HttpVersion httpVersion);
-
-    List<HttpOption<?>> availableHttpOptions();
-
-    List<HttpOption<?>> minimumHttpOptions();
-
-    boolean supportHttpOption(HttpOption<?> httpOption);
 }

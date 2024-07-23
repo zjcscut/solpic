@@ -18,11 +18,15 @@ public interface HttpRequest extends HttpMessage {
 
     HttpMethod getMethod();
 
-    void  setRawUri(String uri);
+    void setRawUri(String uri);
 
     String getRawUri();
 
     URI getUri();
 
     void setUri(URI uri);
+
+    boolean supportPayloadPublisher();
+
+    HttpPayloadPublisher getPayloadPublisher();
 }
