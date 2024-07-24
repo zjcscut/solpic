@@ -6,7 +6,7 @@ package cn.vlts.solpic.core.common;
  * @author throwable
  * @since 2024/7/23 23:30
  */
-public class DefaultHttpStatusCode implements HttpStatusCode {
+public final class DefaultHttpStatusCode implements HttpStatusCode {
 
     private final int value;
 

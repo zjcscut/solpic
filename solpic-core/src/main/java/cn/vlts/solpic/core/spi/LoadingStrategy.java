@@ -3,7 +3,7 @@ package cn.vlts.solpic.core.spi;
 import cn.vlts.solpic.core.util.Ordered;
 
 /**
- * The SPI loading strategy.
+ * SPI loading strategy.
  *
  * @author throwable
  * @since 2024/7/19 星期五 15:18

@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http;
 
 import cn.vlts.solpic.core.flow.Subscriber;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -10,7 +11,7 @@ import java.util.concurrent.CompletionStage;
  * @author throwable
  * @since 2024/7/24 00:09
  */
-public interface HttpPayloadSubscriber<T> extends Subscriber<byte[]> {
+public interface HttpPayloadSubscriber<T> extends Subscriber<ByteBuffer> {
 
     CompletionStage<T> getBody();
 }

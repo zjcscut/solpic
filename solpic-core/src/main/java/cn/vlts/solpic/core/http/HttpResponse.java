@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.common.HttpStatus;
 import cn.vlts.solpic.core.common.HttpStatusCode;
 
 /**
@@ -8,15 +9,25 @@ import cn.vlts.solpic.core.common.HttpStatusCode;
  * @author throwable
  * @since 2024/7/23 23:37
  */
-public interface HttpResponse extends HttpMessage {
+public interface HttpResponse<T> extends HttpMessage {
 
     HttpStatusCode getStatusCode();
 
-    String getReasonPhrase();
+    default String getReasonPhrase() {
+        HttpStatusCode statusCode = getStatusCode();
+        if (statusCode instanceof HttpStatus) {
+            return ((HttpStatus) statusCode).reasonPhrase();
+        }
+        return null;
+    }
 
     default boolean supportPayloadSubscriber() {
         return true;
     }
 
-    <T> HttpPayloadSubscriber<T> getPayloadSubscriber();
+    HttpPayloadSubscriber<T> getPayloadSubscriber();
+
+    HttpRequest getHttpRequest();
+
+    HttpClient getHttpClient();
 }

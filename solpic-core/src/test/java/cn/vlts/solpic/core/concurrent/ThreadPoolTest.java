@@ -6,8 +6,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /**
  * ThreadPoolTest

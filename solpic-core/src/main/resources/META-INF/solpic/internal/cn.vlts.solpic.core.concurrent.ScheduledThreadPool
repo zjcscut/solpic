@@ -1,0 +1,1 @@
+default=cn.vlts.solpic.core.concurrent.DefaultScheduledThreadPool

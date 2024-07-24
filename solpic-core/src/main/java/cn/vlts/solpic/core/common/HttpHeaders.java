@@ -1,12 +1,14 @@
 package cn.vlts.solpic.core.common;
 
 /**
- * HTTP header constants.
+ * HTTP headers.
  *
  * @author throwable
  * @since 2024/7/22 23:19
  */
-public final class HttpHeaderConstants {
+public final class HttpHeaders {
+
+    public static final String ACCEPT = "Accept";
 
     public static final String CONTENT_TYPE = "Content-Type";
 

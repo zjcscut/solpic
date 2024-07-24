@@ -1,6 +1,6 @@
 package cn.vlts.solpic.core.http.impl;
 
-import cn.vlts.solpic.core.common.HttpHeaderConstants;
+import cn.vlts.solpic.core.common.HttpHeaders;
 import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpHeader;
 import cn.vlts.solpic.core.http.HttpMessage;
@@ -11,6 +11,7 @@ import cn.vlts.solpic.core.util.Pair;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,6 +60,13 @@ public abstract class HttpMessageSupport implements HttpMessage {
     @Override
     public List<String> getHeaderValue(String name) {
         return Collections.unmodifiableList(this.headers.get(Cis.of(name)));
+    }
+
+    @Override
+    public Set<String> getAllHeaderNames() {
+        Set<String> headerNames = new HashSet<>();
+        this.headers.forEach((k, valuelist) -> headerNames.add(k.toString()));
+        return headerNames;
     }
 
     @Override
@@ -140,39 +148,44 @@ public abstract class HttpMessageSupport implements HttpMessage {
     }
 
     @Override
+    public void consumeHeaders(Consumer<HttpHeader> consumer) {
+        this.headers.forEach((k, valuelist) -> valuelist.forEach(v -> consumer.accept(BasicHttpHeader.of(k.toString(), v))));
+    }
+
+    @Override
     public void clearHeaders() {
         this.headers.clear();
     }
 
     @Override
     public void setContentLength(long contentLength) {
-        setHeader(HttpHeaderConstants.CONTENT_LENGTH, String.valueOf(contentLength));
+        setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength));
     }
 
     @Override
     public long getContentLength() {
-        return Optional.ofNullable(getFirstHeaderValue(HttpHeaderConstants.CONTENT_LENGTH)).map(Long::parseLong)
+        return Optional.ofNullable(getFirstHeaderValue(HttpHeaders.CONTENT_LENGTH)).map(Long::parseLong)
                 .orElse(0L);
     }
 
     @Override
     public void setContentTypeValue(String contentType) {
-        setHeader(HttpHeaderConstants.CONTENT_TYPE, contentType);
+        setHeader(HttpHeaders.CONTENT_TYPE, contentType);
     }
 
     @Override
     public String getContentTypeValue() {
-        return getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE);
+        return getFirstHeaderValue(HttpHeaders.CONTENT_TYPE);
     }
 
     @Override
     public void setContentType(ContentType contentType) {
-        setHeader(HttpHeaderConstants.CONTENT_TYPE, contentType.getValue());
+        setHeader(HttpHeaders.CONTENT_TYPE, contentType.getValue());
     }
 
     @Override
     public ContentType getContentType() {
-        String contentTypeValue = getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE);
+        String contentTypeValue = getFirstHeaderValue(HttpHeaders.CONTENT_TYPE);
         if (Objects.nonNull(contentTypeValue)) {
             return ContentType.parse(contentTypeValue);
         }

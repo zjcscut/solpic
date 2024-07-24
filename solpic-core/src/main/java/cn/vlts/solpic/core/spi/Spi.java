@@ -13,7 +13,13 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE})
 public @interface Spi {
 
+    /**
+     * Default service name.
+     */
     String value() default "";
 
+    /**
+     * The SPI services should be singleton or not.
+     */
     boolean singleton() default true;
 }

@@ -1,6 +1,8 @@
 package cn.vlts.solpic.core.http;
 
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -22,6 +24,8 @@ public interface HttpMessage {
     List<HttpHeader> getHeader(String name);
 
     List<String> getHeaderValue(String name);
+
+    Set<String> getAllHeaderNames();
 
     List<HttpHeader> getAllHeaders();
 
@@ -46,6 +50,8 @@ public interface HttpMessage {
     boolean containsHeader(String name);
 
     boolean containsHeader(HttpHeader header);
+
+    void consumeHeaders(Consumer<HttpHeader> consumer);
 
     void clearHeaders();
 

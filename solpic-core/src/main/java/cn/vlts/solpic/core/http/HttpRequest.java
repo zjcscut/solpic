@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http;
 
 import java.net.URI;
+import java.util.Arrays;
 
 /**
  * HTTP request.
@@ -26,7 +27,12 @@ public interface HttpRequest extends HttpMessage {
 
     void setUri(URI uri);
 
-    boolean supportPayloadPublisher();
+    default boolean supportPayloadPublisher() {
+        HttpMethod method = getMethod();
+        return Arrays.asList(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH).contains(method);
+    }
 
     HttpPayloadPublisher getPayloadPublisher();
+
+    HttpClient getHttpClient();
 }

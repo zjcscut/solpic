@@ -135,6 +135,9 @@ public class SpiLoader<T> {
     @SuppressWarnings("unchecked")
     public T getService(String name) {
         checkDestroyed();
+        if (Objects.isNull(name)) {
+            throw new IllegalArgumentException("Service name must not be null");
+        }
         return (T) Objects.requireNonNull(cachedServices.computeIfAbsent(name, this::createServiceInfo)).getHolder().get();
     }
 

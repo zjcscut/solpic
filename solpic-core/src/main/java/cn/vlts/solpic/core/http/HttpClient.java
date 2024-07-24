@@ -1,5 +1,7 @@
 package cn.vlts.solpic.core.http;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * HTTP client.
  *
@@ -8,4 +10,11 @@ package cn.vlts.solpic.core.http;
  */
 public interface HttpClient {
 
+    default <T> HttpResponse<T> send(HttpRequest request) {
+        return null;
+    }
+
+    default <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request) {
+        return null;
+    }
 }

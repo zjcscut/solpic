@@ -15,6 +15,16 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public enum HttpStatus implements HttpStatusCode {
 
+    CONTINUE(100, HttpStatusSeries.INFORMATIONAL, "Continue"),
+
+    OK(200, HttpStatusSeries.SUCCESSFUL, "OK"),
+
+    MULTIPLE_CHOICES(300, HttpStatusSeries.REDIRECTION, "Multiple Choices"),
+
+    BAD_REQUEST(400, HttpStatusSeries.CLIENT_ERROR, "Bad Request"),
+
+    INTERNAL_SERVER_ERROR(500, HttpStatusSeries.SERVER_ERROR, "Internal Server Error"),
+
     ;
 
     private final int value;

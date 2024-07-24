@@ -6,6 +6,7 @@ import cn.vlts.solpic.core.logging.LoggerFactory;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Resource loader.
@@ -19,9 +20,20 @@ public class ResourceLoader {
 
     public static Map<ClassLoader, List<URL>> loadResources(String fileName, Collection<ClassLoader> classLoaders) {
         Map<ClassLoader, List<URL>> result = new HashMap<>();
+        List<CompletableFuture<List<URL>>> futureList = new ArrayList<>();
         for (ClassLoader classLoader : classLoaders) {
-            result.put(classLoader, loadClassLoaderResources(fileName, classLoader));
+            CompletableFuture<List<URL>> future = CompletableFuture.supplyAsync(() ->
+                            loadClassLoaderResources(fileName, classLoader))
+                    .whenComplete((urls, throwable) -> {
+                        if (Objects.isNull(throwable)) {
+                            result.put(classLoader, urls);
+                        } else {
+                            throw new IllegalStateException("Load resources from classloader failed", throwable);
+                        }
+                    });
+            futureList.add(future);
         }
+        CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
         return result;
     }
 

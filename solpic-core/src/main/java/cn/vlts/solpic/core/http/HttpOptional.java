@@ -21,4 +21,6 @@ public interface HttpOptional {
     List<HttpOption<?>> minimumHttpOptions();
 
     boolean supportHttpOption(HttpOption<?> httpOption);
+
+    <T> T getHttpOptionValue(HttpOption<T> httpOption);
 }
