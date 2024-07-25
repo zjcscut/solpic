@@ -21,11 +21,11 @@ public interface HttpResponse<T> extends HttpMessage {
         return null;
     }
 
-    default boolean supportPayloadSubscriber() {
+    default boolean supportPayloadReader() {
         return true;
     }
 
-    HttpPayloadSubscriber<T> getPayloadSubscriber();
+    PayloadReader<T> getPayloadReader();
 
     HttpRequest getHttpRequest();
 
