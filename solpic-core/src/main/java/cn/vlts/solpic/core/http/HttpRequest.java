@@ -27,12 +27,12 @@ public interface HttpRequest extends HttpMessage {
 
     void setUri(URI uri);
 
-    default boolean supportPayloadWriter() {
+    default boolean supportPayloadPublisher() {
         HttpMethod method = getMethod();
         return Arrays.asList(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH).contains(method);
     }
 
-    PayloadWriter getPayloadWriter();
+    PayloadPublisher getPayloadPublisher();
 
     HttpClient getHttpClient();
 }

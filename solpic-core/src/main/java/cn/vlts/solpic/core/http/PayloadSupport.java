@@ -1,5 +1,7 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.common.PayloadSupportType;
+
 /**
  * Payload support.
  *
@@ -8,16 +10,7 @@ package cn.vlts.solpic.core.http;
  */
 public interface PayloadSupport {
 
-    Type getType();
+    long getContentLength();
 
-    enum Type {
-
-        BYTES,
-
-        IO_STREAM,
-
-        IO_CHANNEL,
-
-        STREAM
-    }
+    PayloadSupportType getType();
 }
