@@ -14,6 +14,10 @@ public interface PayloadSupport {
 
         BYTES,
 
-        IO_STREAM
+        IO_STREAM,
+
+        IO_CHANNEL,
+
+        STREAM
     }
 }

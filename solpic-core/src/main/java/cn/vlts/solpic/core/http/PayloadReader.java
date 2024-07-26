@@ -12,5 +12,5 @@ public interface PayloadReader<T> extends PayloadSupport {
 
     long contentLength();
 
-    CompletionStage<T> getBody();
+    CompletionStage<T> getPayload();
 }
