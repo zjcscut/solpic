@@ -51,6 +51,13 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         return response;
     }
 
+    @Override
+    public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
+                                                            PayloadPublisher payloadPublisher,
+                                                            PayloadSubscriber<T> payloadSubscriber) {
+        return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
@@ -58,13 +65,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                                                          PayloadSubscriber<T> payloadSubscriber,
                                                          FutureListener... listeners) {
         return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
-    }
-
-    @Override
-    public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                            PayloadPublisher payloadPublisher,
-                                                            PayloadSubscriber<T> payloadSubscriber) {
-        return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
     }
 
     protected ThreadPool getThreadPool() {

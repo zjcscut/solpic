@@ -21,14 +21,19 @@ public abstract class Solpic {
 
     private static class DefaultSolpicTemplate implements SolpicTemplate {
 
+        private Codec codec;
+
+        private HttpClient httpClient;
+
+        @SuppressWarnings("unchecked")
         @Override
         public <S, T> Codec<S, T> getCodec() {
-            return null;
+            return (Codec<S, T>) codec;
         }
 
         @Override
         public HttpClient getHttpClient() {
-            return null;
+            return httpClient;
         }
 
         @SuppressWarnings({"unchecked"})
@@ -52,7 +57,13 @@ public abstract class Solpic {
                 payloadPublisher = getCodec().createPayloadPublisher(requestPayload);
             }
             DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl));
-            return null;
+            if (Objects.nonNull(requestHeaders)) {
+                requestHeaders.forEach(request::addHeader);
+            }
+            if (Objects.nonNull(requestContentType)) {
+                request.setContentType(requestContentType);
+            }
+            return getHttpClient().send(request, payloadPublisher, payloadSubscriber).getPayload();
         }
     }
 }

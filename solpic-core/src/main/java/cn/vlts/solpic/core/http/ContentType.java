@@ -40,6 +40,8 @@ public final class ContentType {
 
     private final Pair[] params;
 
+    private String value;
+
     private ContentType(String mimeType, Charset charset, Pair[] params) {
         this.mimeType = mimeType;
         this.charset = charset;
@@ -145,26 +147,29 @@ public final class ContentType {
     }
 
     public String getValue() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(this.mimeType);
-        if (Objects.nonNull(this.params)) {
-            builder.append("; ");
-            for (int i = 0; i < this.params.length; i++) {
-                if (i > 0) {
-                    builder.append("; ");
+        if (Objects.isNull(this.value)) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(this.mimeType);
+            if (Objects.nonNull(this.params)) {
+                builder.append("; ");
+                for (int i = 0; i < this.params.length; i++) {
+                    if (i > 0) {
+                        builder.append("; ");
+                    }
+                    Pair pair = this.params[i];
+                    if (Objects.nonNull(pair.value())) {
+                        builder.append(pair.name());
+                        builder.append("=");
+                        builder.append(pair.value());
+                    }
                 }
-                Pair pair = this.params[i];
-                if (Objects.nonNull(pair.value())) {
-                    builder.append(pair.name());
-                    builder.append("=");
-                    builder.append(pair.value());
-                }
+            } else if (Objects.nonNull(this.charset)) {
+                builder.append("; charset=");
+                builder.append(this.charset.name());
             }
-        } else if (Objects.nonNull(this.charset)) {
-            builder.append("; charset=");
-            builder.append(this.charset.name());
+            this.value = builder.toString();
         }
-        return builder.toString();
+        return this.value;
     }
 
     public static final ContentType APPLICATION_JSON;

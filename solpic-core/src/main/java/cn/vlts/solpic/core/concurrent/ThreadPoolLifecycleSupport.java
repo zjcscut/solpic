@@ -36,6 +36,7 @@ public abstract class ThreadPoolLifecycleSupport implements DisposableBean {
         throw new IllegalStateException("Create executor service failed");
     }
 
+    @SuppressWarnings("unchecked")
     protected <T extends ExecutorService> T getExecutorService() {
         return (T) Optional.ofNullable(executorServiceRef.get())
                 .filter(e -> isRunning())
