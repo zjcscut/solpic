@@ -1,7 +1,5 @@
 package cn.vlts.solpic.core.http;
 
-import cn.vlts.solpic.core.common.PayloadSupportType;
-
 /**
  * Payload support.
  *
@@ -11,6 +9,4 @@ import cn.vlts.solpic.core.common.PayloadSupportType;
 public interface PayloadSupport {
 
     long getContentLength();
-
-    PayloadSupportType getType();
 }

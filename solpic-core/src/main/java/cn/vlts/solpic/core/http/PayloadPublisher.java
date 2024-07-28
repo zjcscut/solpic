@@ -1,5 +1,8 @@
 package cn.vlts.solpic.core.http;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
  * Payload publisher.
  *
@@ -8,4 +11,9 @@ package cn.vlts.solpic.core.http;
  */
 public interface PayloadPublisher extends PayloadSupport {
 
+    void writeTo(OutputStream outputStream, boolean autoClose) throws IOException;
+
+    default void writeTo(OutputStream outputStream) throws IOException {
+        writeTo(outputStream, true);
+    }
 }

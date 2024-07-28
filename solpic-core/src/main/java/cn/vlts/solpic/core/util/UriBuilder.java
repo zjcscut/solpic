@@ -1,6 +1,9 @@
 package cn.vlts.solpic.core.util;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URL;
 
 /**
  * URI builder.
@@ -24,5 +27,13 @@ public final class UriBuilder {
 
     public URI build() {
         return null;
+    }
+
+    public static URL toUrl(URI uri) {
+        try {
+            return uri.toURL();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

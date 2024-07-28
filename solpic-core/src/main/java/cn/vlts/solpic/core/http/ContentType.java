@@ -166,4 +166,10 @@ public final class ContentType {
         }
         return builder.toString();
     }
+
+    public static final ContentType APPLICATION_JSON;
+
+    static {
+        APPLICATION_JSON = ContentType.create("application/json");
+    }
 }

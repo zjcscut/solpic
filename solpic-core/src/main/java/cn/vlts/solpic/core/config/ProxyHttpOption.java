@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.config;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 
 /**
  * Proxy option.
@@ -9,6 +10,7 @@ import lombok.Builder;
  * @since 2024/7/22 星期一 15:46
  */
 @Builder
+@EqualsAndHashCode(of = "id")
 public class ProxyHttpOption implements HttpOption<ProxyConfig> {
 
     private long id;

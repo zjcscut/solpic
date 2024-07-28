@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.config;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.Optional;
  * @since 2024/7/22 星期一 11:43
  */
 @Builder
+@EqualsAndHashCode(of = "id")
 public class BoolHttpOption implements HttpOption<Boolean> {
 
     private long id;

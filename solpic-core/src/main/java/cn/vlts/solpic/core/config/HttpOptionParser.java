@@ -11,11 +11,12 @@ import java.util.Objects;
  * @author throwable
  * @since 2024/7/22 星期一 16:03
  */
-public final class HttpOptionParser {
+public enum HttpOptionParser {
+    X;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpOptionParser.class);
 
-    public static <T> T parseOptionValue(HttpOption<T> option, T configValue) {
+    public <T> T parseOptionValue(HttpOption<T> option, T configValue) {
         if (Objects.nonNull(configValue)) {
             return configValue;
         }
@@ -26,7 +27,7 @@ public final class HttpOptionParser {
                 try {
                     return option.parseValueFromString(propertyValue);
                 } catch (Throwable e) {
-                    LOGGER.error("Parse option value failed from property value: " + propertyValue +
+                    LOGGER.warn("Parse option value failed from property value: " + propertyValue +
                             ", property key: " + propertyKey, e);
                 }
             }

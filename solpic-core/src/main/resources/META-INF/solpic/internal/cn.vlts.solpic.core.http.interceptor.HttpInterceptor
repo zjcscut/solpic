@@ -1,0 +1,3 @@
+cn.vlts.solpic.core.http.interceptor.impl.ProfileExecutionInterceptor
+cn.vlts.solpic.core.http.interceptor.impl.LoggingInterceptor
+cn.vlts.solpic.core.http.interceptor.impl.TracingInterceptor

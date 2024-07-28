@@ -22,6 +22,8 @@ public abstract class BaseHttpRequest extends HttpMessageSupport implements Http
 
     private URI uri;
 
+    private String rawUri;
+
     protected BaseHttpRequest(HttpMethod method) {
         this.method = method;
     }
@@ -57,11 +59,12 @@ public abstract class BaseHttpRequest extends HttpMessageSupport implements Http
     @Override
     public void setRawUri(String uri) {
         this.uri = URI.create(uri);
+        this.rawUri = uri;
     }
 
     @Override
     public String getRawUri() {
-        return this.uri.toString();
+        return this.rawUri;
     }
 
     @Override
@@ -74,6 +77,7 @@ public abstract class BaseHttpRequest extends HttpMessageSupport implements Http
         this.uri = uri;
         if (Objects.nonNull(uri)) {
             this.scheme = uri.getScheme();
+            this.rawUri = uri.toString();
         }
     }
 }

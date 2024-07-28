@@ -42,4 +42,17 @@ public enum HttpVersion {
     public String getValue() {
         return String.format("%s/%d.%d", protocol, major, minor);
     }
+
+    public String getVersion() {
+        return String.format("%d.%d", major, minor);
+    }
+
+    public static HttpVersion fromVersion(String versionValue) {
+        for (HttpVersion httpVersion : values()) {
+            if (Objects.equals(versionValue, httpVersion.getVersion())) {
+                return httpVersion;
+            }
+        }
+        return null;
+    }
 }

@@ -5,6 +5,7 @@ import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpHeader;
 import cn.vlts.solpic.core.http.HttpMessage;
 import cn.vlts.solpic.core.http.HttpVersion;
+import cn.vlts.solpic.core.util.AttachmentSupport;
 import cn.vlts.solpic.core.util.CaseInsensitiveMap;
 import cn.vlts.solpic.core.util.Cis;
 import cn.vlts.solpic.core.util.Pair;
@@ -22,14 +23,14 @@ import java.util.stream.Stream;
  * @author throwable
  * @since 2024/7/19 星期五 17:35
  */
-public abstract class HttpMessageSupport implements HttpMessage {
+public abstract class HttpMessageSupport extends AttachmentSupport implements HttpMessage {
 
     private final Map<Cis, List<String>> headers = new CaseInsensitiveMap<>();
 
     private HttpVersion httpVersion = HttpVersion.defaultVersion();
 
     @Override
-    public HttpVersion protocolVersion() {
+    public HttpVersion getProtocolVersion() {
         return this.httpVersion;
     }
 

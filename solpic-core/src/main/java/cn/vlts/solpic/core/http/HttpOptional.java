@@ -16,9 +16,11 @@ public interface HttpOptional {
 
     boolean supportHttpVersion(HttpVersion httpVersion);
 
-    List<HttpOption<?>> availableHttpOptions();
+    List<HttpOption<?>> getAvailableHttpOptions();
 
-    List<HttpOption<?>> minimumHttpOptions();
+    List<HttpOption<?>> getMinimumHttpOptions();
+
+    List<HttpOption<?>> getHttpOptions();
 
     boolean supportHttpOption(HttpOption<?> httpOption);
 

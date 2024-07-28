@@ -15,7 +15,7 @@ public interface HttpMessage {
 
     void setProtocolVersion(HttpVersion version);
 
-    HttpVersion protocolVersion();
+    HttpVersion getProtocolVersion();
 
     HttpHeader getFirstHeader(String name);
 

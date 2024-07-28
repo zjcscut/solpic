@@ -1,7 +1,12 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.util.Attachable;
+
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * HTTP request.
@@ -9,7 +14,10 @@ import java.util.Arrays;
  * @author throwable
  * @since 2024/7/23 星期二 19:49
  */
-public interface HttpRequest extends HttpMessage {
+public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
+
+    List<HttpMethod> METHODS_WITH_BODY = new ArrayList<>(Arrays.asList(HttpMethod.POST,
+            HttpMethod.PUT, HttpMethod.DELETE));
 
     String getScheme();
 
@@ -27,12 +35,10 @@ public interface HttpRequest extends HttpMessage {
 
     void setUri(URI uri);
 
-    default boolean supportPayloadPublisher() {
+    default boolean supportPayload() {
         HttpMethod method = getMethod();
-        return Arrays.asList(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH).contains(method);
+        return Objects.nonNull(method) && METHODS_WITH_BODY.contains(method);
     }
-
-    PayloadPublisher getPayloadPublisher();
 
     HttpClient getHttpClient();
 }

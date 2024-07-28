@@ -28,7 +28,7 @@ public interface HttpStatusCode {
         return this.value() == other.value();
     }
 
-    default HttpStatusCode fromStatusCode(int statusCode) {
+    static HttpStatusCode fromStatusCode(int statusCode) {
         if (statusCode < 100 || statusCode > 999) {
             throw new IllegalArgumentException("Invalid status code: " + statusCode);
         }
