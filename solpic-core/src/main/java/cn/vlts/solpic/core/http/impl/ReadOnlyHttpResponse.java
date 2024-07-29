@@ -179,4 +179,9 @@ public class ReadOnlyHttpResponse<T> implements HttpResponse<T> {
     public T getPayload() {
         return this.response.getPayload();
     }
+
+    @Override
+    public void setPayload(T payload) {
+
+    }
 }

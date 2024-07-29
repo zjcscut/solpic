@@ -12,6 +12,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * The solpic.
@@ -92,17 +93,9 @@ public abstract class Solpic {
                                                ContentType requestContentType,
                                                List<HttpHeader> requestHeaders,
                                                S requestPayload,
-                                               Type responsePayloadType) {
-            PayloadSubscriber<T> payloadSubscriber = PayloadSubscribers.X.getBuildInPayloadSubscriber(responsePayloadType);
-            if (Objects.isNull(payloadSubscriber)) {
-                payloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);
-            }
-            PayloadPublisher payloadPublisher;
-            if (Objects.isNull(requestPayload)) {
-                payloadPublisher = PayloadPublishers.DEFAULT.discarding();
-            } else {
-                payloadPublisher = getCodec().createPayloadPublisher(requestPayload);
-            }
+                                               Function<S, PayloadPublisher> requestPayloadFunction,
+                                               PayloadSubscriber<T> responsePayloadSubscriber) {
+            PayloadPublisher requestPayloadPublisher = requestPayloadFunction.apply(requestPayload);
             DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl));
             if (Objects.nonNull(requestContentType)) {
                 request.setContentType(requestContentType);
@@ -110,7 +103,8 @@ public abstract class Solpic {
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            return ReadOnlyHttpResponse.of(getHttpClient().send(request, payloadPublisher, payloadSubscriber));
+            return ReadOnlyHttpResponse.of(getHttpClient().send(request, requestPayloadPublisher,
+                    responsePayloadSubscriber));
         }
     }
 

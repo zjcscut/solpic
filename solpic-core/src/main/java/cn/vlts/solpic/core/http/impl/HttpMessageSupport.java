@@ -1,6 +1,6 @@
 package cn.vlts.solpic.core.http.impl;
 
-import cn.vlts.solpic.core.common.HttpHeaders;
+import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpHeader;
 import cn.vlts.solpic.core.http.HttpMessage;
@@ -160,33 +160,33 @@ public abstract class HttpMessageSupport extends AttachmentSupport implements Ht
 
     @Override
     public void setContentLength(long contentLength) {
-        setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength));
+        setHeader(HttpHeaderConstants.CONTENT_LENGTH_KEY, String.valueOf(contentLength));
     }
 
     @Override
     public long getContentLength() {
-        return Optional.ofNullable(getFirstHeaderValue(HttpHeaders.CONTENT_LENGTH)).map(Long::parseLong)
+        return Optional.ofNullable(getFirstHeaderValue(HttpHeaderConstants.CONTENT_LENGTH_KEY)).map(Long::parseLong)
                 .orElse(0L);
     }
 
     @Override
     public void setContentTypeValue(String contentType) {
-        setHeader(HttpHeaders.CONTENT_TYPE, contentType);
+        setHeader(HttpHeaderConstants.CONTENT_TYPE_KEY, contentType);
     }
 
     @Override
     public String getContentTypeValue() {
-        return getFirstHeaderValue(HttpHeaders.CONTENT_TYPE);
+        return getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE_KEY);
     }
 
     @Override
     public void setContentType(ContentType contentType) {
-        setHeader(HttpHeaders.CONTENT_TYPE, contentType.getValue());
+        setHeader(HttpHeaderConstants.CONTENT_TYPE_KEY, contentType.getValue());
     }
 
     @Override
     public ContentType getContentType() {
-        String contentTypeValue = getFirstHeaderValue(HttpHeaders.CONTENT_TYPE);
+        String contentTypeValue = getFirstHeaderValue(HttpHeaderConstants.CONTENT_TYPE_KEY);
         if (Objects.nonNull(contentTypeValue)) {
             return ContentType.parse(contentTypeValue);
         }

@@ -21,6 +21,8 @@ public interface HttpResponse<T> extends HttpMessage {
         return null;
     }
 
+    void setPayload(T payload);
+
     T getPayload();
 
     HttpRequest getHttpRequest();

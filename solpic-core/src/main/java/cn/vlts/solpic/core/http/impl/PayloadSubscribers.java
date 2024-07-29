@@ -26,6 +26,7 @@ public enum PayloadSubscribers {
 
     public static final DefaultPayloadSubscribers DEFAULT;
 
+    @SuppressWarnings("unchecked")
     public <T> PayloadSubscriber<T> getBuildInPayloadSubscriber(Type type) {
         return Objects.nonNull(type) ? (PayloadSubscriber<T>) BUILD_IN_CACHE.get(type) : null;
     }

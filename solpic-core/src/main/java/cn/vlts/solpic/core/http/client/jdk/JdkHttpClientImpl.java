@@ -1,6 +1,6 @@
 package cn.vlts.solpic.core.http.client.jdk;
 
-import cn.vlts.solpic.core.common.HttpHeaders;
+import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
@@ -110,7 +110,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         for (String headerName : headerNames) {
             List<String> headerValues = request.getHeaderValue(headerName);
             if (Objects.nonNull(headerValues)) {
-                if (HttpHeaders.COOKIE.equalsIgnoreCase(headerName)) {
+                if (HttpHeaderConstants.COOKIE_KEY.equalsIgnoreCase(headerName)) {
                     StringJoiner joiner = new StringJoiner("; ");
                     for (String headerValue : headerValues) {
                         joiner.add(headerValue);

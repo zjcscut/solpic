@@ -21,5 +21,10 @@ public class SolpicTemplateTest {
                 .build();
         String result = solpicTemplate.getForObject("https://httpbin.org/get", String.class);
         Assert.assertNotNull(result);
+        long start = System.currentTimeMillis();
+        result = solpicTemplate.getForObject("https://httpbin.org/get", String.class);
+        Assert.assertNotNull(result);
+        long end = System.currentTimeMillis();
+        System.out.printf("Cost: %d ms\n", end - start);
     }
 }

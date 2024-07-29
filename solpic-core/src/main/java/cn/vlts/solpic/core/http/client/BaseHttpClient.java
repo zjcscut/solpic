@@ -38,15 +38,15 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     public <T> HttpResponse<T> send(HttpRequest request,
                                     PayloadPublisher payloadPublisher,
                                     PayloadSubscriber<T> payloadSubscriber) {
-        triggerInterceptorsBeforeSend(request);
+        triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
             response = sendInternal(request, payloadPublisher, payloadSubscriber);
-            triggerInterceptorsAfterSend(request, response);
+            triggerAfterSend(request, response);
         } catch (IOException e) {
             throw new SolpicHttpException("Send HTTP request failed", e);
         } finally {
-            triggerInterceptorsAfterCompletion(request, response);
+            triggerAfterCompletion(request, response);
         }
         return response;
     }
@@ -108,6 +108,22 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         ReadOnlyHttpRequest readOnlyHttpRequest = ReadOnlyHttpRequest.of(request);
         ReadOnlyHttpResponse<?> readOnlyHttpResponse = ReadOnlyHttpResponse.of(response);
         this.interceptors.forEach(interceptor -> interceptor.afterCompletion(readOnlyHttpRequest, readOnlyHttpResponse));
+    }
+
+    protected void triggerBeforeSend(HttpRequest request) {
+        triggerInterceptorsBeforeSend(request);
+    }
+
+    protected void triggerAfterSend(HttpRequest request, HttpResponse<?> response) {
+        triggerInterceptorsAfterSend(request, response);
+    }
+
+    protected void triggerAfterCompletion(HttpRequest request, HttpResponse<?> response) {
+        triggerInterceptorsAfterCompletion(request, response);
+        // copy attachments
+        if (supportHttpOption(null)) {
+
+        }
     }
 
     protected void baseInit() {
