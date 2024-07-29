@@ -21,10 +21,6 @@ public interface HttpResponse<T> extends HttpMessage {
         return null;
     }
 
-    default boolean supportPayload() {
-        return true;
-    }
-
     T getPayload();
 
     HttpRequest getHttpRequest();

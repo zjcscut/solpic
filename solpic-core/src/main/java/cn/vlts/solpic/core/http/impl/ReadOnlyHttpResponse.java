@@ -170,7 +170,6 @@ public class ReadOnlyHttpResponse<T> implements HttpResponse<T> {
         return this.response.getContentType();
     }
 
-
     @Override
     public String getReasonPhrase() {
         return this.response.getReasonPhrase();

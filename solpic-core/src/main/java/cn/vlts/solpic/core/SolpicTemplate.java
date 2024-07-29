@@ -1,11 +1,11 @@
 package cn.vlts.solpic.core;
 
 import cn.vlts.solpic.core.codec.Codec;
-import cn.vlts.solpic.core.http.ContentType;
-import cn.vlts.solpic.core.http.HttpClient;
-import cn.vlts.solpic.core.http.HttpMethod;
+import cn.vlts.solpic.core.http.*;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,14 +16,36 @@ import java.util.Map;
  */
 public interface SolpicTemplate {
 
+    // ##################### GET METHOD #####################
+
+    default <T> T getForObject(String url, Type responsePayloadType) {
+        return getForObject(url, Collections.emptyList(), responsePayloadType);
+    }
+
+    default <T> T getForObject(String url, List<HttpHeader> requestHeaders, Type responsePayloadType) {
+        return (T) exchange(url, HttpMethod.GET, null, requestHeaders, null,
+                responsePayloadType).getPayload();
+    }
+
+    default <T> HttpResponse<T> get(String url, Type responsePayloadType) {
+        return get(url, Collections.emptyList(), responsePayloadType);
+    }
+
+    default <T> HttpResponse<T> get(String url, List<HttpHeader> requestHeaders, Type responsePayloadType) {
+        return exchange(url, HttpMethod.GET, null, requestHeaders, null,
+                responsePayloadType);
+    }
+
+    // ##################### BASE METHOD #####################
+
     <S, T> Codec<S, T> getCodec();
 
     HttpClient getHttpClient();
 
-    <S, T> T exchange(String requestUrl,
-                      HttpMethod requestMethod,
-                      ContentType requestContentType,
-                      Map<String, String> requestHeaders,
-                      S requestPayload,
-                      Type responsePayloadType);
+    <S, T> HttpResponse<T> exchange(String requestUrl,
+                                    HttpMethod requestMethod,
+                                    ContentType requestContentType,
+                                    List<HttpHeader> requestHeaders,
+                                    S requestPayload,
+                                    Type responsePayloadType);
 }

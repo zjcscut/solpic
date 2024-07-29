@@ -58,7 +58,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
                                                          PayloadPublisher payloadPublisher,

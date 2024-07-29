@@ -5,9 +5,13 @@ import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Payload subscriber impls.
@@ -15,9 +19,16 @@ import java.util.concurrent.CompletionStage;
  * @author throwable
  * @since 2024/7/28 22:29
  */
-public final class PayloadSubscribers {
+public enum PayloadSubscribers {
+    X;
+
+    private static final ConcurrentMap<Type, PayloadSubscriber<?>> BUILD_IN_CACHE = new ConcurrentHashMap<>();
 
     public static final DefaultPayloadSubscribers DEFAULT;
+
+    public <T> PayloadSubscriber<T> getBuildInPayloadSubscriber(Type type) {
+        return Objects.nonNull(type) ? (PayloadSubscriber<T>) BUILD_IN_CACHE.get(type) : null;
+    }
 
     private static class ByteArrayPayloadSubscriber implements PayloadSubscriber<byte[]> {
 
@@ -128,5 +139,8 @@ public final class PayloadSubscribers {
 
     static {
         DEFAULT = new DefaultPayloadSubscribers();
+        BUILD_IN_CACHE.put(Void.class, DEFAULT.discarding());
+        BUILD_IN_CACHE.put(String.class, DEFAULT.ofString());
+        BUILD_IN_CACHE.put(byte[].class, DEFAULT.ofByteArray());
     }
 }

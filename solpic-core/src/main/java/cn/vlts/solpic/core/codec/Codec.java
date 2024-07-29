@@ -93,7 +93,7 @@ public interface Codec<S, T> {
 
             private final AtomicBoolean read = new AtomicBoolean();
 
-            private CompletionStage<T> future;
+            private MinimalFuture<T> future = new MinimalFuture<>();
 
             @Override
             public void readFrom(InputStream inputStream) {

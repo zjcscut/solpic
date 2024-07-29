@@ -32,7 +32,7 @@ public final class MinimalFuture<T> extends CompletableFuture<T> {
         return f;
     }
 
-    public static <U> CompletableFuture<U> failedFuture(Throwable ex) {
+    public static <U> MinimalFuture<U> failedFuture(Throwable ex) {
         requireNonNull(ex);
         MinimalFuture<U> f = new MinimalFuture<>();
         f.completeExceptionally(ex);
