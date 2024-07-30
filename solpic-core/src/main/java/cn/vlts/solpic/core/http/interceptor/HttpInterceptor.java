@@ -19,6 +19,10 @@ public interface HttpInterceptor {
 
     }
 
+    default void onError(HttpRequest request, Throwable throwable) {
+
+    }
+
     default void afterCompletion(HttpRequest request, HttpResponse<?> response) {
 
     }

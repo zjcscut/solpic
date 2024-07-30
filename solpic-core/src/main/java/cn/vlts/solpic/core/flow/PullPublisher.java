@@ -97,7 +97,7 @@ public final class PullPublisher<T> implements Publisher<T> {
                 return;
             }
             if (n <= 0) {
-                error = new IllegalArgumentException("non-positive subscription request: " + n);
+                error = new IllegalArgumentException("Non-positive subscription request: " + n);
             } else {
                 demand.increase(n);
             }

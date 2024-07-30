@@ -1,18 +1,12 @@
 package cn.vlts.solpic.core.codec.impl;
 
 import cn.vlts.solpic.core.codec.Codec;
-import cn.vlts.solpic.core.codec.CodecFactory;
 import cn.vlts.solpic.core.util.ReflectionUtils;
 import com.google.gson.Gson;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  * Gson codec.
@@ -59,28 +53,5 @@ public class GsonCodec<S, T> implements Codec<S, T> {
 
     static {
         ReflectionUtils.X.forName("com.google.gson.Gson");
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    @ToString
-    public static class User {
-        private final Long id;
-        private final String name;
-    }
-
-    public static void main(String[] args) {
-        Codec codec = CodecFactory.X.loadCodec(null, null);
-        User user = new User(1L, "doge");
-        byte[] byteArray = codec.toByteArray(user);
-        System.out.println(byteArray.length);
-        Object o = codec.fromByteArray(byteArray, User.class);
-        System.out.println(o);
-        ByteBuffer byteBuffer = codec.toByteBuffer(o);
-        o = codec.fromByteBuffer(byteBuffer, User.class);
-        System.out.println(o);
-        List byteBuffers = codec.toByteBuffers(o);
-        o = codec.fromByteBuffers(byteBuffers, User.class);
-        System.out.println(o);
     }
 }

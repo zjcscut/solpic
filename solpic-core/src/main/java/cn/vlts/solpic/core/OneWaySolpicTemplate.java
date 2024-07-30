@@ -16,7 +16,6 @@ import java.util.function.Function;
  * @author throwable
  * @since 2024/7/29 星期一 9:57
  */
-@SuppressWarnings("unchecked")
 public interface OneWaySolpicTemplate {
 
     // ##################### GET METHOD #####################

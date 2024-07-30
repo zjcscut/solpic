@@ -29,6 +29,14 @@ public enum IoUtils {
         }
     }
 
+    public ByteBuffer newByteBuffer() {
+        return ByteBuffer.allocate(READ_BUF_SIZE);
+    }
+
+    public ByteBuffer newByteBuffer(int bufSize) {
+        return ByteBuffer.allocate(bufSize);
+    }
+
     public BufferedReader newBufferedReader(Reader reader) {
         return new BufferedReader(reader, READ_BUF_SIZE);
     }
