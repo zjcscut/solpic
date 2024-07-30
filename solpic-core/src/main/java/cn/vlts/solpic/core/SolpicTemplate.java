@@ -100,6 +100,22 @@ public interface SolpicTemplate {
 
     // ##################### POST METHOD #####################
 
+    default <S, T> T postForObject(String url,
+                                   S requestPayload,
+                                   Type responsePayloadType) {
+        return (T) exchange(url, HttpMethod.POST, ContentType.APPLICATION_JSON, Collections.emptyList(), requestPayload,
+                responsePayloadType).getPayload();
+    }
+
+    default <S, T> T postForObject(String url,
+                                   List<HttpHeader> requestHeaders,
+                                   ContentType requestContentType,
+                                   S requestPayload,
+                                   Type responsePayloadType) {
+        return (T) exchange(url, HttpMethod.POST, requestContentType, requestHeaders, requestPayload, responsePayloadType)
+                .getPayload();
+    }
+
     default <S, T> HttpResponse<T> post(String url,
                                         S requestPayload,
                                         Type responsePayloadType) {
@@ -116,6 +132,22 @@ public interface SolpicTemplate {
     }
 
     // ##################### PATCH METHOD #####################
+
+    default <S, T> T patchForObject(String url,
+                                    S requestPayload,
+                                    Type responsePayloadType) {
+        return (T) exchange(url, HttpMethod.PATCH, ContentType.APPLICATION_JSON, Collections.emptyList(), requestPayload,
+                responsePayloadType).getPayload();
+    }
+
+    default <S, T> T patchForObject(String url,
+                                    List<HttpHeader> requestHeaders,
+                                    ContentType requestContentType,
+                                    S requestPayload,
+                                    Type responsePayloadType) {
+        return (T) exchange(url, HttpMethod.PATCH, requestContentType, requestHeaders, requestPayload, responsePayloadType)
+                .getPayload();
+    }
 
     default <S, T> HttpResponse<T> patch(String url,
                                          S requestPayload,
@@ -149,8 +181,11 @@ public interface SolpicTemplate {
             payloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);
         }
         Function<S, PayloadPublisher> requestPayloadFunction;
+        Class<?> requestPayloadClazz;
         if (Objects.isNull(requestPayload)) {
             requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
+        } else if (PayloadPublishers.X.containsBuildInPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
+            requestPayloadFunction = PayloadPublishers.X.getBuildInPayloadPublisher(requestPayloadClazz);
         } else {
             requestPayloadFunction = sp -> getCodec().createPayloadPublisher(sp);
         }

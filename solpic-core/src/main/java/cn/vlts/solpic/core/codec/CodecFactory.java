@@ -13,13 +13,13 @@ import java.util.concurrent.ConcurrentMap;
  * @author throwable
  * @since 2024/7/26 星期五 18:43
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public enum CodecFactory {
     X;
 
     private final SpiLoader<Codec> spiLoader = SpiLoader.getSpiLoader(Codec.class);
 
-    private final ConcurrentMap<CodecType,Codec> cache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<CodecType, Codec> cache = new ConcurrentHashMap<>();
 
     public <S, T> Codec<S, T> loadCodec(CodecType codecType, String codecName) {
         if (Objects.nonNull(codecName)) {
@@ -41,8 +41,8 @@ public enum CodecFactory {
         Codec codec = spiLoader.getAvailableServices().stream().findFirst().orElse(null);
         if (Objects.isNull(codec)) {
             codec = CodecType.getAvailableCodecTypes().stream().findFirst()
-                    .map(codecType -> ReflectionUtils.X.forName(codecType.getType()))
-                    .map(clazz -> (Codec) ReflectionUtils.X.createInstance(clazz))
+                    .map(codecType -> cache.computeIfAbsent(codecType,
+                            k -> (Codec) ReflectionUtils.X.createInstance(ReflectionUtils.X.forName(k.getType()))))
                     .orElse(null);
         }
         return (Codec<S, T>) codec;

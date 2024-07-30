@@ -7,12 +7,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Reference to jdk.internal.net.http.common.MinimalFuture.
- *
- * @author throwable
- * @since 2024/7/24 00:15
- */
 public final class MinimalFuture<T> extends CompletableFuture<T> {
 
     @FunctionalInterface

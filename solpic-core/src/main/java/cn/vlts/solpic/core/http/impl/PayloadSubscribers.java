@@ -31,6 +31,10 @@ public enum PayloadSubscribers {
         return Objects.nonNull(type) ? (PayloadSubscriber<T>) BUILD_IN_CACHE.get(type) : null;
     }
 
+    public boolean containsBuildInPayloadSubscriber(Type type) {
+        return BUILD_IN_CACHE.containsKey(type);
+    }
+
     private static class ByteArrayPayloadSubscriber implements PayloadSubscriber<byte[]> {
 
         private long contentLength;

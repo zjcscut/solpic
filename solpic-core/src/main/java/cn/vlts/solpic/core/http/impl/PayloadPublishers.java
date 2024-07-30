@@ -4,10 +4,15 @@ import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -16,11 +21,22 @@ import java.util.function.Supplier;
  * @author throwable
  * @since 2024/7/26 星期五 10:45
  */
-public final class PayloadPublishers {
+public enum PayloadPublishers {
+    X;
+
+    private static final ConcurrentMap<Type, Function<?, PayloadPublisher>> BUILD_IN_CACHE = new ConcurrentHashMap<>();
 
     public static final DefaultPayloadPublishers DEFAULT;
 
     public static final StreamPayloadPublishers STREAM;
+
+    public <T> Function<T, PayloadPublisher> getBuildInPayloadPublisher(Type type) {
+        return Objects.nonNull(type) ? (Function<T, PayloadPublisher>) BUILD_IN_CACHE.get(type) : null;
+    }
+
+    public boolean containsBuildInPayloadPublisher(Type type) {
+        return BUILD_IN_CACHE.containsKey(type);
+    }
 
     private static class DiscardingPayloadPublisher implements PayloadPublisher {
 
@@ -148,6 +164,10 @@ public final class PayloadPublishers {
 
     static {
         DEFAULT = new DefaultPayloadPublishers();
+        BUILD_IN_CACHE.put(String.class, (String s) -> DEFAULT.ofString(s));
+        BUILD_IN_CACHE.put(byte[].class, (byte[] bytes) -> DEFAULT.ofByteArray(bytes));
+        BUILD_IN_CACHE.put(InputStream.class, (InputStream in) -> DEFAULT.ofInputStream(in));
+        BUILD_IN_CACHE.put(Path.class, (Path path) -> DEFAULT.ofFile(path));
         STREAM = new StreamPayloadPublishers();
     }
 }

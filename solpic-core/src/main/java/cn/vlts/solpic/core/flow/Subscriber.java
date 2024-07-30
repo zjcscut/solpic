@@ -1,7 +1,7 @@
 package cn.vlts.solpic.core.flow;
 
 /**
- * See JDK9 Flow.Subscriber.
+ * See JDK9+ Flow.Subscriber.
  *
  * @author throwable
  * @since 2024/7/24 00:00
