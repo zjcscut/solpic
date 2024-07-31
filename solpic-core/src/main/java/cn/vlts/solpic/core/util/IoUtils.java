@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * IO utils.
@@ -77,9 +78,13 @@ public enum IoUtils {
     }
 
     public List<ByteBuffer> copyByteArrayToByteBuffers(byte[] content, int offset, int length, int bufSize) {
+        return copyByteArrayToByteBuffers(content, offset, length, () -> ByteBuffer.allocate(bufSize));
+    }
+
+    public List<ByteBuffer> copyByteArrayToByteBuffers(byte[] content, int offset, int length, Supplier<ByteBuffer> supplier) {
         List<ByteBuffer> buffers = new ArrayList<>();
         while (length > 0) {
-            ByteBuffer buf = ByteBuffer.allocate(bufSize);
+            ByteBuffer buf = supplier.get();
             int max = buf.capacity();
             int toCopy = Math.min(max, length);
             buf.put(content, offset, toCopy);

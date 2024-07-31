@@ -130,9 +130,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected void triggerAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         triggerInterceptorsAfterCompletion(request, response);
-        // todo copy attachments
-        if (supportHttpOption(null)) {
-
+        // copy request attachments to response
+        if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS)) {
+            response.copyAttachable(request);
         }
     }
 

@@ -27,6 +27,7 @@ public class TestJdkHttpClientImpl {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"));
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
         HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
                 PayloadSubscribers.DEFAULT.ofString());
         Assert.assertNotNull(response);

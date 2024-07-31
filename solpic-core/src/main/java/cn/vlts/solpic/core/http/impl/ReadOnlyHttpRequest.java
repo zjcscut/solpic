@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.util.Attachable;
 import cn.vlts.solpic.core.util.AttachmentKey;
 import lombok.RequiredArgsConstructor;
 
@@ -267,5 +268,10 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
     @Override
     public <T> T getAttachment(AttachmentKey key, T defaultValue) {
         return request.getAttachment(key, defaultValue);
+    }
+
+    @Override
+    public void copyAttachable(Attachable attachable) {
+
     }
 }

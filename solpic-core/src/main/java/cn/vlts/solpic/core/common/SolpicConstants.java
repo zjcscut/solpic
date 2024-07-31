@@ -13,11 +13,11 @@ public final class SolpicConstants {
     private SolpicConstants() {
     }
 
-    public static final AttachmentKey REQUEST_START_NANOS_KEY = AttachmentKey.of();
+    public static final AttachmentKey REQUEST_START_NANOS_KEY = AttachmentKey.ofKey("startNanos");
 
-    public static final AttachmentKey REQUEST_END_NANOS_KEY = AttachmentKey.of();
+    public static final AttachmentKey REQUEST_END_NANOS_KEY = AttachmentKey.ofKey("endNanos");
 
-    public static final AttachmentKey REQUEST_COST_NANOS_KEY = AttachmentKey.of();
+    public static final AttachmentKey REQUEST_COST_NANOS_KEY = AttachmentKey.ofKey("costNanos");
 
-    public static final AttachmentKey REQUEST_TRACE_ID_KEY = AttachmentKey.of();
+    public static final AttachmentKey REQUEST_TRACE_ID_KEY = AttachmentKey.ofKey("traceId");
 }

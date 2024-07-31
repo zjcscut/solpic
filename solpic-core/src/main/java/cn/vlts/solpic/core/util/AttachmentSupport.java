@@ -43,4 +43,14 @@ public abstract class AttachmentSupport implements Attachable {
     public <T> T getAttachment(AttachmentKey key, T defaultValue) {
         return (T) this.attachments.getOrDefault(key, defaultValue);
     }
+
+    @Override
+    public void copyAttachable(Attachable attachable) {
+        if (Objects.nonNull(attachable)) {
+            Map<AttachmentKey, Object> map = attachable.getAttachments();
+            if (Objects.nonNull(map)) {
+                attachments.putAll(map);
+            }
+        }
+    }
 }

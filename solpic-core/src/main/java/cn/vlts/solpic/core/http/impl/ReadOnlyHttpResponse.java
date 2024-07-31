@@ -2,9 +2,13 @@ package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.common.HttpStatusCode;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.util.Attachable;
+import cn.vlts.solpic.core.util.AttachmentKey;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -182,6 +186,41 @@ public class ReadOnlyHttpResponse<T> implements HttpResponse<T> {
 
     @Override
     public void setPayload(T payload) {
+
+    }
+
+    @Override
+    public Map<AttachmentKey, Object> getAttachments() {
+        return this.response.getAttachments();
+    }
+
+    @Override
+    public Set<AttachmentKey> getAttachmentKeys() {
+        return this.response.getAttachmentKeys();
+    }
+
+    @Override
+    public <S> void addAttachment(AttachmentKey key, S value) {
+
+    }
+
+    @Override
+    public <S> void setAttachment(AttachmentKey key, S value) {
+
+    }
+
+    @Override
+    public <S> S getAttachment(AttachmentKey key) {
+        return this.response.getAttachment(key);
+    }
+
+    @Override
+    public <S> S getAttachment(AttachmentKey key, S defaultValue) {
+        return this.response.getAttachment(key, defaultValue);
+    }
+
+    @Override
+    public void copyAttachable(Attachable attachable) {
 
     }
 }

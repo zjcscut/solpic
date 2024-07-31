@@ -5,22 +5,19 @@ import cn.vlts.solpic.core.flow.PullPublisher;
 import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.util.IoUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Request flow payload publisher.
+ * Request flow payload publishers.
  *
  * @author throwable
  * @since 2024/7/30 星期二 17:42
@@ -97,23 +94,8 @@ public final class RequestFlowPayloadPublishers {
 
         @Override
         public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
-            List<ByteBuffer> bufferList = copy(content, offset, length);
+            List<ByteBuffer> bufferList = IoUtils.X.copyByteArrayToByteBuffers(content, offset, length, bufSize);
             new PullPublisher<>(bufferList).subscribe(subscriber);
-        }
-
-        List<ByteBuffer> copy(byte[] content, int offset, int length) {
-            List<ByteBuffer> buffers = new ArrayList<>();
-            while (length > 0) {
-                ByteBuffer b = ByteBuffer.allocate(Math.min(bufSize, length));
-                int max = b.capacity();
-                int toCopy = Math.min(max, length);
-                b.put(content, offset, toCopy);
-                offset += toCopy;
-                length -= toCopy;
-                b.flip();
-                buffers.add(b);
-            }
-            return buffers;
         }
     }
 
@@ -199,9 +181,9 @@ public final class RequestFlowPayloadPublishers {
         private final long length;
 
         public FileFlowPayloadPublisher(Path path) {
-            checkFileStatus();
             this.path = Objects.requireNonNull(path);
             this.length = getFileLength();
+            checkFileStatus();
         }
 
         @Override

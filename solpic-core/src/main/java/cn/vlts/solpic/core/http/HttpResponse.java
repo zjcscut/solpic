@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http;
 
 import cn.vlts.solpic.core.common.HttpStatus;
 import cn.vlts.solpic.core.common.HttpStatusCode;
+import cn.vlts.solpic.core.util.Attachable;
 
 /**
  * HTTP response.
@@ -9,7 +10,7 @@ import cn.vlts.solpic.core.common.HttpStatusCode;
  * @author throwable
  * @since 2024/7/23 23:37
  */
-public interface HttpResponse<T> extends HttpMessage {
+public interface HttpResponse<T> extends HttpMessage, Attachable {
 
     HttpStatusCode getStatusCode();
 

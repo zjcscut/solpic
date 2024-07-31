@@ -5,6 +5,8 @@ import cn.vlts.solpic.core.util.IoUtils;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 /**
@@ -15,43 +17,52 @@ import java.util.function.Supplier;
  */
 public class ByteArrayIterableIterator implements Iterator<ByteBuffer> {
 
-    private final Iterable<? extends byte[]> iterable;
+    private final Iterator<? extends byte[]> iterator;
 
     private final Supplier<ByteBuffer> bufSupplier;
 
-    private ByteBuffer buf;
-
-    private volatile boolean finished;
-
-    private volatile boolean haveNext = true;
+    private final ConcurrentLinkedQueue<ByteBuffer> queue = new ConcurrentLinkedQueue<>();
 
     public ByteArrayIterableIterator(Iterable<? extends byte[]> iterable) {
         this(iterable, IoUtils.X::newByteBuffer);
     }
 
     public ByteArrayIterableIterator(Iterable<? extends byte[]> iterable, Supplier<ByteBuffer> bufSupplier) {
-        this.iterable = iterable;
+        this.iterator = iterable.iterator();
         this.bufSupplier = bufSupplier;
     }
 
-    // TODO impl this method.
     @Override
     public boolean hasNext() {
-        if (finished) {
-            return false;
-        }
-        if (!haveNext) {
-            return false;
-        }
-
-        return haveNext = true;
+        return !queue.isEmpty() || iterator.hasNext();
     }
 
     @Override
     public ByteBuffer next() {
-        if (!haveNext) {
-            throw new NoSuchElementException();
+        ByteBuffer buffer = queue.poll();
+        while (Objects.isNull(buffer)) {
+            copy();
+            buffer = queue.poll();
         }
-        return buf;
+        return buffer;
+    }
+
+    private void copy() {
+        byte[] bytes = iterator.next();
+        int length = bytes.length;
+        if (length == 0 && iterator.hasNext()) {
+            return;
+        }
+        int offset = 0;
+        do {
+            ByteBuffer b = bufSupplier.get();
+            int max = b.capacity();
+            int toCopy = Math.min(max, length);
+            b.put(bytes, offset, toCopy);
+            offset += toCopy;
+            length -= toCopy;
+            b.flip();
+            queue.add(b);
+        } while (length > 0);
     }
 }

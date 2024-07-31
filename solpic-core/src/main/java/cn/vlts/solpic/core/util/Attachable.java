@@ -22,4 +22,6 @@ public interface Attachable {
     <T> T getAttachment(AttachmentKey key);
 
     <T> T getAttachment(AttachmentKey key, T defaultValue);
+
+    void copyAttachable(Attachable attachable);
 }

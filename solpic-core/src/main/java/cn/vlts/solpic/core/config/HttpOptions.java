@@ -65,6 +65,14 @@ public final class HttpOptions {
             .key("HTTP_FORCE_WRITE")
             .propertyKey("solpic.http.force.write")
             .defaultValue(false)
+            .level(OptionLevel.CLIENT)
+            .build();
+
+    public static final HttpOption<Boolean> HTTP_RESPONSE_COPY_ATTACHMENTS = BoolHttpOption.builder()
+            .id(1 << 5)
+            .key("HTTP_RESPONSE_COPY_ATTACHMENTS")
+            .propertyKey("solpic.http.response.copy.attachments")
+            .defaultValue(true)
             .build();
 
     public static List<HttpOption<?>> getMatchedOptions(long opts) {
