@@ -1,6 +1,8 @@
 package cn.vlts.solpic.core.http.flow;
 
 import cn.vlts.solpic.core.flow.MinimalFuture;
+import cn.vlts.solpic.core.flow.Publisher;
+import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.util.IoUtils;
 
@@ -128,6 +130,107 @@ public class ResponseFlowPayloadSubscribers {
             } catch (Throwable throwable) {
                 result.completeExceptionally(throwable);
             }
+        }
+    }
+
+    public static class FlowPayloadSubscriberAdapter<S extends Subscriber<List<ByteBuffer>>, T>
+            implements FlowPayloadSubscriber<T> {
+
+        private volatile Subscription subscription;
+
+        private final CompletableFuture<T> result = new MinimalFuture<>();
+
+        private final Function<? super S, ? extends T> finisher;
+
+        private final S subscriber;
+
+        public FlowPayloadSubscriberAdapter(Function<? super S, ? extends T> finisher, S subscriber) {
+            this.finisher = finisher;
+            this.subscriber = subscriber;
+        }
+
+        @Override
+        public CompletionStage<T> getPayload() {
+            return result;
+        }
+
+        @Override
+        public void onSubscribe(Subscription subscription) {
+            if (Objects.nonNull(this.subscription)) {
+                subscription.cancel();
+            } else {
+                this.subscription = subscription;
+                subscriber.onSubscribe(subscription);
+            }
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> item) {
+            try {
+                subscriber.onNext(item);
+            } catch (Throwable throwable) {
+                subscription.cancel();
+                result.completeExceptionally(throwable);
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            try {
+                subscriber.onError(throwable);
+            } finally {
+                result.completeExceptionally(throwable);
+            }
+        }
+
+        @Override
+        public void onComplete() {
+            try {
+                subscriber.onComplete();
+            } finally {
+                try {
+                    result.complete(finisher.apply(subscriber));
+                } catch (Throwable throwable) {
+                    result.completeExceptionally(throwable);
+                }
+            }
+        }
+    }
+
+    public static class MappingFlowPayloadSubscriber<U, T> implements FlowPayloadSubscriber<T> {
+
+        private final FlowPayloadSubscriber<U> upstream;
+
+        private final Function<? super U, ? extends T> mapper;
+
+        public MappingFlowPayloadSubscriber(FlowPayloadSubscriber<U> upstream, Function<? super U, ? extends T> mapper) {
+            this.upstream = upstream;
+            this.mapper = mapper;
+        }
+
+        @Override
+        public CompletionStage<T> getPayload() {
+            return upstream.getPayload().thenApply(mapper);
+        }
+
+        @Override
+        public void onSubscribe(Subscription subscription) {
+            upstream.onSubscribe(subscription);
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> item) {
+            upstream.onNext(item);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            upstream.onError(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            upstream.onComplete();
         }
     }
 }

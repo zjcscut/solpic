@@ -21,6 +21,7 @@ import java.util.function.Supplier;
  * @author throwable
  * @since 2024/7/26 星期五 10:45
  */
+@SuppressWarnings("unchecked")
 public enum PayloadPublishers {
     X;
 

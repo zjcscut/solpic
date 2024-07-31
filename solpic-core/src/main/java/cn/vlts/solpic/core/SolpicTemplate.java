@@ -6,6 +6,8 @@ import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -164,6 +166,29 @@ public interface SolpicTemplate {
         return exchange(url, HttpMethod.PATCH, requestContentType, requestHeaders, requestPayload, responsePayloadType);
     }
 
+    // ##################### ADVANCED METHOD #####################
+
+    default <S> HttpResponse<Void> download(String url, Path targetFile) {
+        return exchange(url, HttpMethod.GET, null, null, null,
+                PayloadSubscribers.DEFAULT.ofFile(targetFile));
+    }
+
+    default <S> HttpResponse<byte[]> download(String url) {
+        return exchange(url, HttpMethod.GET, null, null, null,
+                PayloadSubscribers.DEFAULT.ofByteArray());
+    }
+
+    default <S> HttpResponse<Void> download(String url,
+                                            HttpMethod requestMethod,
+                                            List<HttpHeader> requestHeaders,
+                                            ContentType requestContentType,
+                                            Path targetFile,
+                                            Charset charset,
+                                            S requestPayload) {
+        return exchange(url, requestMethod, requestContentType, requestHeaders, requestPayload,
+                PayloadSubscribers.DEFAULT.ofFile(targetFile, charset));
+    }
+
     // ##################### BASE METHOD #####################
 
     <S, T> Codec<S, T> getCodec();
@@ -191,6 +216,25 @@ public interface SolpicTemplate {
         }
         return exchange(requestUrl, requestMethod, requestContentType, requestHeaders, requestPayload,
                 requestPayloadFunction, payloadSubscriber);
+    }
+
+    default <S, T> HttpResponse<T> exchange(String requestUrl,
+                                            HttpMethod requestMethod,
+                                            ContentType requestContentType,
+                                            List<HttpHeader> requestHeaders,
+                                            S requestPayload,
+                                            PayloadSubscriber<T> responsePayloadSubscriber) {
+        Function<S, PayloadPublisher> requestPayloadFunction;
+        Class<?> requestPayloadClazz;
+        if (Objects.isNull(requestPayload)) {
+            requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
+        } else if (PayloadPublishers.X.containsBuildInPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
+            requestPayloadFunction = PayloadPublishers.X.getBuildInPayloadPublisher(requestPayloadClazz);
+        } else {
+            requestPayloadFunction = sp -> getCodec().createPayloadPublisher(sp);
+        }
+        return exchange(requestUrl, requestMethod, requestContentType, requestHeaders, requestPayload,
+                requestPayloadFunction, responsePayloadSubscriber);
     }
 
     <S, T> HttpResponse<T> exchange(String requestUrl,
