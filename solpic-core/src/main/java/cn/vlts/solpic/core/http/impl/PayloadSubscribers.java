@@ -67,11 +67,6 @@ public enum PayloadSubscribers {
         public CompletionStage<byte[]> getPayload() {
             return result;
         }
-
-        @Override
-        public long getContentLength() {
-            return contentLength;
-        }
     }
 
     private static class StringPayloadSubscriber implements PayloadSubscriber<String> {
@@ -113,11 +108,6 @@ public enum PayloadSubscribers {
         public CompletionStage<String> getPayload() {
             return result;
         }
-
-        @Override
-        public long getContentLength() {
-            return contentLength;
-        }
     }
 
     private static class DiscardingPayloadSubscriber<T> implements PayloadSubscriber<T> {
@@ -130,11 +120,6 @@ public enum PayloadSubscribers {
         @Override
         public CompletionStage<T> getPayload() {
             return null;
-        }
-
-        @Override
-        public long getContentLength() {
-            return -1;
         }
     }
 
@@ -175,11 +160,6 @@ public enum PayloadSubscribers {
         @Override
         public CompletionStage<Void> getPayload() {
             return result;
-        }
-
-        @Override
-        public long getContentLength() {
-            return -1;
         }
     }
 

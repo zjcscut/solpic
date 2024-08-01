@@ -49,7 +49,7 @@ public enum PayloadPublishers {
         }
 
         @Override
-        public long getContentLength() {
+        public long contentLength() {
             return -1;
         }
     }
@@ -84,7 +84,7 @@ public enum PayloadPublishers {
         }
 
         @Override
-        public long getContentLength() {
+        public long contentLength() {
             return length;
         }
     }
@@ -113,7 +113,7 @@ public enum PayloadPublishers {
         }
 
         @Override
-        public long getContentLength() {
+        public long contentLength() {
             return -1;
         }
     }

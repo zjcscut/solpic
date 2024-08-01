@@ -3,7 +3,7 @@ package cn.vlts.solpic.core.http.client;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
-import cn.vlts.solpic.core.http.client.jdk.JdkHttpClientImpl;
+import cn.vlts.solpic.core.http.client.jdk.DefaultJdkHttpClientImpl;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
@@ -18,9 +18,9 @@ import java.net.URI;
  * @author throwable
  * @since 2024/7/28 22:37
  */
-public class TestJdkHttpClientImpl {
+public class TestDefaultJdkHttpClientImpl {
 
-    private final JdkHttpClientImpl jdkHttpClientImpl = new JdkHttpClientImpl();
+    private final DefaultJdkHttpClientImpl jdkHttpClientImpl = new DefaultJdkHttpClientImpl();
 
     @Test
     public void testSimpleSend() {

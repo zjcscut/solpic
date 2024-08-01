@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http.flow;
 
 import cn.vlts.solpic.core.flow.Publisher;
+import cn.vlts.solpic.core.http.RequestPayloadSupport;
 
 import java.nio.ByteBuffer;
 
@@ -10,7 +11,6 @@ import java.nio.ByteBuffer;
  * @author throwable
  * @since 2024/7/30 星期二 17:40
  */
-public interface FlowPayloadPublisher extends Publisher<ByteBuffer> {
+public interface FlowPayloadPublisher extends Publisher<ByteBuffer>, RequestPayloadSupport {
 
-    long contentLength();
 }

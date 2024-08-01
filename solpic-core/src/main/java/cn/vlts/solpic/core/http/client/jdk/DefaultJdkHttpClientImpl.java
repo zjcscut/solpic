@@ -2,15 +2,9 @@ package cn.vlts.solpic.core.http.client.jdk;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
-import cn.vlts.solpic.core.flow.Publisher;
-import cn.vlts.solpic.core.flow.PullPublisher;
-import cn.vlts.solpic.core.flow.Subscriber;
-import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
-import cn.vlts.solpic.core.http.flow.*;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
-import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,19 +13,19 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 
 /**
- * JDK HTTP client, base on HttpURLConnection.
+ * Default JDK HTTP client, base on HttpURLConnection.
  *
  * @author throwable
  * @since 2024/7/24 00:27
  */
-public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, HttpOptional {
+public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, PayloadSubscriber<?>>
+        implements HttpClient<PayloadPublisher, PayloadSubscriber<?>>, HttpOptional {
 
     private Proxy proxy;
 
@@ -41,15 +35,17 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     private int chunkSize = 4 * 1024;
 
-    public JdkHttpClientImpl() {
+    public DefaultJdkHttpClientImpl() {
         super();
         init();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                               FlowPayloadPublisher payloadPublisher,
-                                               FlowPayloadSubscriber<T> payloadSubscriber) throws IOException {
+                                               PayloadPublisher payloadPublisher,
+                                               PayloadSubscriber<?> payloadSubscriber) throws IOException {
+        PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) payloadSubscriber;
         // create connection
         HttpURLConnection httpConnection = createHttpConnection(request);
         if (httpConnection.getDoOutput()) {
@@ -67,7 +63,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         // write request body
         if (httpConnection.getDoOutput()) {
             OutputStream outputStream = httpConnection.getOutputStream();
-
+            payloadPublisher.writeTo(outputStream);
         } else {
             httpConnection.getResponseCode();
         }
@@ -76,10 +72,10 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         InputStream inputStream = httpConnection.getInputStream();
         InputStream responseStream = Objects.nonNull(errorStream) ? errorStream : inputStream;
         if (Objects.nonNull(responseStream)) {
-
+            subscriber.readFrom(responseStream);
         }
         int responseCode = httpConnection.getResponseCode();
-        DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(payloadSubscriber.getPayload(), responseCode);
+        DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(subscriber.getPayload(), responseCode);
         // process response
         populateResponse(httpResponse, httpConnection, request);
         return httpResponse;

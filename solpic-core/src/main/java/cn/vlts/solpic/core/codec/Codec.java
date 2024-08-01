@@ -88,7 +88,7 @@ public interface Codec<S, T> {
             }
 
             @Override
-            public long getContentLength() {
+            public long contentLength() {
                 return this.contentLength;
             }
         };
@@ -120,11 +120,6 @@ public interface Codec<S, T> {
             @Override
             public CompletionStage<T> getPayload() {
                 return this.future;
-            }
-
-            @Override
-            public long getContentLength() {
-                return -1;
             }
         };
     }

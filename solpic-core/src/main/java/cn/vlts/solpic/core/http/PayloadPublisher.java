@@ -9,7 +9,7 @@ import java.io.OutputStream;
  * @author throwable
  * @since 2024/7/26 01:07
  */
-public interface PayloadPublisher extends PayloadSupport {
+public interface PayloadPublisher extends RequestPayloadSupport {
 
     void writeTo(OutputStream outputStream, boolean autoClose) throws IOException;
 

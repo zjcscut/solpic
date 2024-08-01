@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.impl;
 
+import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.util.Attachable;
@@ -273,5 +274,10 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
     @Override
     public void copyAttachable(Attachable attachable) {
 
+    }
+
+    @Override
+    public HttpRequestStatus getStatus() {
+        return request.getStatus();
     }
 }

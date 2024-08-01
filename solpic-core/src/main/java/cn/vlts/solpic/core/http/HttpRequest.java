@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.util.Attachable;
 
 import java.net.URI;
@@ -41,4 +42,6 @@ public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
     }
 
     HttpClient getHttpClient();
+
+    HttpRequestStatus getStatus();
 }

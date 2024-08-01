@@ -1,13 +1,13 @@
 package cn.vlts.solpic.core.http.client;
 
+import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.concurrent.ListenableFuture;
 import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.exception.SolpicHttpException;
 import cn.vlts.solpic.core.http.*;
-import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
-import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
+import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.HttpOptionSupport;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpRequest;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
@@ -26,7 +26,8 @@ import java.util.concurrent.CompletableFuture;
  * @author throwable
  * @since 2024/7/24 星期三 11:24
  */
-public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOptional, HttpClient {
+public abstract class BaseHttpClient<R extends RequestPayloadSupport, U extends ResponsePayloadSupport<?>>
+        extends HttpOptionSupport implements HttpOptional, HttpClient<R, U> {
 
     private volatile ThreadPool threadPool;
 
@@ -37,9 +38,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     @Override
-    public <T> HttpResponse<T> send(HttpRequest request,
-                                    FlowPayloadPublisher payloadPublisher,
-                                    FlowPayloadSubscriber<T> payloadSubscriber) {
+    public <T> HttpResponse<T> send(HttpRequest request, R payloadPublisher, U payloadSubscriber) {
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
@@ -56,16 +55,16 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                            FlowPayloadPublisher payloadPublisher,
-                                                            FlowPayloadSubscriber<T> payloadSubscriber) {
+                                                            R payloadPublisher,
+                                                            U payloadSubscriber) {
         return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
-                                                         FlowPayloadPublisher payloadPublisher,
-                                                         FlowPayloadSubscriber<T> payloadSubscriber,
+                                                         R payloadPublisher,
+                                                         U payloadSubscriber,
                                                          FutureListener... listeners) {
         return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
     }
@@ -119,6 +118,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected void triggerBeforeSend(HttpRequest request) {
+        changeRequestStatus(request, HttpRequestStatus.PROCESSING);
         triggerInterceptorsBeforeSend(request);
     }
 
@@ -127,6 +127,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected void triggerOnError(HttpRequest request, Throwable throwable) {
+        changeRequestStatus(request, HttpRequestStatus.FAILED);
         triggerInterceptorsOnError(request, throwable);
     }
 
@@ -135,6 +136,14 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         // copy request attachments to response
         if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS)) {
             response.copyAttachable(request);
+        }
+        // mark request finished
+        changeRequestStatus(request, HttpRequestStatus.FINISHED);
+    }
+
+    private void changeRequestStatus(HttpRequest request, HttpRequestStatus status) {
+        if (request instanceof DefaultHttpRequest) {
+            ((DefaultHttpRequest) request).changeStatus(status);
         }
     }
 
@@ -146,6 +155,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                                        FlowPayloadPublisher payloadPublisher,
-                                                        FlowPayloadSubscriber<T> payloadSubscriber) throws IOException;
+                                                        R payloadPublisher,
+                                                        U payloadSubscriber) throws IOException;
 }

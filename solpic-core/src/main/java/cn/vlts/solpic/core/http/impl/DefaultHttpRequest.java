@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.impl;
 
+import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.config.HttpOptionParser;
 import cn.vlts.solpic.core.config.HttpOptions;
@@ -26,6 +27,8 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
     protected long availableOpts = -1;
 
     protected long minimumOpts = -1;
+
+    private volatile HttpRequestStatus status = HttpRequestStatus.INIT;
 
     public DefaultHttpRequest(HttpMethod method) {
         super(method);
@@ -104,5 +107,14 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
 
     public <T> void setHttpOption(HttpOption<T> httpOption, T configValue) {
         this.options.put(httpOption, configValue);
+    }
+
+    public void changeStatus(HttpRequestStatus status) {
+        this.status = status;
+    }
+
+    @Override
+    public HttpRequestStatus getStatus() {
+        return this.status;
     }
 }
