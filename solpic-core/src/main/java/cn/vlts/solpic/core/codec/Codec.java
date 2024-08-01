@@ -189,6 +189,8 @@ public interface Codec<S, T> {
 
             private final AtomicBoolean subscribed = new AtomicBoolean();
 
+            private final AtomicBoolean converted = new AtomicBoolean();
+
             private final CompletableFuture<T> result = new MinimalFuture<>();
 
             private volatile Subscription subscription;
@@ -199,6 +201,10 @@ public interface Codec<S, T> {
 
             @Override
             public CompletionStage<T> getPayload() {
+                if (!result.isDone() && converted.compareAndSet(false, true)) {
+                    result.complete(finisher.apply(received));
+                    received.clear();
+                }
                 return result;
             }
 
@@ -229,8 +235,7 @@ public interface Codec<S, T> {
 
             @Override
             public void onComplete() {
-                result.complete(finisher.apply(received));
-                received.clear();
+
             }
         };
     }
