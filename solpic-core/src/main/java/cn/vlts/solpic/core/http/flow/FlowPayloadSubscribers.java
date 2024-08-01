@@ -1,11 +1,11 @@
 package cn.vlts.solpic.core.http.flow;
 
 import cn.vlts.solpic.core.flow.MinimalFuture;
-import cn.vlts.solpic.core.flow.Publisher;
 import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.util.IoUtils;
 
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +18,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Response flow payload subscribers.
+ * Flow payload subscribers.
  *
  * @author throwable
  * @since 2024/7/31 星期三 15:33
  */
-public class ResponseFlowPayloadSubscribers {
+public enum FlowPayloadSubscribers {
+    X;
 
-    private ResponseFlowPayloadSubscribers() {
-        throw new Error();
+    public FlowPayloadPublisher ofInputStream(InputStream inputStream) {
+        return new FlowPayloadPublishers.InputStreamFlowPayloadPublisher(() -> inputStream);
     }
 
     public static class ByteArrayConsumerFlowPayloadSubscriber implements FlowPayloadSubscriber<Void> {

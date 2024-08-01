@@ -2,9 +2,15 @@ package cn.vlts.solpic.core.http.client.jdk;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.flow.Publisher;
+import cn.vlts.solpic.core.flow.PullPublisher;
+import cn.vlts.solpic.core.flow.Subscriber;
+import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
+import cn.vlts.solpic.core.http.flow.*;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
+import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -41,8 +48,8 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     @Override
     protected <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                               PayloadPublisher payloadPublisher,
-                                               PayloadSubscriber<T> payloadSubscriber) throws IOException {
+                                               FlowPayloadPublisher payloadPublisher,
+                                               FlowPayloadSubscriber<T> payloadSubscriber) throws IOException {
         // create connection
         HttpURLConnection httpConnection = createHttpConnection(request);
         if (httpConnection.getDoOutput()) {
@@ -58,9 +65,9 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         // connect
         httpConnection.connect();
         // write request body
-        if (httpConnection.getDoOutput() && Objects.nonNull(payloadPublisher)) {
+        if (httpConnection.getDoOutput()) {
             OutputStream outputStream = httpConnection.getOutputStream();
-            payloadPublisher.writeTo(outputStream);
+
         } else {
             httpConnection.getResponseCode();
         }
@@ -69,7 +76,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         InputStream inputStream = httpConnection.getInputStream();
         InputStream responseStream = Objects.nonNull(errorStream) ? errorStream : inputStream;
         if (Objects.nonNull(responseStream)) {
-            payloadSubscriber.readFrom(responseStream);
+
         }
         int responseCode = httpConnection.getResponseCode();
         DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(payloadSubscriber.getPayload(), responseCode);

@@ -17,16 +17,13 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Request flow payload publishers.
+ * Flow payload publishers.
  *
  * @author throwable
  * @since 2024/7/30 星期二 17:42
  */
-public final class RequestFlowPayloadPublishers {
-
-    private RequestFlowPayloadPublishers() {
-        throw new Error();
-    }
+public enum FlowPayloadPublishers {
+    X;
 
     public static class EmptyFlowPayloadPublisher implements FlowPayloadPublisher {
 

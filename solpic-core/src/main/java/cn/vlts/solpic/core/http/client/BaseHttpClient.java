@@ -6,6 +6,8 @@ import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.exception.SolpicHttpException;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
+import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.HttpOptionSupport;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpRequest;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
@@ -36,8 +38,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     @Override
     public <T> HttpResponse<T> send(HttpRequest request,
-                                    PayloadPublisher payloadPublisher,
-                                    PayloadSubscriber<T> payloadSubscriber) {
+                                    FlowPayloadPublisher payloadPublisher,
+                                    FlowPayloadSubscriber<T> payloadSubscriber) {
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
@@ -54,16 +56,16 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                            PayloadPublisher payloadPublisher,
-                                                            PayloadSubscriber<T> payloadSubscriber) {
+                                                            FlowPayloadPublisher payloadPublisher,
+                                                            FlowPayloadSubscriber<T> payloadSubscriber) {
         return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
-                                                         PayloadPublisher payloadPublisher,
-                                                         PayloadSubscriber<T> payloadSubscriber,
+                                                         FlowPayloadPublisher payloadPublisher,
+                                                         FlowPayloadSubscriber<T> payloadSubscriber,
                                                          FutureListener... listeners) {
         return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
     }
@@ -144,6 +146,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                                        PayloadPublisher payloadPublisher,
-                                                        PayloadSubscriber<T> payloadSubscriber) throws IOException;
+                                                        FlowPayloadPublisher payloadPublisher,
+                                                        FlowPayloadSubscriber<T> payloadSubscriber) throws IOException;
 }

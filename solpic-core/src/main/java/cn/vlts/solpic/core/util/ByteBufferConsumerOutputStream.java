@@ -18,6 +18,10 @@ public class ByteBufferConsumerOutputStream extends OutputStream {
 
     private final Consumer<ByteBuffer> consumer;
 
+    public ByteBufferConsumerOutputStream(Consumer<ByteBuffer> consumer) {
+        this(IoUtils.X::newReadByteBuffer, consumer);
+    }
+
     public ByteBufferConsumerOutputStream(int bufSize, Consumer<ByteBuffer> consumer) {
         this(() -> IoUtils.X.newReadByteBuffer(bufSize), consumer);
     }

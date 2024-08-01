@@ -7,6 +7,7 @@ import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
+import cn.vlts.solpic.core.util.ByteBufferConsumerOutputStream;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
@@ -14,11 +15,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 /**
  * Codec.
@@ -130,6 +133,8 @@ public interface Codec<S, T> {
 
         class PayloadPublisherSubscription implements Subscription {
 
+            private final ByteBufferConsumerOutputStream bcos;
+
             private final S payload;
 
             private final Subscriber<? super ByteBuffer> subscriber;
@@ -141,17 +146,17 @@ public interface Codec<S, T> {
             public PayloadPublisherSubscription(S payload,
                                                 Subscriber<? super ByteBuffer> subscriber) {
                 this.payload = payload;
+                this.bcos = new ByteBufferConsumerOutputStream(subscriber::onNext);
                 this.subscriber = subscriber;
             }
 
             @Override
             public void request(long n) {
                 if (!canceled && published.compareAndSet(false, true)) {
-                    List<ByteBuffer> byteBuffers = toByteBuffers(payload);
-                    if (Objects.nonNull(byteBuffers)) {
-                        for (ByteBuffer byteBuffer : byteBuffers) {
-                            subscriber.onNext(byteBuffer);
-                        }
+                    try {
+                        write(bcos, payload);
+                    } catch (IOException e) {
+                        subscriber.onError(e);
                     }
                     subscriber.onComplete();
                 }
@@ -179,6 +184,54 @@ public interface Codec<S, T> {
     }
 
     default FlowPayloadSubscriber<T> createFlowPayloadSubscriber(Type targetType) {
-        return null;
+
+        return new FlowPayloadSubscriber<T>() {
+
+            private final AtomicBoolean subscribed = new AtomicBoolean();
+
+            private final CompletableFuture<T> result = new MinimalFuture<>();
+
+            private volatile Subscription subscription;
+
+            private final Function<List<ByteBuffer>, T> finisher = list -> fromByteBuffers(list, targetType);
+
+            private final List<ByteBuffer> received = new ArrayList<>();
+
+            @Override
+            public CompletionStage<T> getPayload() {
+                return result;
+            }
+
+            @Override
+            public void onSubscribe(Subscription subscription) {
+                if (subscribed.compareAndSet(false, true)) {
+                    this.subscription = subscription;
+                } else {
+                    subscription.cancel();
+                }
+            }
+
+            @Override
+            public void onNext(List<ByteBuffer> item) {
+                if (Objects.nonNull(item)) {
+                    for (ByteBuffer buffer : item) {
+                        if (buffer.hasRemaining()) {
+                            received.add(buffer);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                result.completeExceptionally(throwable);
+            }
+
+            @Override
+            public void onComplete() {
+                result.complete(finisher.apply(received));
+                received.clear();
+            }
+        };
     }
 }
