@@ -17,7 +17,7 @@ public class DefaultHttpResponse<T> extends BaseHttpResponse<T> implements HttpR
 
     private final CompletionStage<T> completionStage;
 
-    private final AtomicBoolean setPayloadManual = new AtomicBoolean();
+    private final AtomicBoolean manual = new AtomicBoolean();
 
     private T manualPayload;
 
@@ -29,7 +29,7 @@ public class DefaultHttpResponse<T> extends BaseHttpResponse<T> implements HttpR
     @Override
     public T getPayload() {
         try {
-            return this.setPayloadManual.get() ? this.manualPayload : this.completionStage.toCompletableFuture().get();
+            return this.manual.get() ? this.manualPayload : this.completionStage.toCompletableFuture().get();
         } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
             throw new SolpicHttpException("Interrupted while getting response payload", interruptedException);
@@ -40,7 +40,7 @@ public class DefaultHttpResponse<T> extends BaseHttpResponse<T> implements HttpR
 
     @Override
     public void setPayload(T payload) {
-        if (this.setPayloadManual.compareAndSet(false, true)) {
+        if (this.manual.compareAndSet(false, true)) {
             this.manualPayload = payload;
         }
     }

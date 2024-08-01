@@ -29,7 +29,7 @@ public class InputStreamIterator implements Iterator<ByteBuffer> {
     private volatile boolean haveNext = true;
 
     public InputStreamIterator(InputStream inputStream) {
-        this(inputStream, IoUtils.X::newByteBuffer);
+        this(inputStream, IoUtils.X::newReadByteBuffer);
     }
 
     public InputStreamIterator(InputStream inputStream, Supplier<ByteBuffer> bufSupplier) {

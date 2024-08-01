@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Payload subscriber impls.
@@ -40,27 +41,31 @@ public enum PayloadSubscribers {
 
     private static class ByteArrayPayloadSubscriber implements PayloadSubscriber<byte[]> {
 
+        private final AtomicBoolean read = new AtomicBoolean();
+
         private long contentLength;
 
-        private CompletionStage<byte[]> future;
+        private final CompletableFuture<byte[]> result = new MinimalFuture<>();
 
         @Override
         public void readFrom(InputStream inputStream) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
-            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream))) {
-                int b;
-                while (-1 != (b = reader.read())) {
-                    bos.write(b);
+            if (read.compareAndSet(false, true)) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
+                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream))) {
+                    int b;
+                    while (-1 != (b = reader.read())) {
+                        bos.write(b);
+                    }
+                    result.complete(bos.toByteArray());
+                } catch (IOException e) {
+                    result.completeExceptionally(e);
                 }
-                future = MinimalFuture.completedFuture(bos.toByteArray());
-            } catch (IOException e) {
-                future = MinimalFuture.failedFuture(e);
             }
         }
 
         @Override
         public CompletionStage<byte[]> getPayload() {
-            return future;
+            return result;
         }
 
         @Override
@@ -71,7 +76,13 @@ public enum PayloadSubscribers {
 
     private static class StringPayloadSubscriber implements PayloadSubscriber<String> {
 
+        private final AtomicBoolean read = new AtomicBoolean();
+
         private final Charset charset;
+
+        private long contentLength;
+
+        private final CompletableFuture<String> result = new MinimalFuture<>();
 
         public StringPayloadSubscriber() {
             this(StandardCharsets.UTF_8);
@@ -81,28 +92,26 @@ public enum PayloadSubscribers {
             this.charset = charset;
         }
 
-        private long contentLength;
-
-        private CompletionStage<String> future;
-
         @Override
         public void readFrom(InputStream inputStream) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
-            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
-                    StandardCharsets.UTF_8))) {
-                int b;
-                while (-1 != (b = reader.read())) {
-                    bos.write(b);
+            if (read.compareAndSet(false, true)) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
+                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
+                        StandardCharsets.UTF_8))) {
+                    int b;
+                    while (-1 != (b = reader.read())) {
+                        bos.write(b);
+                    }
+                    result.complete(new String(bos.toByteArray(), charset));
+                } catch (IOException e) {
+                    result.completeExceptionally(e);
                 }
-                future = MinimalFuture.completedFuture(new String(bos.toByteArray(), charset));
-            } catch (IOException e) {
-                future = MinimalFuture.failedFuture(e);
             }
         }
 
         @Override
         public CompletionStage<String> getPayload() {
-            return future;
+            return result;
         }
 
         @Override
@@ -131,6 +140,8 @@ public enum PayloadSubscribers {
 
     private static class FilePayloadSubscriber implements PayloadSubscriber<Void> {
 
+        private final AtomicBoolean read = new AtomicBoolean();
+
         private final CompletableFuture<Void> result = new MinimalFuture<>();
 
         private final Path targetPath;
@@ -148,14 +159,16 @@ public enum PayloadSubscribers {
 
         @Override
         public void readFrom(InputStream inputStream) {
-            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
-                 BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset)) {
-                int b;
-                while (-1 != (b = reader.read())) {
-                    bufferedWriter.write(b);
+            if (read.compareAndSet(false, true)) {
+                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
+                     BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset)) {
+                    int b;
+                    while (-1 != (b = reader.read())) {
+                        bufferedWriter.write(b);
+                    }
+                } catch (IOException e) {
+                    result.completeExceptionally(e);
                 }
-            } catch (IOException e) {
-                result.completeExceptionally(e);
             }
         }
 

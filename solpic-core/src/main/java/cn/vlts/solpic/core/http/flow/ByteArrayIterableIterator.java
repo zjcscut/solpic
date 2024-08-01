@@ -4,7 +4,6 @@ import cn.vlts.solpic.core.util.IoUtils;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
@@ -24,7 +23,7 @@ public class ByteArrayIterableIterator implements Iterator<ByteBuffer> {
     private final ConcurrentLinkedQueue<ByteBuffer> queue = new ConcurrentLinkedQueue<>();
 
     public ByteArrayIterableIterator(Iterable<? extends byte[]> iterable) {
-        this(iterable, IoUtils.X::newByteBuffer);
+        this(iterable, IoUtils.X::newReadByteBuffer);
     }
 
     public ByteArrayIterableIterator(Iterable<? extends byte[]> iterable, Supplier<ByteBuffer> bufSupplier) {

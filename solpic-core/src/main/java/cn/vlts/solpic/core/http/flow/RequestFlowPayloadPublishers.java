@@ -103,7 +103,6 @@ public final class RequestFlowPayloadPublishers {
 
         private final Iterable<? extends byte[]> iterable;
 
-
         public IterableByteArrayFlowPayloadPublisher(Iterable<? extends byte[]> iterable) {
             this.iterable = iterable;
         }
@@ -182,8 +181,8 @@ public final class RequestFlowPayloadPublishers {
 
         public FileFlowPayloadPublisher(Path path) {
             this.path = Objects.requireNonNull(path);
-            this.length = getFileLength();
             checkFileStatus();
+            this.length = getFileLength();
         }
 
         @Override

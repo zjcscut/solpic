@@ -16,9 +16,28 @@ import java.util.function.Supplier;
 public enum IoUtils {
     X;
 
-    public static final int READ_BUF_SIZE = 4 * 1024;
+    public static int READ_BUF_SIZE = 8 * 1024;
 
-    public static final int WRITE_BUF_SIZE = 4 * 1024;
+    public static int WRITE_BUF_SIZE = 8 * 1024;
+
+    static {
+        try {
+            String readBufSizeProperty = System.getProperty("solpic.http.read.buffer.size");
+            if (Objects.nonNull(readBufSizeProperty)) {
+                READ_BUF_SIZE = Integer.parseInt(readBufSizeProperty);
+            }
+        } catch (Throwable ignore) {
+
+        }
+        try {
+            String writeBufSizeProperty = System.getProperty("solpic.http.write.buffer.size");
+            if (Objects.nonNull(writeBufSizeProperty)) {
+                WRITE_BUF_SIZE = Integer.parseInt(writeBufSizeProperty);
+            }
+        } catch (Throwable ignore) {
+
+        }
+    }
 
     public void closeQuietly(Closeable closeable) {
         if (Objects.nonNull(closeable)) {
@@ -30,11 +49,11 @@ public enum IoUtils {
         }
     }
 
-    public ByteBuffer newByteBuffer() {
+    public ByteBuffer newReadByteBuffer() {
         return ByteBuffer.allocate(READ_BUF_SIZE);
     }
 
-    public ByteBuffer newByteBuffer(int bufSize) {
+    public ByteBuffer newReadByteBuffer(int bufSize) {
         return ByteBuffer.allocate(bufSize);
     }
 

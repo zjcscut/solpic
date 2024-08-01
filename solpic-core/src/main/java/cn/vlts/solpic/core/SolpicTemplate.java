@@ -33,6 +33,13 @@ public interface SolpicTemplate {
                 responsePayloadType).getPayload();
     }
 
+    default <T> T getForObject(String url,
+                               List<HttpHeader> requestHeaders,
+                               PayloadSubscriber<T> responsePayloadSubscriber) {
+        return exchange(url, HttpMethod.GET, null, requestHeaders, null,
+                responsePayloadSubscriber).getPayload();
+    }
+
     default <T> HttpResponse<T> get(String url, Type responsePayloadType) {
         return get(url, Collections.emptyList(), responsePayloadType);
     }
@@ -40,6 +47,13 @@ public interface SolpicTemplate {
     default <T> HttpResponse<T> get(String url, List<HttpHeader> requestHeaders, Type responsePayloadType) {
         return exchange(url, HttpMethod.GET, null, requestHeaders, null,
                 responsePayloadType);
+    }
+
+    default <T> HttpResponse<T> get(String url,
+                                    List<HttpHeader> requestHeaders,
+                                    PayloadSubscriber<T> responsePayloadSubscriber) {
+        return exchange(url, HttpMethod.GET, null, requestHeaders, null,
+                responsePayloadSubscriber);
     }
 
     // ##################### HEAD METHOD #####################

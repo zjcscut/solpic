@@ -1,8 +1,12 @@
 package cn.vlts.solpic.core.codec;
 
 import cn.vlts.solpic.core.flow.MinimalFuture;
+import cn.vlts.solpic.core.flow.Subscriber;
+import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
+import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
+import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
@@ -12,6 +16,7 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -91,7 +96,7 @@ public interface Codec<S, T> {
 
             private final AtomicBoolean read = new AtomicBoolean();
 
-            private MinimalFuture<T> future = new MinimalFuture<>();
+            private final CompletableFuture<T> future = new MinimalFuture<>();
 
             @Override
             public void readFrom(InputStream inputStream) {
@@ -99,12 +104,12 @@ public interface Codec<S, T> {
                     try {
                         if (Objects.nonNull(inputStream)) {
                             T result = read(inputStream, targetType);
-                            this.future = MinimalFuture.completedFuture(result);
+                            future.complete(result);
                         } else {
-                            this.future = MinimalFuture.completedFuture(null);
+                            future.complete(null);
                         }
                     } catch (IOException e) {
-                        this.future = MinimalFuture.failedFuture(e);
+                        future.completeExceptionally(e);
                     }
                 }
             }
@@ -119,5 +124,61 @@ public interface Codec<S, T> {
                 return -1;
             }
         };
+    }
+
+    default FlowPayloadPublisher createFlowPayloadPublisher(S s) {
+
+        class PayloadPublisherSubscription implements Subscription {
+
+            private final S payload;
+
+            private final Subscriber<? super ByteBuffer> subscriber;
+
+            private final AtomicBoolean published = new AtomicBoolean();
+
+            private volatile boolean canceled;
+
+            public PayloadPublisherSubscription(S payload,
+                                                Subscriber<? super ByteBuffer> subscriber) {
+                this.payload = payload;
+                this.subscriber = subscriber;
+            }
+
+            @Override
+            public void request(long n) {
+                if (!canceled && published.compareAndSet(false, true)) {
+                    List<ByteBuffer> byteBuffers = toByteBuffers(payload);
+                    if (Objects.nonNull(byteBuffers)) {
+                        for (ByteBuffer byteBuffer : byteBuffers) {
+                            subscriber.onNext(byteBuffer);
+                        }
+                    }
+                    subscriber.onComplete();
+                }
+            }
+
+            @Override
+            public void cancel() {
+                canceled = true;
+            }
+        }
+
+        return new FlowPayloadPublisher() {
+
+            @Override
+            public long contentLength() {
+                return -1;
+            }
+
+            @Override
+            public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
+                PayloadPublisherSubscription subscription = new PayloadPublisherSubscription(s, subscriber);
+                subscriber.onSubscribe(subscription);
+            }
+        };
+    }
+
+    default FlowPayloadSubscriber<T> createFlowPayloadSubscriber(Type targetType) {
+        return null;
     }
 }
