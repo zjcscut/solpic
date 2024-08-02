@@ -48,7 +48,7 @@ public enum PayloadSubscribers {
         private final CompletableFuture<byte[]> result = new MinimalFuture<>();
 
         @Override
-        public void readFrom(InputStream inputStream) {
+        public void readFrom(InputStream inputStream, boolean autoClose) {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream))) {
@@ -59,6 +59,10 @@ public enum PayloadSubscribers {
                     result.complete(bos.toByteArray());
                 } catch (IOException e) {
                     result.completeExceptionally(e);
+                } finally {
+                    if (autoClose) {
+                        IoUtils.X.closeQuietly(inputStream);
+                    }
                 }
             }
         }
@@ -88,7 +92,7 @@ public enum PayloadSubscribers {
         }
 
         @Override
-        public void readFrom(InputStream inputStream) {
+        public void readFrom(InputStream inputStream, boolean autoClose) {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
@@ -100,6 +104,10 @@ public enum PayloadSubscribers {
                     result.complete(new String(bos.toByteArray(), charset));
                 } catch (IOException e) {
                     result.completeExceptionally(e);
+                } finally {
+                    if (autoClose) {
+                        IoUtils.X.closeQuietly(inputStream);
+                    }
                 }
             }
         }
@@ -113,7 +121,7 @@ public enum PayloadSubscribers {
     private static class DiscardingPayloadSubscriber<T> implements PayloadSubscriber<T> {
 
         @Override
-        public void readFrom(InputStream inputStream) {
+        public void readFrom(InputStream inputStream, boolean autoClose) {
 
         }
 
@@ -143,7 +151,7 @@ public enum PayloadSubscribers {
         }
 
         @Override
-        public void readFrom(InputStream inputStream) {
+        public void readFrom(InputStream inputStream, boolean autoClose) {
             if (read.compareAndSet(false, true)) {
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
                      BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset)) {
@@ -153,6 +161,10 @@ public enum PayloadSubscribers {
                     }
                 } catch (IOException e) {
                     result.completeExceptionally(e);
+                } finally {
+                    if (autoClose) {
+                        IoUtils.X.closeQuietly(inputStream);
+                    }
                 }
             }
         }

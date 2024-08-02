@@ -30,17 +30,30 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
 
     private volatile HttpRequestStatus status = HttpRequestStatus.INIT;
 
+    private final HttpClient httpClient;
+
     public DefaultHttpRequest(HttpMethod method) {
         super(method);
+        this.httpClient = null;
+    }
+
+    public DefaultHttpRequest(HttpMethod method, HttpClient httpClient) {
+        super(method);
+        this.httpClient = httpClient;
     }
 
     public DefaultHttpRequest(HttpMethod method, URI uri) {
+        this(method, uri, null);
+    }
+
+    public DefaultHttpRequest(HttpMethod method, URI uri, HttpClient httpClient) {
         super(method, uri);
+        this.httpClient = httpClient;
     }
 
     @Override
     public HttpClient getHttpClient() {
-        return null;
+        return httpClient;
     }
 
     @Override

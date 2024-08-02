@@ -55,7 +55,7 @@ public interface Codec<S, T> {
 
     default T fromByteBuffers(List<ByteBuffer> bufferList, Type targetType) {
         if (Objects.nonNull(bufferList)) {
-            byte[] content = IoUtils.X.copyByteBuffersToByteArray(bufferList);
+            byte[] content = IoUtils.X.fastCopyByteBuffersToByteArray(bufferList);
             if (content.length > 0) {
                 return fromByteArray(content, targetType);
             }
@@ -72,7 +72,7 @@ public interface Codec<S, T> {
 
             private final AtomicBoolean written = new AtomicBoolean();
 
-            private long contentLength = 0;
+            private long contentLength = -1;
 
             @Override
             public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
@@ -102,7 +102,7 @@ public interface Codec<S, T> {
             private final CompletableFuture<T> future = new MinimalFuture<>();
 
             @Override
-            public void readFrom(InputStream inputStream) {
+            public void readFrom(InputStream inputStream, boolean autoClose) {
                 if (this.read.compareAndSet(false, true)) {
                     try {
                         if (Objects.nonNull(inputStream)) {
@@ -113,6 +113,10 @@ public interface Codec<S, T> {
                         }
                     } catch (IOException e) {
                         future.completeExceptionally(e);
+                    } finally {
+                        if (autoClose) {
+                            IoUtils.X.closeQuietly(inputStream);
+                        }
                     }
                 }
             }
@@ -184,22 +188,16 @@ public interface Codec<S, T> {
 
             private final AtomicBoolean subscribed = new AtomicBoolean();
 
-            private final AtomicBoolean converted = new AtomicBoolean();
-
             private final CompletableFuture<T> result = new MinimalFuture<>();
 
             private volatile Subscription subscription;
 
-            private final Function<List<ByteBuffer>, T> finisher = list -> fromByteBuffers(list, targetType);
+            private final Function<List<ByteBuffer>, T> finisher = buffers -> fromByteBuffers(buffers, targetType);
 
             private final List<ByteBuffer> received = new ArrayList<>();
 
             @Override
             public CompletionStage<T> getPayload() {
-                if (!result.isDone() && converted.compareAndSet(false, true)) {
-                    result.complete(finisher.apply(received));
-                    received.clear();
-                }
                 return result;
             }
 
@@ -207,6 +205,7 @@ public interface Codec<S, T> {
             public void onSubscribe(Subscription subscription) {
                 if (subscribed.compareAndSet(false, true)) {
                     this.subscription = subscription;
+                    subscription.request(Long.MAX_VALUE);
                 } else {
                     subscription.cancel();
                 }
@@ -225,12 +224,14 @@ public interface Codec<S, T> {
 
             @Override
             public void onError(Throwable throwable) {
+                subscription.cancel();
                 result.completeExceptionally(throwable);
             }
 
             @Override
             public void onComplete() {
-
+                result.complete(finisher.apply(received));
+                received.clear();
             }
         };
     }

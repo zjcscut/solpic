@@ -5,8 +5,9 @@ import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.util.IoUtils;
 
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,8 +27,46 @@ import java.util.function.Function;
 public enum FlowPayloadSubscribers {
     X;
 
-    public FlowPayloadPublisher ofInputStream(InputStream inputStream) {
-        return new FlowPayloadPublishers.InputStreamFlowPayloadPublisher(() -> inputStream);
+    public FlowPayloadSubscriber<Void> discarding() {
+        return new EmptyFlowPayloadSubscriber();
+    }
+
+    public FlowPayloadSubscriber<String> ofString() {
+        return ofString(StandardCharsets.UTF_8);
+    }
+
+    public FlowPayloadSubscriber<String> ofString(Charset charset) {
+        return new ByteArrayFlowPayloadSubscriber<>(bytes -> new String(bytes, charset));
+    }
+
+    public static class EmptyFlowPayloadSubscriber implements FlowPayloadSubscriber<Void> {
+
+        private final CompletableFuture<Void> result = new MinimalFuture<>();
+
+        @Override
+        public void onSubscribe(Subscription subscription) {
+            subscription.request(Long.MAX_VALUE);
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> item) {
+
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            result.completeExceptionally(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            result.complete(null);
+        }
+
+        @Override
+        public CompletionStage<Void> getPayload() {
+            return result;
+        }
     }
 
     public static class ByteArrayConsumerFlowPayloadSubscriber implements FlowPayloadSubscriber<Void> {
@@ -126,7 +165,7 @@ public enum FlowPayloadSubscribers {
         @Override
         public void onComplete() {
             try {
-                result.complete(finisher.apply(IoUtils.X.copyByteBuffersToByteArray(received)));
+                result.complete(finisher.apply(IoUtils.X.fastCopyByteBuffersToByteArray(received)));
                 received.clear();
             } catch (Throwable throwable) {
                 result.completeExceptionally(throwable);

@@ -116,7 +116,7 @@ public abstract class Solpic {
                                                Function<S, PayloadPublisher> requestPayloadFunction,
                                                PayloadSubscriber<T> responsePayloadSubscriber) {
             PayloadPublisher requestPayloadPublisher = requestPayloadFunction.apply(requestPayload);
-            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl));
+            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), getHttpClient());
             if (Objects.nonNull(requestContentType)) {
                 request.setContentType(requestContentType);
             }
@@ -196,7 +196,7 @@ public abstract class Solpic {
                                  S requestPayload,
                                  Function<S, PayloadPublisher> requestPayloadFunction) {
             PayloadPublisher requestPayloadPublisher = requestPayloadFunction.apply(requestPayload);
-            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl));
+            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), getHttpClient());
             if (Objects.nonNull(requestContentType)) {
                 request.setContentType(requestContentType);
             }

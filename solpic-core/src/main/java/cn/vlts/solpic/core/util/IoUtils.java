@@ -134,4 +134,25 @@ public enum IoUtils {
         }
         return bos.toByteArray();
     }
+
+    /**
+     * only used for heap ByteBuffers.
+     */
+    public byte[] fastCopyByteBuffersToByteArray(List<ByteBuffer> bufferList) {
+        if (Objects.isNull(bufferList)) {
+            return new byte[0];
+        }
+        int total = 0;
+        for (ByteBuffer buffer : bufferList) {
+            total += buffer.remaining();
+        }
+        byte[] result = new byte[total];
+        int offset = 0;
+        for (ByteBuffer buffer : bufferList) {
+            int length = buffer.remaining();
+            System.arraycopy(buffer.array(), buffer.position(), result, offset, length);
+            offset += length;
+        }
+        return result;
+    }
 }

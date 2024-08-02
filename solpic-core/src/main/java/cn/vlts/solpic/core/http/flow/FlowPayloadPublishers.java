@@ -3,6 +3,8 @@ package cn.vlts.solpic.core.http.flow;
 import cn.vlts.solpic.core.flow.Publisher;
 import cn.vlts.solpic.core.flow.PullPublisher;
 import cn.vlts.solpic.core.flow.Subscriber;
+import cn.vlts.solpic.core.http.PayloadPublisher;
+import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
@@ -24,6 +26,14 @@ import java.util.function.Supplier;
  */
 public enum FlowPayloadPublishers {
     X;
+
+    public FlowPayloadPublisher discarding() {
+        return new EmptyFlowPayloadPublisher();
+    }
+
+    public FlowPayloadPublisher ofInputStream(InputStream inputStream) {
+        return new InputStreamFlowPayloadPublisher(() -> inputStream);
+    }
 
     public static class EmptyFlowPayloadPublisher implements FlowPayloadPublisher {
 

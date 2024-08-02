@@ -2,30 +2,30 @@ package cn.vlts.solpic.core.http.client.jdk;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.ProxyConfig;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
+import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
+import cn.vlts.solpic.core.http.flow.FlowOutputStreamSubscriber;
+import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
+import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.net.*;
+import java.util.*;
 
 /**
- * Default JDK HTTP client, base on HttpURLConnection.
+ * JDK HTTP client, base on HttpURLConnection.
  *
  * @author throwable
  * @since 2024/7/24 00:27
  */
-public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, PayloadSubscriber<?>>
-        implements HttpClient<PayloadPublisher, PayloadSubscriber<?>>, HttpOptional {
+public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, HttpOptional {
+
+    private static final int DEFAULT_CHUNK_SIZE = 4 * 1024;
 
     private Proxy proxy;
 
@@ -33,9 +33,9 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
 
     private int readTimeout = -1;
 
-    private int chunkSize = 4 * 1024;
+    private int chunkSize = DEFAULT_CHUNK_SIZE;
 
-    public DefaultJdkHttpClientImpl() {
+    public JdkHttpClientImpl() {
         super();
         init();
     }
@@ -43,17 +43,21 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
     @SuppressWarnings("unchecked")
     @Override
     protected <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                               PayloadPublisher payloadPublisher,
-                                               PayloadSubscriber<?> payloadSubscriber) throws IOException {
-        PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) payloadSubscriber;
+                                               RequestPayloadSupport payloadPublisher,
+                                               ResponsePayloadSupport<?> payloadSubscriber) throws IOException {
+        ResponsePayloadSupport<T> responsePayloadSupport = (ResponsePayloadSupport<T>) payloadSubscriber;
         // create connection
         HttpURLConnection httpConnection = createHttpConnection(request);
         if (httpConnection.getDoOutput()) {
-            long contentLength = request.getContentLength();
+            long contentLength = payloadPublisher.contentLength();
+            if (contentLength < 0) {
+                contentLength = request.getContentLength();
+            }
             if (contentLength > 0) {
                 httpConnection.setFixedLengthStreamingMode(contentLength);
             } else {
-                httpConnection.setChunkedStreamingMode(this.chunkSize);
+                int chunkSizeToUse = getChunkSize();
+                httpConnection.setChunkedStreamingMode(chunkSizeToUse);
             }
         }
         // process request headers
@@ -63,7 +67,12 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
         // write request body
         if (httpConnection.getDoOutput()) {
             OutputStream outputStream = httpConnection.getOutputStream();
-            payloadPublisher.writeTo(outputStream);
+            if (payloadPublisher instanceof PayloadPublisher) {
+                ((PayloadPublisher) payloadPublisher).writeTo(outputStream);
+            } else if (payloadPublisher instanceof FlowPayloadPublisher) {
+                FlowPayloadPublisher flowPublisher = (FlowPayloadPublisher) payloadPublisher;
+                flowPublisher.subscribe(FlowOutputStreamSubscriber.ofOutputStream(outputStream));
+            }
         } else {
             httpConnection.getResponseCode();
         }
@@ -72,10 +81,16 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
         InputStream inputStream = httpConnection.getInputStream();
         InputStream responseStream = Objects.nonNull(errorStream) ? errorStream : inputStream;
         if (Objects.nonNull(responseStream)) {
-            subscriber.readFrom(responseStream);
+            if (responsePayloadSupport instanceof PayloadSubscriber) {
+                PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) responsePayloadSupport;
+                subscriber.readFrom(responseStream);
+            } else if (responsePayloadSupport instanceof FlowPayloadSubscriber) {
+                FlowPayloadSubscriber<T> flowSubscriber = (FlowPayloadSubscriber<T>) responsePayloadSupport;
+                FlowInputStreamPublisher.ofInputStream(responseStream).subscribe(flowSubscriber);
+            }
         }
         int responseCode = httpConnection.getResponseCode();
-        DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(subscriber.getPayload(), responseCode);
+        DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(), responseCode);
         // process response
         populateResponse(httpResponse, httpConnection, request);
         return httpResponse;
@@ -88,16 +103,19 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
 
     private HttpURLConnection createHttpConnection(HttpRequest request) throws IOException {
         URL url = request.getUri().toURL();
-        URLConnection urlConnection = Objects.nonNull(this.proxy) ? url.openConnection(this.proxy) : url.openConnection();
+        Proxy proxyToUse = getProxy();
+        URLConnection urlConnection = Objects.nonNull(proxyToUse) ? url.openConnection(proxyToUse) : url.openConnection();
         if (!(urlConnection instanceof HttpURLConnection)) {
             throw new IllegalStateException("Require HttpURLConnection, but got: " + urlConnection);
         }
         HttpURLConnection httpConnection = (HttpURLConnection) urlConnection;
-        if (this.connectTimeout > 0) {
-            httpConnection.setConnectTimeout(this.connectTimeout);
+        int connectTimeoutToUse = getConnectTimeout();
+        if (connectTimeoutToUse > 0) {
+            httpConnection.setConnectTimeout(connectTimeoutToUse);
         }
-        if (this.readTimeout > 0) {
-            httpConnection.setReadTimeout(this.readTimeout);
+        int readTimeoutToUse = getReadTimeout();
+        if (readTimeoutToUse > 0) {
+            httpConnection.setReadTimeout(readTimeoutToUse);
         }
         httpConnection.setRequestMethod(request.getRawMethod());
         httpConnection.setDoInput(true);
@@ -148,5 +166,47 @@ public class DefaultJdkHttpClientImpl extends BaseHttpClient<PayloadPublisher, P
             httpResponse.addHeader(headerName, connection.getHeaderField(headerName));
             index++;
         }
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getConnectTimeout() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_CONNECT_TIMEOUT))
+                .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CONNECT_TIMEOUT))
+                        .orElse(this.connectTimeout));
+    }
+
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    public int getReadTimeout() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_READ_TIMEOUT))
+                .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_READ_TIMEOUT))
+                        .orElse(this.readTimeout));
+    }
+
+    public void setChunkSize(int chunkSize) {
+        this.chunkSize = chunkSize;
+    }
+
+    public int getChunkSize() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_CHUNK_SIZE))
+                .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CHUNK_SIZE))
+                        .orElse(this.chunkSize));
+    }
+
+    public void setProxy(Proxy proxy) {
+        this.proxy = proxy;
+    }
+
+    public Proxy getProxy() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_PROXY))
+                .filter(proxyConfig -> !Objects.equals(ProxyConfig.NO, proxyConfig))
+                .map(proxyConfig -> new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfig.getHostname(),
+                        proxyConfig.getPort())))
+                .orElse(this.proxy);
     }
 }

@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -10,5 +11,9 @@ import java.io.InputStream;
  */
 public interface PayloadSubscriber<T> extends ResponsePayloadSupport<T> {
 
-    void readFrom(InputStream inputStream);
+    void readFrom(InputStream inputStream, boolean autoClose);
+
+    default void readFrom(InputStream inputStream) throws IOException {
+        readFrom(inputStream, true);
+    }
 }

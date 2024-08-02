@@ -1,7 +1,7 @@
 package cn.vlts.solpic.core;
 
 import cn.vlts.solpic.core.codec.impl.JacksonCodec;
-import cn.vlts.solpic.core.http.client.jdk.DefaultJdkHttpClientImpl;
+import cn.vlts.solpic.core.http.client.jdk.JdkHttpClientImpl;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ public class SolpicTemplateTest {
     public void testGetForObject() {
         SolpicTemplate solpicTemplate = Solpic.newSolpicTemplateBuilder()
                 .codec(new JacksonCodec<>())
-                .httpClient(new DefaultJdkHttpClientImpl())
+                .httpClient(new JdkHttpClientImpl())
                 .build();
         String result = solpicTemplate.getForObject("https://httpbin.org/get", String.class);
         Assert.assertNotNull(result);

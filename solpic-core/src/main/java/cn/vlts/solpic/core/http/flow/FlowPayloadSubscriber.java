@@ -5,7 +5,6 @@ import cn.vlts.solpic.core.http.ResponsePayloadSupport;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Flow payload subscriber.

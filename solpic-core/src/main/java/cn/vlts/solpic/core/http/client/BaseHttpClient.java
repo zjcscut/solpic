@@ -26,8 +26,7 @@ import java.util.concurrent.CompletableFuture;
  * @author throwable
  * @since 2024/7/24 星期三 11:24
  */
-public abstract class BaseHttpClient<R extends RequestPayloadSupport, U extends ResponsePayloadSupport<?>>
-        extends HttpOptionSupport implements HttpOptional, HttpClient<R, U> {
+public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOptional, HttpClient {
 
     private volatile ThreadPool threadPool;
 
@@ -38,7 +37,9 @@ public abstract class BaseHttpClient<R extends RequestPayloadSupport, U extends 
     }
 
     @Override
-    public <T> HttpResponse<T> send(HttpRequest request, R payloadPublisher, U payloadSubscriber) {
+    public <T> HttpResponse<T> send(HttpRequest request,
+                                    RequestPayloadSupport payloadPublisher,
+                                    ResponsePayloadSupport<?> payloadSubscriber) {
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
@@ -55,16 +56,16 @@ public abstract class BaseHttpClient<R extends RequestPayloadSupport, U extends 
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                            R payloadPublisher,
-                                                            U payloadSubscriber) {
+                                                            RequestPayloadSupport payloadPublisher,
+                                                            ResponsePayloadSupport<?> payloadSubscriber) {
         return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
-                                                         R payloadPublisher,
-                                                         U payloadSubscriber,
+                                                         RequestPayloadSupport payloadPublisher,
+                                                         ResponsePayloadSupport<?> payloadSubscriber,
                                                          FutureListener... listeners) {
         return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
     }
@@ -154,7 +155,16 @@ public abstract class BaseHttpClient<R extends RequestPayloadSupport, U extends 
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        closeInternal();
+    }
+
+    protected void closeInternal() {
+
+    }
+
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,
-                                                        R payloadPublisher,
-                                                        U payloadSubscriber) throws IOException;
+                                                        RequestPayloadSupport payloadPublisher,
+                                                        ResponsePayloadSupport<?> payloadSubscriber) throws IOException;
 }
