@@ -2,7 +2,6 @@ package cn.vlts.solpic.core.http.client.jdk;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
-import cn.vlts.solpic.core.config.ProxyConfig;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
@@ -14,7 +13,10 @@ import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 
 /**
@@ -27,8 +29,6 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     private static final int DEFAULT_CHUNK_SIZE = 4 * 1024;
 
-    private Proxy proxy;
-
     private int connectTimeout = -1;
 
     private int readTimeout = -1;
@@ -38,6 +38,25 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
     public JdkHttpClientImpl() {
         super();
         init();
+    }
+
+    private void init() {
+        // HttpURLConnection only support HTTP/1.0 and HTTP/1.1
+        addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1);
+        // minimum options and available options
+        addAvailableHttpOptions(
+                HttpOptions.HTTP_PROXY,
+                HttpOptions.HTTP_ENABLE_LOGGING,
+                HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE,
+                HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
+                HttpOptions.HTTP_FORCE_WRITE,
+                HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
+                HttpOptions.HTTP_CONNECT_TIMEOUT,
+                HttpOptions.HTTP_REQUEST_CONNECT_TIMEOUT,
+                HttpOptions.HTTP_READ_TIMEOUT,
+                HttpOptions.HTTP_REQUEST_READ_TIMEOUT,
+                HttpOptions.HTTP_CHUNK_SIZE
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -94,11 +113,6 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         // process response
         populateResponse(httpResponse, httpConnection, request);
         return httpResponse;
-    }
-
-    private void init() {
-        // HttpURLConnection only support HTTP/1.0 and HTTP/1.1
-        addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1);
     }
 
     private HttpURLConnection createHttpConnection(HttpRequest request) throws IOException {
@@ -196,17 +210,5 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_CHUNK_SIZE))
                 .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CHUNK_SIZE))
                         .orElse(this.chunkSize));
-    }
-
-    public void setProxy(Proxy proxy) {
-        this.proxy = proxy;
-    }
-
-    public Proxy getProxy() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_PROXY))
-                .filter(proxyConfig -> !Objects.equals(ProxyConfig.NO, proxyConfig))
-                .map(proxyConfig -> new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfig.getHostname(),
-                        proxyConfig.getPort())))
-                .orElse(this.proxy);
     }
 }

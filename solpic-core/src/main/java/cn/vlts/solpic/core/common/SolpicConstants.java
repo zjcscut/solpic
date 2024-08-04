@@ -13,6 +13,8 @@ public final class SolpicConstants {
     private SolpicConstants() {
     }
 
+    // ##################### ATTACHMENT KEY #####################
+
     public static final AttachmentKey REQUEST_START_NANOS_KEY = AttachmentKey.ofKey("startNanos");
 
     public static final AttachmentKey REQUEST_END_NANOS_KEY = AttachmentKey.ofKey("endNanos");

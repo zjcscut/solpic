@@ -15,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface HttpClient extends Closeable {
 
+    String id();
+
     <T> HttpResponse<T> send(HttpRequest request,
                              RequestPayloadSupport payloadPublisher,
                              ResponsePayloadSupport<?> payloadSubscriber);

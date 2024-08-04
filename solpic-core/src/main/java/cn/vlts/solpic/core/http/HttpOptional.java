@@ -22,6 +22,10 @@ public interface HttpOptional {
 
     List<HttpOption<?>> getHttpOptions();
 
+    <T> void addHttpOption(HttpOption<T> httpOption, T configValue);
+
+    <T> void setHttpOption(HttpOption<T> httpOption, T configValue);
+
     boolean supportHttpOption(HttpOption<?> httpOption);
 
     <T> T getHttpOptionValue(HttpOption<T> httpOption);

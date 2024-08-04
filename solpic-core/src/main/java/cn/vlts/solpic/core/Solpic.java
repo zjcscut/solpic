@@ -203,7 +203,7 @@ public abstract class Solpic {
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            getHttpClient().send(request, requestPayloadPublisher, PayloadSubscribers.DEFAULT.discarding());
+            getHttpClient().send(request, requestPayloadPublisher, PayloadSubscribers.X.discarding());
         }
     }
 

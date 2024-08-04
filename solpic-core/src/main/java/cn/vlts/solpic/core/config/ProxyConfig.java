@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.config;
 
+import cn.vlts.solpic.core.common.UriScheme;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -36,13 +37,13 @@ public class ProxyConfig {
 
     private static ProxyConfig parse(String url) {
         URI uri = URI.create(url);
-        String schema = Objects.nonNull(uri.getScheme()) ? uri.getScheme() : "http";
+        String schema = Objects.nonNull(uri.getScheme()) ? uri.getScheme() : UriScheme.HTTP.getValue();
         int port = uri.getPort();
         if (port <= 0) {
-            if (Objects.equals("http", schema)) {
-                port = 80;
-            } else {
+            if (Objects.equals(UriScheme.HTTPS.getValue(), schema)) {
                 port = 443;
+            } else {
+                port = 80;
             }
         }
         return new ProxyConfig(schema, uri.getHost(), port);

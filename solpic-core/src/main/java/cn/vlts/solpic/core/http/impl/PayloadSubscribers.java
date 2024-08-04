@@ -10,7 +10,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,17 +25,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public enum PayloadSubscribers {
     X;
 
-    private static final ConcurrentMap<Type, PayloadSubscriber<?>> BUILD_IN_CACHE = new ConcurrentHashMap<>();
-
-    public static final DefaultPayloadSubscribers DEFAULT;
+    private static final ConcurrentMap<Type, PayloadSubscriber<?>> CACHE = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public <T> PayloadSubscriber<T> getBuildInPayloadSubscriber(Type type) {
-        return Objects.nonNull(type) ? (PayloadSubscriber<T>) BUILD_IN_CACHE.get(type) : DEFAULT.discarding();
+    public <T> PayloadSubscriber<T> getPayloadSubscriber(Type type) {
+        return (PayloadSubscriber<T>) CACHE.get(type);
     }
 
-    public boolean containsBuildInPayloadSubscriber(Type type) {
-        return BUILD_IN_CACHE.containsKey(type);
+    public boolean containsPayloadSubscriber(Type type) {
+        return CACHE.containsKey(type);
+    }
+
+    public <T> PayloadSubscriber<T> discarding() {
+        return new DiscardingPayloadSubscriber<>();
+    }
+
+    public PayloadSubscriber<String> ofString() {
+        return new StringPayloadSubscriber();
+    }
+
+    public PayloadSubscriber<String> ofString(Charset charset) {
+        return new StringPayloadSubscriber(charset);
+    }
+
+    public PayloadSubscriber<byte[]> ofByteArray() {
+        return new ByteArrayPayloadSubscriber();
+    }
+
+    public PayloadSubscriber<Void> ofFile(Path path, Charset charset) {
+        return new FilePayloadSubscriber(path, charset);
+    }
+
+    public PayloadSubscriber<Void> ofFile(Path path) {
+        return new FilePayloadSubscriber(path);
     }
 
     private static class ByteArrayPayloadSubscriber implements PayloadSubscriber<byte[]> {
@@ -175,37 +196,9 @@ public enum PayloadSubscribers {
         }
     }
 
-    public static class DefaultPayloadSubscribers {
-
-        public <T> PayloadSubscriber<T> discarding() {
-            return new DiscardingPayloadSubscriber<>();
-        }
-
-        public PayloadSubscriber<String> ofString() {
-            return new StringPayloadSubscriber();
-        }
-
-        public PayloadSubscriber<String> ofString(Charset charset) {
-            return new StringPayloadSubscriber(charset);
-        }
-
-        public PayloadSubscriber<byte[]> ofByteArray() {
-            return new ByteArrayPayloadSubscriber();
-        }
-
-        public PayloadSubscriber<Void> ofFile(Path path, Charset charset) {
-            return new FilePayloadSubscriber(path, charset);
-        }
-
-        public PayloadSubscriber<Void> ofFile(Path path) {
-            return new FilePayloadSubscriber(path);
-        }
-    }
-
     static {
-        DEFAULT = new DefaultPayloadSubscribers();
-        BUILD_IN_CACHE.put(Void.class, DEFAULT.discarding());
-        BUILD_IN_CACHE.put(String.class, DEFAULT.ofString());
-        BUILD_IN_CACHE.put(byte[].class, DEFAULT.ofByteArray());
+        CACHE.put(Void.class, PayloadSubscribers.X.discarding());
+        CACHE.put(String.class, PayloadSubscribers.X.ofString());
+        CACHE.put(byte[].class, PayloadSubscribers.X.ofByteArray());
     }
 }

@@ -8,7 +8,6 @@ import cn.vlts.solpic.core.util.AttachmentKey;
 import lombok.RequiredArgsConstructor;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -279,5 +278,15 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
     @Override
     public HttpRequestStatus getStatus() {
         return request.getStatus();
+    }
+
+    @Override
+    public <T> void addHttpOption(HttpOption<T> httpOption, T configValue) {
+
+    }
+
+    @Override
+    public <T> void setHttpOption(HttpOption<T> httpOption, T configValue) {
+
     }
 }

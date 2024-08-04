@@ -112,8 +112,8 @@ public interface OneWaySolpicTemplate {
         Class<?> requestPayloadClazz;
         if (Objects.isNull(requestPayload)) {
             requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
-        } else if (PayloadPublishers.X.containsBuildInPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
-            requestPayloadFunction = PayloadPublishers.X.getBuildInPayloadPublisher(requestPayloadClazz);
+        } else if (PayloadPublishers.X.containsPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
+            requestPayloadFunction = PayloadPublishers.X.getPayloadPublisher(requestPayloadClazz);
         } else {
             requestPayloadFunction = sp -> getCodec().createPayloadPublisher(sp);
         }

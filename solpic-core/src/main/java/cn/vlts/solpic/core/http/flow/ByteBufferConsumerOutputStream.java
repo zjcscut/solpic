@@ -1,4 +1,6 @@
-package cn.vlts.solpic.core.util;
+package cn.vlts.solpic.core.http.flow;
+
+import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;

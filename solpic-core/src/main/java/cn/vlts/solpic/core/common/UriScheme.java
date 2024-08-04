@@ -3,6 +3,8 @@ package cn.vlts.solpic.core.common;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Objects;
+
 /**
  * URI scheme.
  *
@@ -20,6 +22,6 @@ public enum UriScheme {
     private final String value;
 
     public boolean isSameAs(String scheme) {
-        return value.equalsIgnoreCase(scheme);
+        return Objects.nonNull(scheme) && value.equalsIgnoreCase(scheme);
     }
 }

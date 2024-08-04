@@ -5,6 +5,7 @@ import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.concurrent.ListenableFuture;
 import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.ProxyConfig;
 import cn.vlts.solpic.core.exception.SolpicHttpException;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
@@ -15,10 +16,14 @@ import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
 import cn.vlts.solpic.core.spi.SpiLoader;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Base HTTP client.
@@ -28,12 +33,23 @@ import java.util.concurrent.CompletableFuture;
  */
 public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOptional, HttpClient {
 
-    private volatile ThreadPool threadPool;
+    private final AtomicLong index = new AtomicLong();
 
     private final List<HttpInterceptor> interceptors = new ArrayList<>();
 
+    private volatile ThreadPool threadPool;
+
+    private String id;
+
+    protected Proxy proxy;
+
     public BaseHttpClient() {
         baseInit();
+    }
+
+    @Override
+    public String id() {
+        return id;
     }
 
     @Override
@@ -153,6 +169,13 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (Objects.nonNull(interceptorList)) {
             this.interceptors.addAll(interceptorList);
         }
+        // client id
+        String clientId = getHttpOptionValue(HttpOptions.HTTP_CLIENT_ID);
+        if (Objects.nonNull(clientId)) {
+            this.id = clientId;
+        } else {
+            this.id = getClass().getSimpleName() + "-" + index.incrementAndGet();
+        }
     }
 
     @Override
@@ -162,6 +185,18 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected void closeInternal() {
 
+    }
+
+    public void setProxy(Proxy proxy) {
+        this.proxy = proxy;
+    }
+
+    public Proxy getProxy() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_PROXY))
+                .filter(proxyConfig -> !Objects.equals(ProxyConfig.NO, proxyConfig))
+                .map(proxyConfig -> new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfig.getHostname(),
+                        proxyConfig.getPort())))
+                .orElse(this.proxy);
     }
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,

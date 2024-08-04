@@ -7,7 +7,8 @@ import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
-import cn.vlts.solpic.core.util.ByteBufferConsumerOutputStream;
+import cn.vlts.solpic.core.http.flow.ByteBufferConsumerOutputStream;
+import cn.vlts.solpic.core.http.flow.PullingInputStream;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
@@ -105,12 +106,8 @@ public interface Codec<S, T> {
             public void readFrom(InputStream inputStream, boolean autoClose) {
                 if (this.read.compareAndSet(false, true)) {
                     try {
-                        if (Objects.nonNull(inputStream)) {
-                            T result = read(inputStream, targetType);
-                            future.complete(result);
-                        } else {
-                            future.complete(null);
-                        }
+                        T result = read(inputStream, targetType);
+                        future.complete(result);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
                     } finally {
@@ -156,6 +153,8 @@ public interface Codec<S, T> {
                         write(bcos, payload);
                     } catch (IOException e) {
                         subscriber.onError(e);
+                    } finally {
+                        IoUtils.X.closeQuietly(bcos);
                     }
                     subscriber.onComplete();
                 }
@@ -192,9 +191,7 @@ public interface Codec<S, T> {
 
             private volatile Subscription subscription;
 
-            private final Function<List<ByteBuffer>, T> finisher = buffers -> fromByteBuffers(buffers, targetType);
-
-            private final List<ByteBuffer> received = new ArrayList<>();
+            private volatile PullingInputStream pullingInputStream;
 
             @Override
             public CompletionStage<T> getPayload() {
@@ -205,7 +202,8 @@ public interface Codec<S, T> {
             public void onSubscribe(Subscription subscription) {
                 if (subscribed.compareAndSet(false, true)) {
                     this.subscription = subscription;
-                    subscription.request(Long.MAX_VALUE);
+                    pullingInputStream = new PullingInputStream(subscription);
+                    subscription.request(1);
                 } else {
                     subscription.cancel();
                 }
@@ -213,10 +211,12 @@ public interface Codec<S, T> {
 
             @Override
             public void onNext(List<ByteBuffer> item) {
-                if (Objects.nonNull(item)) {
-                    for (ByteBuffer buffer : item) {
-                        if (buffer.hasRemaining()) {
-                            received.add(buffer);
+                for (ByteBuffer buffer : item) {
+                    if (buffer.hasRemaining()) {
+                        try {
+                            pullingInputStream.offer(buffer);
+                        } catch (IOException e) {
+                            result.completeExceptionally(e);
                         }
                     }
                 }
@@ -224,14 +224,18 @@ public interface Codec<S, T> {
 
             @Override
             public void onError(Throwable throwable) {
-                subscription.cancel();
                 result.completeExceptionally(throwable);
             }
 
             @Override
             public void onComplete() {
-                result.complete(finisher.apply(received));
-                received.clear();
+                try {
+                    result.complete(read(pullingInputStream, targetType));
+                } catch (Throwable throwable) {
+                    result.completeExceptionally(throwable);
+                } finally {
+                    IoUtils.X.closeQuietly(pullingInputStream);
+                }
             }
         };
     }

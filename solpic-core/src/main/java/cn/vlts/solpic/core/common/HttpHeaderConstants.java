@@ -8,6 +8,10 @@ package cn.vlts.solpic.core.common;
  */
 public final class HttpHeaderConstants {
 
+    private HttpHeaderConstants() {
+
+    }
+
     public static final String ACCEPT_KEY = "Accept";
 
     public static final String CONTENT_TYPE_KEY = "Content-Type";

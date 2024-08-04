@@ -26,6 +26,12 @@ public final class HttpOptions {
             .level(OptionLevel.GLOBAL)
             .build();
 
+    public static final HttpOption<String> HTTP_CLIENT_ID = StringHttpOption.builder()
+            .key("HTTP_CLIENT_ID")
+            .propertyKey("solpic.http.client.id")
+            .level(OptionLevel.CLIENT)
+            .build();
+
     public static final HttpOption<String> HTTP_PROTOCOL_VERSION = StringHttpOption.builder()
             .id(1 << 1L)
             .key("HTTP_PROTOCOL_VERSION")
@@ -52,6 +58,13 @@ public final class HttpOptions {
     public static final HttpOption<Integer> HTTP_READ_TIMEOUT = IntHttpOption.builder()
             .key("HTTP_READ_TIMEOUT")
             .propertyKey("solpic.http.read.timeout")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(5000)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_WRITE_TIMEOUT = IntHttpOption.builder()
+            .key("HTTP_WRITE_TIMEOUT")
+            .propertyKey("solpic.http.write.timeout")
             .level(OptionLevel.CLIENT)
             .defaultValue(5000)
             .build();
@@ -119,6 +132,13 @@ public final class HttpOptions {
     public static final HttpOption<Integer> HTTP_REQUEST_READ_TIMEOUT = IntHttpOption.builder()
             .key("HTTP_REQUEST_READ_TIMEOUT")
             .propertyKey("solpic.http.request.read.timeout")
+            .level(OptionLevel.REQUEST)
+            .defaultValue(5000)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_REQUEST_WRITE_TIMEOUT = IntHttpOption.builder()
+            .key("HTTP_REQUEST_WRITE_TIMEOUT")
+            .propertyKey("solpic.http.request.write.timeout")
             .level(OptionLevel.REQUEST)
             .defaultValue(5000)
             .build();

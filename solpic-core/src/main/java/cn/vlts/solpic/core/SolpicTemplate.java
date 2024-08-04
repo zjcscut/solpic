@@ -184,12 +184,12 @@ public interface SolpicTemplate {
 
     default <S> HttpResponse<Void> download(String url, Path targetFile) {
         return exchange(url, HttpMethod.GET, null, null, null,
-                PayloadSubscribers.DEFAULT.ofFile(targetFile));
+                PayloadSubscribers.X.ofFile(targetFile));
     }
 
     default <S> HttpResponse<byte[]> download(String url) {
         return exchange(url, HttpMethod.GET, null, null, null,
-                PayloadSubscribers.DEFAULT.ofByteArray());
+                PayloadSubscribers.X.ofByteArray());
     }
 
     default <S> HttpResponse<Void> download(String url,
@@ -200,7 +200,7 @@ public interface SolpicTemplate {
                                             Charset charset,
                                             S requestPayload) {
         return exchange(url, requestMethod, requestContentType, requestHeaders, requestPayload,
-                PayloadSubscribers.DEFAULT.ofFile(targetFile, charset));
+                PayloadSubscribers.X.ofFile(targetFile, charset));
     }
 
     // ##################### BASE METHOD #####################
@@ -215,21 +215,13 @@ public interface SolpicTemplate {
                                             List<HttpHeader> requestHeaders,
                                             S requestPayload,
                                             Type responsePayloadType) {
-        PayloadSubscriber<T> payloadSubscriber = PayloadSubscribers.X.getBuildInPayloadSubscriber(responsePayloadType);
-        if (Objects.isNull(payloadSubscriber)) {
-            payloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);
-        }
-        Function<S, PayloadPublisher> requestPayloadFunction;
-        Class<?> requestPayloadClazz;
-        if (Objects.isNull(requestPayload)) {
-            requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
-        } else if (PayloadPublishers.X.containsBuildInPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
-            requestPayloadFunction = PayloadPublishers.X.getBuildInPayloadPublisher(requestPayloadClazz);
-        } else {
-            requestPayloadFunction = sp -> getCodec().createPayloadPublisher(sp);
+        PayloadSubscriber<T> responePayloadSubscriber = Objects.nonNull(requestContentType) ?
+                PayloadSubscribers.X.getPayloadSubscriber(responsePayloadType) : PayloadSubscribers.X.discarding();
+        if (Objects.isNull(responePayloadSubscriber)) {
+            responePayloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);
         }
         return exchange(requestUrl, requestMethod, requestContentType, requestHeaders, requestPayload,
-                requestPayloadFunction, payloadSubscriber);
+                responePayloadSubscriber);
     }
 
     default <S, T> HttpResponse<T> exchange(String requestUrl,
@@ -242,8 +234,8 @@ public interface SolpicTemplate {
         Class<?> requestPayloadClazz;
         if (Objects.isNull(requestPayload)) {
             requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
-        } else if (PayloadPublishers.X.containsBuildInPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
-            requestPayloadFunction = PayloadPublishers.X.getBuildInPayloadPublisher(requestPayloadClazz);
+        } else if (PayloadPublishers.X.containsPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
+            requestPayloadFunction = PayloadPublishers.X.getPayloadPublisher(requestPayloadClazz);
         } else {
             requestPayloadFunction = sp -> getCodec().createPayloadPublisher(sp);
         }

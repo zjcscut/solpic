@@ -35,7 +35,7 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
         HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
-                PayloadSubscribers.DEFAULT.ofString());
+                PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -62,6 +62,7 @@ public class TestJdkHttpClientImpl {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), jdkHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING, true);
         jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
         HttpResponse<HttpBinResult> response = jdkHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
                 codec.createFlowPayloadSubscriber(HttpBinResult.class));

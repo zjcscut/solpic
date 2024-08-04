@@ -78,15 +78,39 @@ public abstract class HttpOptionSupport implements HttpOptional {
         this.availableOpts |= httpOption.id();
     }
 
+    public void addAvailableHttpOptions(HttpOption<?>... httpOptions) {
+        for (HttpOption<?> httpOption : httpOptions) {
+            addAvailableHttpOption(httpOption);
+        }
+    }
+
     public void addMinimumHttpOption(HttpOption<?> httpOption) {
         this.minimumOpts |= httpOption.id();
     }
 
+    public void addMinimumHttpOptions(HttpOption<?>... httpOptions) {
+        for (HttpOption<?> httpOption : httpOptions) {
+            addMinimumHttpOption(httpOption);
+        }
+    }
+
+    @Override
     public <T> void addHttpOption(HttpOption<T> httpOption, T configValue) {
+        if (availableOpts != -1) {
+            if (!httpOption.support(availableOpts)) {
+                throw new IllegalArgumentException("HttpOption '" + httpOption + "' does not support");
+            }
+        }
         this.options.putIfAbsent(httpOption, configValue);
     }
 
+    @Override
     public <T> void setHttpOption(HttpOption<T> httpOption, T configValue) {
+        if (availableOpts != -1) {
+            if (!httpOption.support(availableOpts)) {
+                throw new IllegalArgumentException("HttpOption '" + httpOption + "' does not support");
+            }
+        }
         this.options.put(httpOption, configValue);
     }
 }
