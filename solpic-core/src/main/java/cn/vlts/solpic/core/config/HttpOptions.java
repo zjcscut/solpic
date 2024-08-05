@@ -59,7 +59,7 @@ public final class HttpOptions {
             .key("HTTP_CLIENT_ENABLE_CONNECTION_POOL")
             .propertyKey("solpic.http.client.enable.connection.pool")
             .level(OptionLevel.CLIENT)
-            .defaultValue(false)
+            .defaultValue(true)
             .build();
 
     public static final HttpOption<Integer> HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE = IntHttpOption.builder()
@@ -93,6 +93,13 @@ public final class HttpOptions {
     public static final HttpOption<Integer> HTTP_WRITE_TIMEOUT = IntHttpOption.builder()
             .key("HTTP_WRITE_TIMEOUT")
             .propertyKey("solpic.http.write.timeout")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(5000)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_TIMEOUT = IntHttpOption.builder()
+            .key("HTTP_TIMEOUT")
+            .propertyKey("solpic.http.timeout")
             .level(OptionLevel.CLIENT)
             .defaultValue(5000)
             .build();
@@ -167,6 +174,13 @@ public final class HttpOptions {
     public static final HttpOption<Integer> HTTP_REQUEST_WRITE_TIMEOUT = IntHttpOption.builder()
             .key("HTTP_REQUEST_WRITE_TIMEOUT")
             .propertyKey("solpic.http.request.write.timeout")
+            .level(OptionLevel.REQUEST)
+            .defaultValue(5000)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_REQUEST_TIMEOUT = IntHttpOption.builder()
+            .key("HTTP_REQUEST_WRITE_TIMEOUT")
+            .propertyKey("solpic.http.request.timeout")
             .level(OptionLevel.REQUEST)
             .defaultValue(5000)
             .build();
