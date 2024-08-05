@@ -9,6 +9,7 @@ import cn.vlts.solpic.core.http.flow.FlowOutputStreamSubscriber;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
+import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +46,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1);
         // minimum options and available options
         addAvailableHttpOptions(
+                HttpOptions.HTTP_CLIENT_ID,
                 HttpOptions.HTTP_PROXY,
                 HttpOptions.HTTP_ENABLE_LOGGING,
                 HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE,
@@ -107,6 +109,9 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
                 FlowPayloadSubscriber<T> flowSubscriber = (FlowPayloadSubscriber<T>) responsePayloadSupport;
                 FlowInputStreamPublisher.ofInputStream(responseStream).subscribe(flowSubscriber);
             }
+        } else {
+            // force to discard
+            responsePayloadSupport = PayloadSubscribers.X.discarding();
         }
         int responseCode = httpConnection.getResponseCode();
         DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(), responseCode);

@@ -18,7 +18,7 @@ import java.util.Objects;
 public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
 
     List<HttpMethod> METHODS_WITH_BODY = new ArrayList<>(Arrays.asList(HttpMethod.POST,
-            HttpMethod.PUT, HttpMethod.PATCH));
+            HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.TRACE));
 
     String getScheme();
 

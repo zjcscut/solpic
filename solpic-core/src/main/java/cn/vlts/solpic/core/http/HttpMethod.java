@@ -28,6 +28,8 @@ public enum HttpMethod {
 
     PATCH,
 
+    TRACE,
+
     ;
 
     private static final CaseInsensitiveMap<Cis, HttpMethod> CACHE = new CaseInsensitiveMap<>(8);

@@ -3,6 +3,7 @@ package cn.vlts.solpic.core.http.client;
 import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.concurrent.ListenableFuture;
+import cn.vlts.solpic.core.concurrent.ScheduledThreadPool;
 import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.ProxyConfig;
@@ -23,6 +24,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -33,18 +38,24 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOptional, HttpClient {
 
-    private final AtomicLong index = new AtomicLong();
+    private static final AtomicLong INDEX = new AtomicLong();
+
+    private final AtomicBoolean running = new AtomicBoolean();
 
     private final List<HttpInterceptor> interceptors = new ArrayList<>();
 
     private volatile ThreadPool threadPool;
+
+    private volatile ScheduledThreadPool scheduledThreadPool;
 
     private String id;
 
     protected Proxy proxy;
 
     public BaseHttpClient() {
-        baseInit();
+        if (running.compareAndSet(false, true)) {
+            baseInit();
+        }
     }
 
     @Override
@@ -86,15 +97,34 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
     }
 
+    @Override
+    public <T> ScheduledFuture<HttpResponse<T>> scheduledSend(HttpRequest request,
+                                                              RequestPayloadSupport payloadPublisher,
+                                                              ResponsePayloadSupport<?> payloadSubscriber,
+                                                              long delay,
+                                                              TimeUnit unit,
+                                                              CompletableFuture<HttpResponse<T>> promise) {
+        return getScheduledThreadPool().schedule(() -> {
+            HttpResponse<T> response = null;
+            try {
+                response = send(request, payloadPublisher, payloadSubscriber);
+                promise.complete(response);
+            } catch (Throwable throwable) {
+                promise.completeExceptionally(throwable);
+            }
+            return response;
+        }, delay, unit);
+    }
+
     protected ThreadPool getThreadPool() {
         if (Objects.isNull(this.threadPool)) {
             synchronized (this) {
                 if (Objects.isNull(this.threadPool)) {
                     String threadPoolName = ThreadPool.DEFAULT;
                     if (supportHttpOption(HttpOptions.HTTP_THREAD_POOL)) {
-                        String threadPoolOption = getHttpOptionValue(HttpOptions.HTTP_THREAD_POOL);
-                        if (Objects.nonNull(threadPoolOption)) {
-                            threadPoolName = threadPoolOption;
+                        String threadPoolOptionValue = getHttpOptionValue(HttpOptions.HTTP_THREAD_POOL);
+                        if (Objects.nonNull(threadPoolOptionValue)) {
+                            threadPoolName = threadPoolOptionValue;
                         }
                     }
                     this.threadPool = SpiLoader.getSpiLoader(ThreadPool.class).getService(threadPoolName);
@@ -102,6 +132,24 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             }
         }
         return this.threadPool;
+    }
+
+    protected ScheduledThreadPool getScheduledThreadPool() {
+        if (Objects.isNull(this.scheduledThreadPool)) {
+            synchronized (this) {
+                if (Objects.isNull(this.scheduledThreadPool)) {
+                    String threadPoolName = ScheduledThreadPool.DEFAULT;
+                    if (supportHttpOption(HttpOptions.HTTP_SCHEDULED_THREAD_POOL)) {
+                        String threadPoolOptionValue = getHttpOptionValue(HttpOptions.HTTP_SCHEDULED_THREAD_POOL);
+                        if (Objects.nonNull(threadPoolOptionValue)) {
+                            threadPoolName = threadPoolOptionValue;
+                        }
+                    }
+                    this.scheduledThreadPool = SpiLoader.getSpiLoader(ScheduledThreadPool.class).getService(threadPoolName);
+                }
+            }
+        }
+        return this.scheduledThreadPool;
     }
 
     public void addInterceptor(HttpInterceptor interceptor) {
@@ -174,13 +222,20 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (Objects.nonNull(clientId)) {
             this.id = clientId;
         } else {
-            this.id = getClass().getSimpleName() + "-" + index.incrementAndGet();
+            this.id = getClass().getSimpleName() + "-" + INDEX.incrementAndGet();
         }
     }
 
     @Override
+    public boolean isRunning() {
+        return running.get();
+    }
+
+    @Override
     public void close() throws IOException {
-        closeInternal();
+        if (running.compareAndSet(true, false)) {
+            closeInternal();
+        }
     }
 
     protected void closeInternal() {

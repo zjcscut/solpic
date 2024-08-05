@@ -18,6 +18,8 @@ public final class HttpHeaderConstants {
 
     public static final String CONTENT_LENGTH_KEY = "Content-Length";
 
+    public static final String CONTENT_ENCODING_KEY = "Content-Encoding";
+
     public static final String COOKIE_KEY = "Cookie";
 
     public static final String ALLOW_HEADER_KEY = "Allow";

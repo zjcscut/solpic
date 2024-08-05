@@ -6,6 +6,7 @@ import cn.vlts.solpic.core.concurrent.ListenableFuture;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -33,14 +34,14 @@ public interface HttpClient extends Closeable {
                                                   ResponsePayloadSupport<?> payloadSubscriber,
                                                   FutureListener... listeners);
 
-    @SuppressWarnings("rawtypes")
-    default <T> ScheduledFuture<HttpResponse<T>> scheduledSend(HttpRequest request,
-                                                               RequestPayloadSupport payloadPublisher,
-                                                               ResponsePayloadSupport<?> payloadSubscriber,
-                                                               long delay,
-                                                               TimeUnit unit) {
-        throw new UnsupportedOperationException();
-    }
+    <T> ScheduledFuture<HttpResponse<T>> scheduledSend(HttpRequest request,
+                                                       RequestPayloadSupport payloadPublisher,
+                                                       ResponsePayloadSupport<?> payloadSubscriber,
+                                                       long delay,
+                                                       TimeUnit unit,
+                                                       CompletableFuture<HttpResponse<T>> promise);
+
+    boolean isRunning();
 
     @Override
     default void close() throws IOException {

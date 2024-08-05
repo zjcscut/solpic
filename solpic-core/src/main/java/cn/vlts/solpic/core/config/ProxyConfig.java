@@ -39,7 +39,7 @@ public class ProxyConfig {
         URI uri = URI.create(url);
         String schema = Objects.nonNull(uri.getScheme()) ? uri.getScheme() : UriScheme.HTTP.getValue();
         int port = uri.getPort();
-        if (port <= 0) {
+        if (port < 0) {
             if (Objects.equals(UriScheme.HTTPS.getValue(), schema)) {
                 port = 443;
             } else {

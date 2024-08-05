@@ -5,9 +5,9 @@ import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
+import cn.vlts.solpic.core.http.flow.ByteBufferConsumerOutputStream;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
-import cn.vlts.solpic.core.http.flow.ByteBufferConsumerOutputStream;
 import cn.vlts.solpic.core.http.flow.PullingInputStream;
 import cn.vlts.solpic.core.util.IoUtils;
 
@@ -16,13 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 /**
  * Codec.

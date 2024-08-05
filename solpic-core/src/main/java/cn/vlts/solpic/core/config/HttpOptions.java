@@ -26,6 +26,13 @@ public final class HttpOptions {
             .level(OptionLevel.GLOBAL)
             .build();
 
+    public static final HttpOption<String> HTTP_SCHEDULED_THREAD_POOL = StringHttpOption.builder()
+            .key("HTTP_SCHEDULED_THREAD_POOL")
+            .propertyKey("solpic.http.scheduled.thread.pool")
+            .defaultValue("default")
+            .level(OptionLevel.GLOBAL)
+            .build();
+
     public static final HttpOption<String> HTTP_CLIENT_ID = StringHttpOption.builder()
             .key("HTTP_CLIENT_ID")
             .propertyKey("solpic.http.client.id")
@@ -46,6 +53,27 @@ public final class HttpOptions {
             .propertyKey("solpic.http.proxy")
             .defaultValue(ProxyConfig.NO)
             .level(OptionLevel.CLIENT)
+            .build();
+
+    public static final HttpOption<Boolean> HTTP_CLIENT_ENABLE_CONNECTION_POOL = BoolHttpOption.builder()
+            .key("HTTP_CLIENT_ENABLE_CONNECTION_POOL")
+            .propertyKey("solpic.http.client.enable.connection.pool")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(false)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE = IntHttpOption.builder()
+            .key("HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE")
+            .propertyKey("solpic.http.client.connection.pool.max.size")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(20)
+            .build();
+
+    public static final HttpOption<Integer> HTTP_CLIENT_CONNECTION_POOL_TTL = IntHttpOption.builder()
+            .key("HTTP_CLIENT_CONNECTION_POOL_TTL")
+            .propertyKey("solpic.http.client.connection.pool.ttl")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(1800000)
             .build();
 
     public static final HttpOption<Integer> HTTP_CONNECT_TIMEOUT = IntHttpOption.builder()
