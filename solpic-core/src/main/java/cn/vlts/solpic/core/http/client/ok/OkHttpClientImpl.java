@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * HTTP client base on OKHTTP 4.x.
@@ -63,8 +62,8 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
                 HttpOptions.HTTP_READ_TIMEOUT,
                 HttpOptions.HTTP_WRITE_TIMEOUT,
                 HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL,
-                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE,
-                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_TTL
+                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY,
+                HttpOptions.HTTP_CLIENT_CONNECTION_TTL
         );
         int connectTimeoutToUse = getConnectTimeout();
         int readTimeoutToUse = getReadTimeout();
@@ -132,6 +131,16 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
                 httpResponse.addHeader(headerName, headerValue);
             }
         }
+        HttpVersion httpVersion = HttpVersion.defaultVersion();
+        Protocol protocol = okHttpResponse.protocol();
+        if (Objects.equals(protocol, Protocol.HTTP_1_0)) {
+            httpVersion = HttpVersion.HTTP_1;
+        } else if (Objects.equals(protocol, Protocol.HTTP_1_1)) {
+            httpVersion = HttpVersion.HTTP_1_1;
+        } else if (Objects.equals(protocol, Protocol.HTTP_2)) {
+            httpVersion = HttpVersion.HTTP_2;
+        }
+        httpResponse.setProtocolVersion(httpVersion);
         return httpResponse;
     }
 
@@ -185,9 +194,9 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     }
 
     public ConnectionPool getConnectionPool() {
-        Integer max = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE);
-        Integer ttl = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_POOL_TTL);
-        if (supportHttpOption(HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL) &&
+        Integer max = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY);
+        Integer ttl = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_TTL);
+        if (Objects.equals(getHttpOptionValue(HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL), Boolean.TRUE) &&
                 Objects.nonNull(max) && Objects.nonNull(ttl)) {
             return new ConnectionPool(max, ttl, TimeUnit.MILLISECONDS);
         }

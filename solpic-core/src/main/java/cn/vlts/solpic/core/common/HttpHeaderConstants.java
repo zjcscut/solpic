@@ -12,6 +12,8 @@ public final class HttpHeaderConstants {
 
     }
 
+    public static final String HTTP_URL_CONNECTION_STATUS_LINE_KEY = "Huc-Statue-Line";
+
     public static final String ACCEPT_KEY = "Accept";
 
     public static final String CONTENT_TYPE_KEY = "Content-Type";

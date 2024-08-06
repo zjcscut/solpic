@@ -5,7 +5,6 @@ import cn.vlts.solpic.core.codec.impl.JacksonCodec;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
-import cn.vlts.solpic.core.http.client.jdk.JdkHttpClientImpl;
 import cn.vlts.solpic.core.http.client.ok.OkHttpClientImpl;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublishers;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscribers;

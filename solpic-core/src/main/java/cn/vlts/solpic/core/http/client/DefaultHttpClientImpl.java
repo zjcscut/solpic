@@ -1,9 +1,8 @@
-package cn.vlts.solpic.core.http.client.jdk;
+package cn.vlts.solpic.core.http.client;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.*;
-import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
 import cn.vlts.solpic.core.http.flow.FlowOutputStreamSubscriber;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
@@ -21,12 +20,12 @@ import java.net.URLConnection;
 import java.util.*;
 
 /**
- * JDK HTTP client, base on HttpURLConnection.
+ * Default HTTP client, base on HttpURLConnection.
  *
  * @author throwable
  * @since 2024/7/24 00:27
  */
-public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, HttpOptional {
+public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient, HttpOptional {
 
     private static final int DEFAULT_CHUNK_SIZE = 4 * 1024;
 
@@ -36,7 +35,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     private int chunkSize = DEFAULT_CHUNK_SIZE;
 
-    public JdkHttpClientImpl() {
+    public DefaultHttpClientImpl() {
         super();
         init();
     }
@@ -173,8 +172,11 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         httpResponse.setReasonPhrase(connection.getResponseMessage());
         // process response headers - first line should be status text line
         String firstName = connection.getHeaderFieldKey(0);
-        if (Objects.nonNull(firstName) && !firstName.isEmpty()) {
-            httpResponse.setHeader(firstName, connection.getHeaderField(0));
+        String statusLine = connection.getHeaderField(0);
+        if (Objects.isNull(firstName) && Objects.nonNull(statusLine)) {
+            httpResponse.addHeader(HttpHeaderConstants.HTTP_URL_CONNECTION_STATUS_LINE_KEY, statusLine);
+            HttpVersion httpVersion = HttpVersion.fromStatusLine(statusLine);
+            httpResponse.setProtocolVersion(httpVersion);
         }
         int index = 1;
         for (; ; ) {

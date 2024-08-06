@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,6 +66,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     public <T> HttpResponse<T> send(HttpRequest request,
                                     RequestPayloadSupport payloadPublisher,
                                     ResponsePayloadSupport<?> payloadSubscriber) {
+        if (!isRunning()) {
+            throw new IllegalStateException("Http client is not running");
+        }
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
@@ -178,7 +180,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     private void triggerInterceptorsAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         ReadOnlyHttpRequest readOnlyHttpRequest = ReadOnlyHttpRequest.of(request);
-        ReadOnlyHttpResponse<?> readOnlyHttpResponse = ReadOnlyHttpResponse.of(response);
+        ReadOnlyHttpResponse<?> readOnlyHttpResponse = Objects.nonNull(response) ? ReadOnlyHttpResponse.of(response) : null;
         this.interceptors.forEach(interceptor -> interceptor.afterCompletion(readOnlyHttpRequest, readOnlyHttpResponse));
     }
 
@@ -199,7 +201,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     protected void triggerAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         triggerInterceptorsAfterCompletion(request, response);
         // copy request attachments to response
-        if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS)) {
+        if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS) && Objects.nonNull(response)) {
             response.copyAttachable(request);
         }
         // mark request finished

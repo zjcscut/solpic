@@ -55,4 +55,48 @@ public enum HttpVersion {
         }
         return null;
     }
+
+    public static HttpVersion fromVersion(int major, int minor) {
+        for (HttpVersion httpVersion : HttpVersion.values()) {
+            if (httpVersion.getMajor() == major && httpVersion.getMinor() == major) {
+                return httpVersion;
+            }
+        }
+        return null;
+    }
+
+    public static HttpVersion fromStatusLine(String statusLine) {
+        HttpVersion httpVersion = defaultVersion();
+        if (Objects.nonNull(statusLine) && statusLine.startsWith("HTTP/")) {
+            int protocolStartPos = 5;
+            int protocolEndPos = statusLine.indexOf(' ', protocolStartPos + 1);
+            if (protocolEndPos == -1) {
+                protocolEndPos = statusLine.indexOf('\t', protocolStartPos + 1);
+            }
+            if (protocolEndPos > protocolStartPos && protocolEndPos < statusLine.length()) {
+                try {
+                    int major, minor;
+                    String version = statusLine.substring(protocolStartPos, protocolEndPos);
+                    String[] strings = version.split("\\.");
+                    if (strings.length == 1) {
+                        major = Integer.parseInt(strings[0]);
+                        HttpVersion v = fromVersion(major, 0);
+                        if (Objects.nonNull(v)) {
+                            httpVersion = v;
+                        }
+                    } else if (strings.length == 2) {
+                        major = Integer.parseInt(strings[0]);
+                        minor = Integer.parseInt(strings[1]);
+                        HttpVersion v = fromVersion(major, minor);
+                        if (Objects.nonNull(v)) {
+                            httpVersion = v;
+                        }
+                    }
+                } catch (Throwable ignore) {
+
+                }
+            }
+        }
+        return httpVersion;
+    }
 }

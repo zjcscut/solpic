@@ -5,7 +5,6 @@ import cn.vlts.solpic.core.codec.impl.JacksonCodec;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
-import cn.vlts.solpic.core.http.client.jdk.JdkHttpClientImpl;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublishers;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscribers;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
@@ -28,17 +27,17 @@ import java.util.concurrent.TimeUnit;
  * @author throwable
  * @since 2024/7/28 22:37
  */
-public class TestJdkHttpClientImpl {
+public class TestDefaultHttpClientImpl {
 
-    private final JdkHttpClientImpl jdkHttpClientImpl = new JdkHttpClientImpl();
+    private final DefaultHttpClientImpl defaultHttpClientImpl = new DefaultHttpClientImpl();
 
     @Test
     public void testSimpleSend() {
-        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), jdkHttpClientImpl);
+        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
-        jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        HttpResponse<String> response = defaultHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
                 PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
@@ -48,11 +47,11 @@ public class TestJdkHttpClientImpl {
 
     @Test
     public void testFlowSend() {
-        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), jdkHttpClientImpl);
+        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
-        jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = jdkHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        HttpResponse<String> response = defaultHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
                 FlowPayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
@@ -63,12 +62,12 @@ public class TestJdkHttpClientImpl {
     @Test
     public void testHttpBinSend() {
         Codec<?, ?> codec = new JacksonCodec<>();
-        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), jdkHttpClientImpl);
+        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING, true);
-        jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<HttpBinResult> response = jdkHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        HttpResponse<HttpBinResult> response = defaultHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
                 codec.createFlowPayloadSubscriber(HttpBinResult.class));
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
@@ -79,11 +78,11 @@ public class TestJdkHttpClientImpl {
     @Test
     public void testHttpBinScheduledSend() throws Exception {
         Codec<?, ?> codec = new JacksonCodec<>();
-        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), jdkHttpClientImpl);
+        DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING, true);
-        jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
         CompletableFuture<HttpResponse<HttpBinResult>> promise = new CompletableFuture<>();
         promise.whenComplete((response, throwable) -> {
             if (Objects.nonNull(throwable)) {
@@ -92,7 +91,7 @@ public class TestJdkHttpClientImpl {
                 System.out.printf("result => %s\n", response.getPayload());
             }
         });
-        ScheduledFuture<HttpResponse<HttpBinResult>> response = jdkHttpClientImpl.scheduledSend(request, FlowPayloadPublishers.X.discarding(),
+        ScheduledFuture<HttpResponse<HttpBinResult>> response = defaultHttpClientImpl.scheduledSend(request, FlowPayloadPublishers.X.discarding(),
                 codec.createFlowPayloadSubscriber(HttpBinResult.class), 3, TimeUnit.SECONDS, promise);
         Assert.assertNotNull(response);
         Thread.sleep(5000);

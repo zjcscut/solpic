@@ -1,26 +1,39 @@
 package cn.vlts.solpic.core.http.client.ahc5;
 
+import cn.vlts.solpic.core.common.UriScheme;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.SSLConfig;
+import cn.vlts.solpic.core.http.HttpRequest;
+import cn.vlts.solpic.core.http.HttpResponse;
+import cn.vlts.solpic.core.http.HttpVersion;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
-import cn.vlts.solpic.core.http.flow.ByteBufferConsumerOutputStream;
-import cn.vlts.solpic.core.http.flow.FlowOutputStreamSubscriber;
+import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
-import cn.vlts.solpic.core.http.flow.PullingInputStream;
+import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
+import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
+import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.IoUtils;
 import cn.vlts.solpic.core.util.ReflectionUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.entity.EntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
-import org.apache.hc.core5.http.ClassicHttpRequest;
-import org.apache.hc.core5.http.io.entity.InputStreamEntity;
-import org.apache.hc.core5.http.io.entity.NullEntity;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.util.TimeValue;
 
+import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +49,17 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
 
     private int connectTimeout = -1;
 
-    private int timeout = -1;
+    private int socketTimeout = -1;
 
-    private int requestTimeout = -1;
+    private int connectionRequestTimeout = -1;
+
+    private int responseTimeout = -1;
+
+    private int connectionKeepAlive = -1;
+
+    private int connectionMaxTotal = -1;
+
+    private int connectionTtl = -1;
 
     private HttpClientConnectionManager connectionManager;
 
@@ -50,8 +71,8 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
     }
 
     private void init() {
-        // support HTTP/1.0, HTTP/1.1, HTTP/2.0
-        addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
+        // support HTTP/0.9, HTTP/1.0, HTTP/1.1, HTTP/2.0
+        addHttpVersions(HttpVersion.HTTP_0_9, HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options
         addAvailableHttpOptions(
                 HttpOptions.HTTP_CLIENT_ID,
@@ -63,18 +84,66 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
                 HttpOptions.HTTP_CONNECT_TIMEOUT,
                 HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL,
-                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_MAX_SIZE,
-                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_TTL
+                HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY,
+                HttpOptions.HTTP_CLIENT_CONNECTION_TTL
         );
+        // build real client
+        rebuildRealClient();
+    }
 
+    public void rebuildRealClient() {
+        // default connection config
         ConnectionConfig.Builder connectionConfigBuilder = ConnectionConfig.custom();
-        RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
         int connectTimeoutToUse = getConnectTimeout();
-        if (connectTimeoutToUse >= 0) {
-
+        if (connectTimeoutToUse > 0) {
+            connectionConfigBuilder.setConnectTimeout(connectTimeoutToUse, TimeUnit.MILLISECONDS);
         }
+        int socketTimeoutToUse = getSocketTimeout();
+        if (socketTimeoutToUse > 0) {
+            connectionConfigBuilder.setSocketTimeout(socketTimeoutToUse, TimeUnit.MILLISECONDS);
+        }
+        // default request config
+        RequestConfig.Builder defaultRequestConfigBuilder = RequestConfig.custom();
+        int connectionRequestTimeoutToUse = getConnectionRequestTimeout();
+        if (connectionRequestTimeoutToUse > 0) {
+            defaultRequestConfigBuilder.setConnectionRequestTimeout(connectionRequestTimeoutToUse, TimeUnit.MILLISECONDS);
+        }
+        int responseTimeoutToUse = getResponseTimeout();
+        if (responseTimeoutToUse > 0) {
+            defaultRequestConfigBuilder.setResponseTimeout(responseTimeoutToUse, TimeUnit.MILLISECONDS);
+        }
+        int connectionKeepAliveToUse = getConnectionKeepAlive();
+        if (connectionKeepAliveToUse > 0) {
+            defaultRequestConfigBuilder.setConnectionKeepAlive(TimeValue.of(connectionKeepAliveToUse, TimeUnit.MILLISECONDS));
+        }
+        // connection pool
+        if (Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL))) {
+            RegistryBuilder<ConnectionSocketFactory> socketFactoryRegistryBuilder = RegistryBuilder.create();
+            socketFactoryRegistryBuilder.register(UriScheme.HTTP.getValue(), new PlainConnectionSocketFactory());
+            SSLConnectionSocketFactory sslConnectionSocketFactory = createSSLConnectionSocketFactory();
+            socketFactoryRegistryBuilder.register(UriScheme.HTTPS.getValue(), sslConnectionSocketFactory);
+            PoolingHttpClientConnectionManager connectionManager
+                    = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build());
+            int connectionMaxTotalToUse = getConnectionMaxTotal();
+            if (connectionMaxTotalToUse > 0) {
+                connectionManager.setMaxTotal(connectionMaxTotalToUse);
+            }
+            int connectionTtlToUse = getConnectionTtl();
+            if (connectionTtlToUse > 0) {
+                connectionConfigBuilder.setTimeToLive(connectionTtlToUse, TimeUnit.MILLISECONDS);
+            }
+            connectionManager.setDefaultConnectionConfig(connectionConfigBuilder.build());
+            this.connectionManager = connectionManager;
+        }
+        // proxy
+        HttpHost proxyToUse = Optional.ofNullable(getProxy()).map(Proxy::address)
+                .map(addr -> (InetSocketAddress) addr)
+                .map(addr -> new HttpHost(addr.getHostName(), addr.getPort()))
+                .orElse(null);
         realHttpClient = HttpClients.custom()
-                .setDefaultRequestConfig(requestConfigBuilder.build())
+                .setDefaultRequestConfig(defaultRequestConfigBuilder.build())
+                .setConnectionManager(connectionManager)
+                .setProxy(proxyToUse)
                 .build();
     }
 
@@ -83,40 +152,98 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
                                                RequestPayloadSupport payloadPublisher,
                                                ResponsePayloadSupport<?> payloadSubscriber) throws IOException {
         ResponsePayloadSupport<T> responsePayloadSupport = (ResponsePayloadSupport<T>) payloadSubscriber;
-
-        return null;
+        ClassicHttpRequest classicHttpRequest = createClassicHttpRequest(request, payloadPublisher);
+        return realHttpClient.execute(classicHttpRequest, classicHttpResponse -> {
+            try {
+                return parseFromClassicHttpResponse(classicHttpResponse, responsePayloadSupport);
+            } finally {
+                IoUtils.X.closeQuietly(classicHttpResponse);
+            }
+        });
     }
 
     private ClassicHttpRequest createClassicHttpRequest(HttpRequest request,
                                                         RequestPayloadSupport payloadPublisher) throws IOException {
         HttpMethod method = request.getMethod();
         HttpUriRequestBase base = new HttpUriRequestBase(method.name(), request.getUri());
-//        Integer requestTimeout = request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_TIMEOUT);
-//        if (Objects.nonNull(requestTimeout)) {
-//            RequestConfig requestConfig = RequestConfig.custom()
-//                    .setResponseTimeout(requestTimeout, TimeUnit.MILLISECONDS)
-//                    .build();
-//            base.setConfig(requestConfig);
-//        }
+        Integer connectionRequestTimeoutToUse
+                = request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_CONNECTION_REQUEST_TIMEOUT);
+        Integer responseTimeoutToUse = request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_RESPONSE_TIMEOUT);
+        Integer connectionKeepAliveToUse = request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_CONNECTION_KEEPALIVE);
+        if (Objects.nonNull(connectionRequestTimeoutToUse) || Objects.nonNull(responseTimeoutToUse) ||
+                Objects.nonNull(connectionKeepAliveToUse)) {
+            RequestConfig.Builder builder = RequestConfig.custom();
+            Optional.ofNullable(connectionRequestTimeoutToUse)
+                    .ifPresent(v -> builder.setConnectionRequestTimeout(v, TimeUnit.MILLISECONDS));
+            Optional.ofNullable(responseTimeoutToUse)
+                    .ifPresent(v -> builder.setResponseTimeout(v, TimeUnit.MILLISECONDS));
+            Optional.ofNullable(connectionKeepAliveToUse)
+                    .ifPresent(v -> builder.setConnectionKeepAlive(TimeValue.of(connectionKeepAliveToUse,
+                            TimeUnit.MILLISECONDS)));
+            base.setConfig(builder.build());
+        }
+        request.consumeHeaders(httpHeader -> base.addHeader(httpHeader.name(), httpHeader.value()));
         String contentTypeValue = request.getContentTypeValue();
         org.apache.hc.core5.http.ContentType contentType = null;
         if (Objects.nonNull(contentTypeValue)) {
             contentType = org.apache.hc.core5.http.ContentType.parse(contentTypeValue);
         }
         if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
-            EntityBuilder bodyBuilder = EntityBuilder.create();
-            ByteBufferConsumerOutputStream outputStream = new ByteBufferConsumerOutputStream(null);
+            long contentLength = request.getContentLength();
+            if (contentLength < 0) {
+                contentLength = payloadPublisher.contentLength();
+            }
             if (payloadPublisher instanceof PayloadPublisher) {
-                ((PayloadPublisher) payloadPublisher).writeTo(outputStream);
+                PayloadPublisher publisher = (PayloadPublisher) payloadPublisher;
+                if (contentLength < 0) {
+                    base.setEntity(PayloadPublisherEntityV5.newInstance(publisher, contentType));
+                } else {
+                    base.setEntity(PayloadPublisherEntityV5.newInstance(publisher, contentLength, contentType));
+                }
             } else if (payloadPublisher instanceof FlowPayloadPublisher) {
                 FlowPayloadPublisher flowPublisher = (FlowPayloadPublisher) payloadPublisher;
-                flowPublisher.subscribe(FlowOutputStreamSubscriber.ofOutputStream(outputStream));
+                if (contentLength < 0) {
+                    base.setEntity(FlowPayloadPublisherEntityV5.newInstance(flowPublisher, contentType));
+                } else {
+                    base.setEntity(FlowPayloadPublisherEntityV5.newInstance(flowPublisher, contentLength, contentType));
+                }
             }
-            PullingInputStream pullingInputStream = new PullingInputStream(null);
-            InputStreamEntity inputStreamEntity = new InputStreamEntity(pullingInputStream, contentType);
-            base.setEntity(inputStreamEntity);
         }
         return base;
+    }
+
+    private <T> HttpResponse<T> parseFromClassicHttpResponse(ClassicHttpResponse classicHttpResponse,
+                                                             ResponsePayloadSupport<T> responsePayloadSupport) throws IOException {
+        HttpEntity responseEntity = classicHttpResponse.getEntity();
+        if (Objects.nonNull(responseEntity) && Objects.nonNull(responseEntity.getContent())) {
+            if (responsePayloadSupport instanceof PayloadSubscriber) {
+                PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) responsePayloadSupport;
+                subscriber.readFrom(responseEntity.getContent());
+            } else if (responsePayloadSupport instanceof FlowPayloadSubscriber) {
+                FlowPayloadSubscriber<T> flowSubscriber = (FlowPayloadSubscriber<T>) responsePayloadSupport;
+                FlowInputStreamPublisher.ofInputStream(responseEntity.getContent()).subscribe(flowSubscriber);
+            }
+        } else {
+            // force to discard
+            responsePayloadSupport = PayloadSubscribers.X.discarding();
+        }
+        DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(),
+                classicHttpResponse.getCode());
+        httpResponse.setReasonPhrase(classicHttpResponse.getReasonPhrase());
+        HttpVersion httpVersion = HttpVersion.defaultVersion();
+        ProtocolVersion protocolVersion = classicHttpResponse.getVersion();
+        HttpVersion parsedHttpVersion = HttpVersion.fromVersion(protocolVersion.getMajor(), protocolVersion.getMinor());
+        if (Objects.nonNull(parsedHttpVersion)) {
+            httpVersion = parsedHttpVersion;
+        }
+        httpResponse.setProtocolVersion(httpVersion);
+        Header[] responseHeaders = classicHttpResponse.getHeaders();
+        if (Objects.nonNull(responseHeaders)) {
+            for (Header responseHeader : responseHeaders) {
+                httpResponse.addHeader(responseHeader.getName(), responseHeader.getValue());
+            }
+        }
+        return httpResponse;
     }
 
     public void setConnectTimeout(int connectTimeout) {
@@ -128,21 +255,82 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
                 .orElse(this.connectTimeout);
     }
 
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
+    public void setSocketTimeout(int socketTimeout) {
+        this.socketTimeout = socketTimeout;
     }
 
-    public int getTimeout() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_TIMEOUT))
-                .orElse(this.timeout);
+    public int getSocketTimeout() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_SOCKET_TIMEOUT))
+                .orElse(this.socketTimeout);
+    }
+
+    public void setConnectionMaxTotal(int connectionMaxTotal) {
+        this.connectionMaxTotal = connectionMaxTotal;
+    }
+
+    public int getConnectionMaxTotal() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY))
+                .orElse(this.connectionMaxTotal);
+    }
+
+    public void setConnectionTtl(int connectionTtl) {
+        this.connectionTtl = connectionTtl;
+    }
+
+    public int getConnectionTtl() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_TTL))
+                .orElse(this.connectionTtl);
+    }
+
+    public int getConnectionRequestTimeout() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CONNECTION_REQUEST_TIMEOUT))
+                .orElse(this.connectionRequestTimeout);
+    }
+
+    public void setConnectionRequestTimeout(int connectionRequestTimeout) {
+        this.connectionRequestTimeout = connectionRequestTimeout;
+    }
+
+    public int getResponseTimeout() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_RESPONSE_TIMEOUT))
+                .orElse(this.responseTimeout);
+    }
+
+    public void setResponseTimeout(int responseTimeout) {
+        this.responseTimeout = responseTimeout;
+    }
+
+    public int getConnectionKeepAlive() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CONNECTION_KEEPALIVE))
+                .orElse(this.connectionKeepAlive);
+    }
+
+    public void setConnectionKeepAlive(int connectionKeepAlive) {
+        this.connectionKeepAlive = connectionKeepAlive;
+    }
+
+    public void setConnectionManager(HttpClientConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 
     @Override
     protected void closeInternal() {
-        Optional.ofNullable(realHttpClient).ifPresent(hc -> {
+        Optional.ofNullable(realHttpClient).ifPresent(ahc -> {
             Optional.ofNullable(connectionManager).ifPresent(IoUtils.X::closeQuietly);
-            IoUtils.X.closeQuietly(hc);
+            IoUtils.X.closeQuietly(ahc);
         });
+    }
+
+    private SSLConnectionSocketFactory createSSLConnectionSocketFactory() {
+        SSLConfig sslConfig = getHttpOptionValue(HttpOptions.HTTP_SSL_CONFIG);
+        if (Objects.nonNull(sslConfig) && Objects.nonNull(sslConfig.getContext())) {
+            HostnameVerifier hostnameVerifier = sslConfig.getHostnameVerifier();
+            if (Objects.isNull(hostnameVerifier)) {
+                hostnameVerifier = new NoopHostnameVerifier();
+            }
+            return new SSLConnectionSocketFactory(sslConfig.getContext(), hostnameVerifier);
+        }
+        return SSLConnectionSocketFactory.getSocketFactory();
     }
 
     static {
