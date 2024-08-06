@@ -4,6 +4,7 @@ import cn.vlts.solpic.core.logging.Logger;
 import cn.vlts.solpic.core.logging.LoggerFactory;
 import cn.vlts.solpic.core.util.Box;
 import cn.vlts.solpic.core.util.Ordered;
+import cn.vlts.solpic.core.util.ReflectionUtils;
 import cn.vlts.solpic.core.util.ResourceLoader;
 import lombok.Data;
 
@@ -297,6 +298,11 @@ public class SpiLoader<T> {
                                     name = className;
                                 }
                                 name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+                            }
+                            boolean isClassPresent = ReflectionUtils.X.isClassPresent(className, classLoader);
+                            // skip class that is not present
+                            if (!isClassPresent) {
+                                continue;
                             }
                             Class<?> serviceType = Class.forName(className, true, classLoader);
                             Class<?> cacheType = servicesClasses.get(name);

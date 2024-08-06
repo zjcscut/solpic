@@ -19,6 +19,7 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -60,6 +61,10 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
     private int connectionMaxTotal = -1;
 
     private int connectionTtl = -1;
+
+    private int connectionIdleTime = -1;
+
+    private boolean evictExpiredConnections = true;
 
     private HttpClientConnectionManager connectionManager;
 
@@ -140,11 +145,18 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
                 .map(addr -> (InetSocketAddress) addr)
                 .map(addr -> new HttpHost(addr.getHostName(), addr.getPort()))
                 .orElse(null);
-        realHttpClient = HttpClients.custom()
-                .setDefaultRequestConfig(defaultRequestConfigBuilder.build())
+        HttpClientBuilder httpClientBuilder = HttpClients.custom();
+        httpClientBuilder.setDefaultRequestConfig(defaultRequestConfigBuilder.build())
                 .setConnectionManager(connectionManager)
-                .setProxy(proxyToUse)
-                .build();
+                .setProxy(proxyToUse);
+        if (isEvictExpiredConnections()) {
+            httpClientBuilder.evictExpiredConnections();
+        }
+        int connectionIdleTimeToUse = getConnectionIdleTime();
+        if (connectionIdleTimeToUse > 0) {
+            httpClientBuilder.evictIdleConnections(TimeValue.of(connectionIdleTimeToUse, TimeUnit.MILLISECONDS));
+        }
+        realHttpClient = httpClientBuilder.build();
     }
 
     @Override
@@ -309,8 +321,28 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
         this.connectionKeepAlive = connectionKeepAlive;
     }
 
+    public int getConnectionIdleTime() {
+        return connectionIdleTime;
+    }
+
+    public void setConnectionIdleTime(int connectionIdleTime) {
+        this.connectionIdleTime = connectionIdleTime;
+    }
+
+    public boolean isEvictExpiredConnections() {
+        return evictExpiredConnections;
+    }
+
+    public void setEvictExpiredConnections(boolean evictExpiredConnections) {
+        this.evictExpiredConnections = evictExpiredConnections;
+    }
+
     public void setConnectionManager(HttpClientConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    public CloseableHttpClient getRealHttpClient() {
+        return this.realHttpClient;
     }
 
     @Override

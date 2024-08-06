@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 @Getter
 public enum CodecType {
 
+    NONE("cn.vlts.solpic.core.codec.impl.NoneCodec", 5),
+
     JACKSON("cn.vlts.solpic.core.codec.impl.JacksonCodec", 1),
 
     GSON("cn.vlts.solpic.core.codec.impl.GsonCodec", 4),

@@ -27,6 +27,7 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
@@ -36,6 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HTTP client base on Apache HTTP client 4.x.
@@ -43,6 +45,7 @@ import java.util.Optional;
  * @author throwable
  * @since 2024/7/24 00:29
  */
+@SuppressWarnings("unchecked")
 public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient {
 
     private int connectTimeout = -1;
@@ -52,6 +55,10 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
     private int connectionRequestTimeout = -1;
 
     private int connectionMaxTotal = -1;
+
+    private int connectionIdleTime = -1;
+
+    private boolean evictExpiredConnections = true;
 
     private HttpClientConnectionManager connectionManager;
 
@@ -117,11 +124,18 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
                 .map(addr -> (InetSocketAddress) addr)
                 .map(addr -> new HttpHost(addr.getHostName(), addr.getPort()))
                 .orElse(null);
-        realHttpClient = HttpClients.custom()
-                .setDefaultRequestConfig(defaultRequestConfigBuilder.build())
+        HttpClientBuilder httpClientBuilder = HttpClients.custom();
+        httpClientBuilder.setDefaultRequestConfig(defaultRequestConfigBuilder.build())
                 .setConnectionManager(connectionManager)
-                .setProxy(proxyToUse)
-                .build();
+                .setProxy(proxyToUse);
+        if (isEvictExpiredConnections()) {
+            httpClientBuilder.evictExpiredConnections();
+        }
+        int connectionIdleTimeToUse = getConnectionIdleTime();
+        if (connectionIdleTimeToUse > 0) {
+            httpClientBuilder.evictIdleConnections(connectionIdleTimeToUse, TimeUnit.MILLISECONDS);
+        }
+        realHttpClient = httpClientBuilder.build();
     }
 
     @Override
@@ -248,12 +262,28 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
     }
 
     public int getConnectionRequestTimeout() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_TTL))
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CONNECTION_REQUEST_TIMEOUT))
                 .orElse(this.connectionRequestTimeout);
     }
 
     public void setConnectionRequestTimeout(int connectionRequestTimeout) {
         this.connectionRequestTimeout = connectionRequestTimeout;
+    }
+
+    public int getConnectionIdleTime() {
+        return connectionIdleTime;
+    }
+
+    public void setConnectionIdleTime(int connectionIdleTime) {
+        this.connectionIdleTime = connectionIdleTime;
+    }
+
+    public boolean isEvictExpiredConnections() {
+        return evictExpiredConnections;
+    }
+
+    public void setEvictExpiredConnections(boolean evictExpiredConnections) {
+        this.evictExpiredConnections = evictExpiredConnections;
     }
 
     public void setConnectionManager(HttpClientConnectionManager connectionManager) {

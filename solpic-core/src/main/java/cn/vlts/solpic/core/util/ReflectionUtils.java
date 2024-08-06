@@ -32,6 +32,16 @@ public enum ReflectionUtils {
         return false;
     }
 
+    public boolean isClassPresent(String className, ClassLoader classLoader) {
+        try {
+            Class.forName(className, true, classLoader);
+            return true;
+        } catch (Throwable ignore) {
+
+        }
+        return false;
+    }
+
     public <T> T createInstance(Class<T> clazz) {
         try {
             return instanceFactory.newInstance(clazz);

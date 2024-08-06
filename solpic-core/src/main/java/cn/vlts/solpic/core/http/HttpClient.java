@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http;
 
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.concurrent.ListenableFuture;
+import cn.vlts.solpic.core.spi.Spi;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -15,7 +16,10 @@ import java.util.concurrent.TimeUnit;
  * @author throwable
  * @since 2024/7/23 星期二 17:59
  */
+@Spi(value = HttpClient.DEFAULT, singleton = false)
 public interface HttpClient extends Closeable {
+
+    String DEFAULT = "default";
 
     String id();
 
