@@ -136,7 +136,7 @@ public enum IoUtils {
     }
 
     /**
-     * only used for heap ByteBuffers.
+     * only used for heap none readonly ByteBuffers.
      */
     public byte[] fastCopyByteBuffersToByteArray(List<ByteBuffer> bufferList) {
         if (Objects.isNull(bufferList)) {
@@ -147,10 +147,16 @@ public enum IoUtils {
             total += buffer.remaining();
         }
         byte[] result = new byte[total];
+        byte[] tempArray;
         int offset = 0;
         for (ByteBuffer buffer : bufferList) {
             int length = buffer.remaining();
-            System.arraycopy(buffer.array(), buffer.position(), result, offset, length);
+            if (length == 0) {
+                continue;
+            }
+            tempArray = new byte[length];
+            buffer.get(tempArray);
+            System.arraycopy(tempArray, 0, result, offset, length);
             offset += length;
         }
         return result;

@@ -1,5 +1,7 @@
 package cn.vlts.solpic.core.config;
 
+import cn.vlts.solpic.core.http.HttpVersion;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,11 +41,11 @@ public final class HttpOptions {
             .level(OptionLevel.CLIENT)
             .build();
 
-    public static final HttpOption<String> HTTP_PROTOCOL_VERSION = StringHttpOption.builder()
+    public static final HttpOption<HttpVersion> HTTP_PROTOCOL_VERSION = HttpVersionHttpOption.builder()
             .id(1 << 1L)
             .key("HTTP_PROTOCOL_VERSION")
             .propertyKey("solpic.http.protocol.version")
-            .defaultValue("1.1")
+            .defaultValue(HttpVersion.HTTP_1_1)
             .level(OptionLevel.CLIENT)
             .build();
 

@@ -56,6 +56,9 @@ public abstract class HttpOptionSupport implements HttpOptional {
 
     @Override
     public <T> T getHttpOptionValue(HttpOption<T> httpOption) {
+        if (!supportHttpOption(httpOption)) {
+            return null;
+        }
         Class<T> type = httpOption.valueType();
         T configValue = type.cast(options.get(httpOption));
         if (Objects.nonNull(configValue)) {

@@ -74,7 +74,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         try {
             response = sendInternal(request, payloadPublisher, payloadSubscriber);
             triggerAfterSend(request, response);
-        } catch (IOException e) {
+        } catch (Throwable e) {
             triggerOnError(request, e);
             throw new SolpicHttpException("Send HTTP request failed", e);
         } finally {
@@ -258,5 +258,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,
                                                         RequestPayloadSupport payloadPublisher,
-                                                        ResponsePayloadSupport<?> payloadSubscriber) throws IOException;
+                                                        ResponsePayloadSupport<?> payloadSubscriber)
+            throws IOException, InterruptedException;
 }
