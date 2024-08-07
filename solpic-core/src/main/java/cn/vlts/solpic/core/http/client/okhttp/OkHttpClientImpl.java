@@ -1,4 +1,4 @@
-package cn.vlts.solpic.core.http.client.ok;
+package cn.vlts.solpic.core.http.client.okhttp;
 
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.*;

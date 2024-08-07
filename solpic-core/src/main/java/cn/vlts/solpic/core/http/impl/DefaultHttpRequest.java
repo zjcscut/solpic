@@ -37,8 +37,18 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         this.httpClient = null;
     }
 
+    public DefaultHttpRequest(String method) {
+        super(HttpMethod.fromMethod(method));
+        this.httpClient = null;
+    }
+
     public DefaultHttpRequest(HttpMethod method, HttpClient httpClient) {
         super(method);
+        this.httpClient = httpClient;
+    }
+
+    public DefaultHttpRequest(String method, HttpClient httpClient) {
+        super(HttpMethod.fromMethod(method));
         this.httpClient = httpClient;
     }
 
@@ -46,8 +56,17 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         this(method, uri, null);
     }
 
+    public DefaultHttpRequest(String method, URI uri) {
+        this(method, uri, null);
+    }
+
     public DefaultHttpRequest(HttpMethod method, URI uri, HttpClient httpClient) {
         super(method, uri);
+        this.httpClient = httpClient;
+    }
+
+    public DefaultHttpRequest(String method, URI uri, HttpClient httpClient) {
+        super(HttpMethod.fromMethod(method), uri);
         this.httpClient = httpClient;
     }
 

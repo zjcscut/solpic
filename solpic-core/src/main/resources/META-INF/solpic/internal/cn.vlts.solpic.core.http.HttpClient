@@ -1,0 +1,4 @@
+default=cn.vlts.solpic.core.http.client.DefaultHttpClientImpl
+okhttp=cn.vlts.solpic.core.http.client.okhttp.OkHttpClientImpl
+ahc4=cn.vlts.solpic.core.http.client.ahc4.ApacheHttpClientV4Impl
+ahc5=cn.vlts.solpic.core.http.client.ahc5.ApacheHttpClientV5Impl
