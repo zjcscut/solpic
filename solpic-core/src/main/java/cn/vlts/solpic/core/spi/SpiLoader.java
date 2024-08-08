@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.spi;
 
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.logging.Logger;
 import cn.vlts.solpic.core.logging.LoggerFactory;
 import cn.vlts.solpic.core.util.Box;
@@ -408,6 +409,10 @@ public class SpiLoader<T> {
     public static void destroyOnShutdown() {
         SPI_LOADER_CACHE.forEach((k, v) -> v.destroy());
         SPI_LOADER_CACHE.clear();
+    }
+
+    static {
+        SolpicShutdownHook.registerShutdownHookAction(SpiLoader::destroyOnShutdown);
     }
 
     @Data

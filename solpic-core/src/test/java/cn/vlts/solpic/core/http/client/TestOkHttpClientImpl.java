@@ -2,15 +2,17 @@ package cn.vlts.solpic.core.http.client;
 
 import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.codec.impl.JacksonCodec;
+import cn.vlts.solpic.core.common.HttpClientType;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.http.HttpClient;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
-import cn.vlts.solpic.core.http.client.okhttp.OkHttpClientImpl;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublishers;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscribers;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.spi.SpiLoader;
 import lombok.Data;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,7 +32,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class TestOkHttpClientImpl {
 
-    private final OkHttpClientImpl okHttpClientImpl = new OkHttpClientImpl();
+    private final HttpClient okHttpClientImpl = SpiLoader.getSpiLoader(HttpClient.class)
+            .getService(HttpClientType.OKHTTP.getCode());
 
     @Test
     public void testSimpleSend() {

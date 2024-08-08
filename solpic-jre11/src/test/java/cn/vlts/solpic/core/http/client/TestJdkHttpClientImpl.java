@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.client;
 
+import cn.vlts.solpic.core.common.HttpClientType;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.HttpClient;
 import cn.vlts.solpic.core.http.HttpMethod;
@@ -26,7 +27,8 @@ import java.net.URI;
  */
 public class TestJdkHttpClientImpl {
 
-    private final JdkHttpClientImpl jdkHttpClientImpl = new JdkHttpClientImpl();
+    private final HttpClient jdkHttpClientImpl = SpiLoader.getSpiLoader(HttpClient.class)
+            .getService(HttpClientType.JDK_HTTPCLIENT.getCode());
 
     @Test
     public void testSimpleSend() {

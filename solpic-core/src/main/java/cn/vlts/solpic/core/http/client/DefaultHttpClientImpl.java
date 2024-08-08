@@ -37,10 +37,9 @@ public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient,
 
     public DefaultHttpClientImpl() {
         super();
-        init();
     }
 
-    private void init() {
+    protected void initInternal() {
         // HttpURLConnection only support HTTP/1.0 and HTTP/1.1
         addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1);
         // minimum options and available options

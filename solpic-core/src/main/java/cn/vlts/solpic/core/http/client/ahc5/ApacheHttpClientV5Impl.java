@@ -72,10 +72,9 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
 
     public ApacheHttpClientV5Impl() {
         super();
-        init();
     }
 
-    private void init() {
+    protected void initInternal() {
         // support HTTP/0.9, HTTP/1.0, HTTP/1.1, HTTP/2.0
         addHttpVersions(HttpVersion.HTTP_0_9, HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options

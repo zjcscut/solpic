@@ -43,10 +43,9 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
 
     public OkHttpClientImpl() {
         super();
-        init();
     }
 
-    private void init() {
+    protected void initInternal() {
         // support HTTP/1.0, HTTP/1.1, HTTP/2.0
         addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options

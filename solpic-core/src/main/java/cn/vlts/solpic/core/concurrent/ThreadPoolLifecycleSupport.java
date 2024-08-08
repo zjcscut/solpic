@@ -56,7 +56,7 @@ public abstract class ThreadPoolLifecycleSupport implements DisposableBean {
     }
 
     @Override
-    public void destroy() {
+    public void destroy() throws Exception {
         if (running.compareAndSet(true, false)) {
             ExecutorService executorService = executorServiceRef.getAndSet(null);
             if (Objects.nonNull(executorService)) {

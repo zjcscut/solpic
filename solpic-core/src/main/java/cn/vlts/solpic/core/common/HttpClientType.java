@@ -16,12 +16,12 @@ import java.util.Objects;
 public enum HttpClientType {
 
     /**
-     * Default, use HttpURLConnection.
+     * Default, base on HttpURLConnection.
      */
     DEFAULT("default"),
 
     /**
-     * OkHttp3.
+     * OkHttp 4.x.
      */
     OKHTTP("okhttp"),
 

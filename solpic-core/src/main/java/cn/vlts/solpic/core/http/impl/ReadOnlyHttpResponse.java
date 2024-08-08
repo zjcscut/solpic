@@ -6,7 +6,6 @@ import cn.vlts.solpic.core.util.Attachable;
 import cn.vlts.solpic.core.util.AttachmentKey;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -27,4 +27,12 @@ public class SolpicTemplateTest {
         long end = System.currentTimeMillis();
         System.out.printf("Cost: %d ms\n", end - start);
     }
+
+    @Test
+    public void testBestMatchedConfig() {
+        SolpicTemplate solpicTemplate = Solpic.newSolpicTemplate();
+        String result = solpicTemplate.getForObject("https://httpbin.org/get", String.class);
+        Assert.assertNotNull(result);
+        System.out.println(result);
+    }
 }

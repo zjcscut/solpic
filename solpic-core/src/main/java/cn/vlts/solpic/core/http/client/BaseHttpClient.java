@@ -247,6 +247,20 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     @Override
+    public void init() {
+        initInternal();
+    }
+
+    protected void initInternal() {
+
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        close();
+    }
+
+    @Override
     public void close() throws IOException {
         if (running.compareAndSet(true, false)) {
             this.interceptors.clear();
@@ -254,7 +268,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         }
     }
 
-    protected void closeInternal() throws IOException{
+    protected void closeInternal() throws IOException {
 
     }
 

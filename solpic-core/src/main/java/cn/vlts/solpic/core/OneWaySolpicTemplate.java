@@ -4,7 +4,6 @@ import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 
-import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -20,11 +19,11 @@ public interface OneWaySolpicTemplate {
 
     // ##################### GET METHOD #####################
 
-    default void get(String url, Type responsePayloadType) {
-        get(url, Collections.emptyList(), responsePayloadType);
+    default void get(String url) {
+        get(url, Collections.emptyList());
     }
 
-    default void get(String url, List<HttpHeader> requestHeaders, Type responsePayloadType) {
+    default void get(String url, List<HttpHeader> requestHeaders) {
         exchange(url, HttpMethod.GET, null, requestHeaders, null);
     }
 
@@ -73,7 +72,7 @@ public interface OneWaySolpicTemplate {
 
     // ##################### POST METHOD #####################
 
-    default <S> void post(String url, S requestPayload, Type responsePayloadType) {
+    default <S> void post(String url, S requestPayload) {
         exchange(url, HttpMethod.POST, ContentType.APPLICATION_JSON, Collections.emptyList(), requestPayload);
     }
 

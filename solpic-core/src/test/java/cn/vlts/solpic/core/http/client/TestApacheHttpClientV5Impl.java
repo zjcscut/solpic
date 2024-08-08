@@ -1,12 +1,15 @@
 package cn.vlts.solpic.core.http.client;
 
+import cn.vlts.solpic.core.common.HttpClientType;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.http.HttpClient;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
 import cn.vlts.solpic.core.http.client.ahc5.ApacheHttpClientV5Impl;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.spi.SpiLoader;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,7 +23,8 @@ import java.net.URI;
  */
 public class TestApacheHttpClientV5Impl {
 
-    private final ApacheHttpClientV5Impl apacheHttpClientV5Impl = new ApacheHttpClientV5Impl();
+    private final HttpClient apacheHttpClientV5Impl = SpiLoader.getSpiLoader(HttpClient.class)
+            .getService(HttpClientType.APACHE_HTTPCLIENT_V5.getCode());
 
     @Test
     public void testSimpleSend() {

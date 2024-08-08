@@ -8,5 +8,5 @@ package cn.vlts.solpic.core.spi;
  */
 public interface DisposableBean {
 
-    void destroy();
+    void destroy() throws Exception;
 }

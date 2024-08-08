@@ -44,10 +44,9 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     public JdkHttpClientImpl() {
         super();
-        init();
     }
 
-    private void init() {
+    protected void initInternal() {
         // support HTTP/1.1, HTTP/2.0
         addHttpVersions(HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options

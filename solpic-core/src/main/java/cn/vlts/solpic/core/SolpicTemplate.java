@@ -128,8 +128,8 @@ public interface SolpicTemplate {
                                    ContentType requestContentType,
                                    S requestPayload,
                                    Type responsePayloadType) {
-        return (T) exchange(url, HttpMethod.POST, requestContentType, requestHeaders, requestPayload, responsePayloadType)
-                .getPayload();
+        return (T) exchange(url, HttpMethod.POST, requestContentType, requestHeaders, requestPayload,
+                responsePayloadType).getPayload();
     }
 
     default <S, T> HttpResponse<T> post(String url,
@@ -215,7 +215,7 @@ public interface SolpicTemplate {
                                             List<HttpHeader> requestHeaders,
                                             S requestPayload,
                                             Type responsePayloadType) {
-        PayloadSubscriber<T> responePayloadSubscriber = Objects.nonNull(requestContentType) ?
+        PayloadSubscriber<T> responePayloadSubscriber = Objects.nonNull(responsePayloadType) ?
                 PayloadSubscribers.X.getPayloadSubscriber(responsePayloadType) : PayloadSubscribers.X.discarding();
         if (Objects.isNull(responePayloadSubscriber)) {
             responePayloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);

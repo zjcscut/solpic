@@ -1,6 +1,8 @@
 package cn.vlts.solpic.core.http.client;
 
+import cn.vlts.solpic.core.common.HttpClientType;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.http.HttpClient;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.HttpResponse;
 import cn.vlts.solpic.core.http.client.ahc4.ApacheHttpClientV4Impl;
@@ -8,6 +10,7 @@ import cn.vlts.solpic.core.http.client.ahc5.ApacheHttpClientV5Impl;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.spi.SpiLoader;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +24,8 @@ import java.net.URI;
  */
 public class TestApacheHttpClientV4Impl {
 
-    private final ApacheHttpClientV4Impl apacheHttpClientV4Impl = new ApacheHttpClientV4Impl();
+    private final HttpClient apacheHttpClientV4Impl = SpiLoader.getSpiLoader(HttpClient.class)
+            .getService(HttpClientType.APACHE_HTTPCLIENT_V4.getCode());
 
     @Test
     public void testSimpleSend() {

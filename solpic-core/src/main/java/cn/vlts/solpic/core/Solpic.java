@@ -2,7 +2,9 @@ package cn.vlts.solpic.core;
 
 import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.codec.CodecFactory;
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
@@ -27,7 +29,7 @@ public abstract class Solpic {
 
     public static SolpicTemplate newSolpicTemplate() {
         return new DefaultSolpicTemplateBuilder()
-                .httpClient(null)
+                .httpClient(HttpClientFactory.X.loadBestMatchedHttpClient())
                 .codec(CodecFactory.X.loadBestMatchedCodec())
                 .build();
     }
@@ -38,7 +40,7 @@ public abstract class Solpic {
 
     public static OneWaySolpicTemplate newOneWaySolpicTemplate() {
         return new DefaultOneWaySolpicTemplateBuilder()
-                .httpClient(null)
+                .httpClient(HttpClientFactory.X.loadBestMatchedHttpClient())
                 .codec(CodecFactory.X.loadBestMatchedCodec())
                 .build();
     }
@@ -209,5 +211,9 @@ public abstract class Solpic {
 
     public interface HttpClientBuilder {
 
+    }
+
+    static {
+        new SolpicShutdownHook().addToShutdownHook();
     }
 }
