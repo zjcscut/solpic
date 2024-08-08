@@ -241,7 +241,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     }
 
     @Override
-    protected void closeInternal() {
+    protected void closeInternal() throws IOException {
         Optional.ofNullable(realHttpClient).ifPresent(ohc -> {
             Optional.ofNullable(ohc.cache()).ifPresent(IoUtils.X::closeQuietly);
             ohc.dispatcher().executorService().shutdown();

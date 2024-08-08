@@ -290,6 +290,14 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         this.connectionManager = connectionManager;
     }
 
+    @Override
+    protected void closeInternal() throws IOException {
+        Optional.ofNullable(realHttpClient).ifPresent(ahc -> {
+            Optional.ofNullable(connectionManager).ifPresent(HttpClientConnectionManager::shutdown);
+            IoUtils.X.closeQuietly(ahc);
+        });
+    }
+
     private SSLConnectionSocketFactory createSSLConnectionSocketFactory() {
         SSLConfig sslConfig = getHttpOptionValue(HttpOptions.HTTP_SSL_CONFIG);
         if (Objects.nonNull(sslConfig) && Objects.nonNull(sslConfig.getContext())) {

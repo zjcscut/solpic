@@ -23,6 +23,11 @@ public final class DefaultHttpStatusCode implements HttpStatusCode {
     }
 
     @Override
+    public HttpStatusSeries series() {
+        return this.series;
+    }
+
+    @Override
     public boolean isInformational() {
         return this.series == HttpStatusSeries.INFORMATIONAL;
     }

@@ -12,6 +12,8 @@ public interface HttpStatusCode {
 
     int value();
 
+    HttpStatusSeries series();
+
     boolean isInformational();
 
     boolean isSuccessful();

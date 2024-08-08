@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentMap;
 public enum CodecFactory {
     X;
 
-    private final SpiLoader<Codec> spiLoader = SpiLoader.getSpiLoader(Codec.class);
+    private volatile SpiLoader<Codec> spiLoader;
 
     private final ConcurrentMap<CodecType, Codec> cache = new ConcurrentHashMap<>();
 
     public <S, T> Codec<S, T> loadCodec(CodecType codecType, String codecName) {
         if (Objects.nonNull(codecName)) {
-            return (Codec<S, T>) spiLoader.getService(codecName);
+            return (Codec<S, T>) getSpiLoader().getService(codecName);
         }
         if (Objects.nonNull(codecType) && CodecType.checkAvailableCodecType(codecType)) {
             return (Codec<S, T>)
@@ -38,7 +38,7 @@ public enum CodecFactory {
     }
 
     public <S, T> Codec<S, T> loadBestMatchedCodec() {
-        Codec codec = spiLoader.getAvailableServices().stream().findFirst().orElse(null);
+        Codec codec = getSpiLoader().getAvailableServices().stream().findFirst().orElse(null);
         if (Objects.isNull(codec)) {
             codec = CodecType.getAvailableCodecTypes().stream().findFirst()
                     .map(codecType -> cache.computeIfAbsent(codecType,
@@ -46,5 +46,14 @@ public enum CodecFactory {
                     .orElse(null);
         }
         return (Codec<S, T>) codec;
+    }
+
+    private SpiLoader<Codec> getSpiLoader() {
+        if (Objects.isNull(spiLoader)) {
+            synchronized (this) {
+                spiLoader = SpiLoader.getSpiLoader(Codec.class);
+            }
+        }
+        return spiLoader;
     }
 }

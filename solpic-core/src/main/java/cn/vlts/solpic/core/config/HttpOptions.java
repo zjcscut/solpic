@@ -17,7 +17,7 @@ public final class HttpOptions {
     public static final HttpOption<String> HTTP_CLIENT_TYPE = StringHttpOption.builder()
             .key("HTTP_CLIENT_TYPE")
             .propertyKey("solpic.http.client.type")
-            .defaultValue("jdk")
+            .defaultValue("default")
             .level(OptionLevel.GLOBAL)
             .build();
 

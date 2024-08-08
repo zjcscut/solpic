@@ -173,8 +173,10 @@ public final class ContentType {
     }
 
     public static final ContentType APPLICATION_JSON;
+    public static final ContentType TEXT_PLAIN;
 
     static {
         APPLICATION_JSON = ContentType.create("application/json");
+        TEXT_PLAIN = ContentType.create("text/plain");
     }
 }

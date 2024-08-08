@@ -11,6 +11,7 @@ import cn.vlts.solpic.core.http.flow.FlowPayloadSubscribers;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.metrics.Metrics;
 import cn.vlts.solpic.core.spi.SpiLoader;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,6 +40,9 @@ public class TestJdkHttpClientImpl {
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
         System.out.println(response.getPayload());
+        Metrics.X.getHttpClientStats(jdkHttpClientImpl.id()).consume(statsFactorInfo -> {
+            System.out.printf("Stats factor: %s, value: %d\n", statsFactorInfo.getName(), statsFactorInfo.getValue());
+        });
     }
 
     @Test

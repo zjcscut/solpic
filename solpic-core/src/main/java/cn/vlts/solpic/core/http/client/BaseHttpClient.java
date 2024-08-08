@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http.client;
 
 import cn.vlts.solpic.core.common.HttpRequestStatus;
+import cn.vlts.solpic.core.common.HttpStatusCode;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.concurrent.ListenableFuture;
 import cn.vlts.solpic.core.concurrent.ScheduledThreadPool;
@@ -14,6 +15,7 @@ import cn.vlts.solpic.core.http.impl.HttpOptionSupport;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpRequest;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
+import cn.vlts.solpic.core.metrics.Metrics;
 import cn.vlts.solpic.core.spi.SpiLoader;
 
 import java.io.IOException;
@@ -186,6 +188,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected void triggerBeforeSend(HttpRequest request) {
         changeRequestStatus(request, HttpRequestStatus.PROCESSING);
+        String clientId = id();
+        Metrics.X.initHttpClientStats(clientId);
+        Metrics.X.increaseTotalRequestCount(clientId);
         triggerInterceptorsBeforeSend(request);
     }
 
@@ -195,17 +200,25 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected void triggerOnError(HttpRequest request, Throwable throwable) {
         changeRequestStatus(request, HttpRequestStatus.FAILED);
+        Metrics.X.increaseFailedRequestCount(id());
         triggerInterceptorsOnError(request, throwable);
     }
 
     protected void triggerAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         triggerInterceptorsAfterCompletion(request, response);
-        // copy request attachments to response
-        if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS) && Objects.nonNull(response)) {
-            response.copyAttachable(request);
+        if (Objects.nonNull(response)) {
+            // mark request finished
+            changeRequestStatus(request, HttpRequestStatus.FINISHED);
+            // copy request attachments to response
+            if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS)) {
+                response.copyAttachable(request);
+            }
+            // record stats factors
+            String clientId = id();
+            Metrics.X.increaseCompletedRequestCount(clientId);
+            Optional.ofNullable(response.getStatusCode()).map(HttpStatusCode::series)
+                    .ifPresent(series -> Metrics.X.increaseHttpStatusSeriesCount(clientId, series));
         }
-        // mark request finished
-        changeRequestStatus(request, HttpRequestStatus.FINISHED);
     }
 
     private void changeRequestStatus(HttpRequest request, HttpRequestStatus status) {
@@ -236,11 +249,12 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public void close() throws IOException {
         if (running.compareAndSet(true, false)) {
+            this.interceptors.clear();
             closeInternal();
         }
     }
 
-    protected void closeInternal() {
+    protected void closeInternal() throws IOException{
 
     }
 

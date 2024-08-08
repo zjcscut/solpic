@@ -346,7 +346,7 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
     }
 
     @Override
-    protected void closeInternal() {
+    protected void closeInternal() throws IOException {
         Optional.ofNullable(realHttpClient).ifPresent(ahc -> {
             Optional.ofNullable(connectionManager).ifPresent(IoUtils.X::closeQuietly);
             IoUtils.X.closeQuietly(ahc);
