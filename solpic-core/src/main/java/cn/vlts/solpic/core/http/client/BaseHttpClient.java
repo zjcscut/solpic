@@ -51,7 +51,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     private String id;
 
-    protected Proxy proxy;
+    private Proxy proxy;
 
     public BaseHttpClient() {
         if (running.compareAndSet(false, true)) {

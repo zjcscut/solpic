@@ -21,19 +21,19 @@ import java.util.*;
 @Getter
 public final class UriBuilder {
 
-    private static final String QUERY_PARAM_SEPARATOR = "&";
+    public static final String QUERY_PARAM_SEPARATOR = "&";
 
-    private static final String PARAM_VALUE_SEPARATOR = "=";
+    public static final String PARAM_VALUE_SEPARATOR = "=";
 
-    private static final String PATH_SEPARATOR = "/";
+    public static final String PATH_SEPARATOR = "/";
 
-    private static final String CON = ":";
+    public static final String CON = ":";
 
-    private static final String Q = "?";
+    public static final String Q = "?";
 
-    private static final String FRAGMENT_SEPARATOR = "#";
+    public static final String FRAGMENT_SEPARATOR = "#";
 
-    private static final String AT = "@";
+    public static final String AT = "@";
 
     private final Charset charset;
 
@@ -302,12 +302,8 @@ public final class UriBuilder {
         this.authority = authorityString;
     }
 
-    private String encodeValue(String value) {
-        try {
-            return URLEncoder.encode(value, charset.name());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public String encodeValue(String value) {
+        return HttpCodecUtils.X.encodeValue(value, charset);
     }
 
     private String buildString() {

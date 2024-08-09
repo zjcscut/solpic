@@ -6,6 +6,7 @@ import cn.vlts.solpic.core.util.SimpleLRUCache;
 import cn.vlts.solpic.core.util.Tokenizer;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -62,6 +63,10 @@ public final class ContentType {
         return CACHE.computeIfAbsent(contentType, ct -> parse0(ct, strict));
     }
 
+    public static ContentType newInstance(String mimeType, Charset charset) {
+        return create(mimeType, charset);
+    }
+
     private static ContentType parse0(final CharSequence charSequence, boolean strict) {
         Cursor cursor = new Cursor(charSequence.length());
         Pair mimeTypePair = parsePair(charSequence, cursor);
@@ -107,6 +112,10 @@ public final class ContentType {
 
     private static ContentType create(String mimeType, Charset charset, Pair[] params) {
         return new ContentType(mimeType, charset, params);
+    }
+
+    private static ContentType create(String mimeType, Charset charset) {
+        return new ContentType(mimeType, charset, null);
     }
 
     private static ContentType create(String mimeType, Pair[] params, boolean strict) {
@@ -174,9 +183,11 @@ public final class ContentType {
 
     public static final ContentType APPLICATION_JSON;
     public static final ContentType TEXT_PLAIN;
+    public static final ContentType APPLICATION_FORM_URLENCODED;
 
     static {
         APPLICATION_JSON = ContentType.create("application/json");
         TEXT_PLAIN = ContentType.create("text/plain");
+        APPLICATION_FORM_URLENCODED = ContentType.create("application/x-www-form-urlencoded");
     }
 }
