@@ -71,6 +71,11 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (!isRunning()) {
             throw new IllegalStateException("Http client is not running");
         }
+        // attach request content type
+        ContentType requestContentType = payloadPublisher.contentType();
+        if (Objects.nonNull(requestContentType) && Objects.isNull(request.getContentType())) {
+            request.setContentType(requestContentType);
+        }
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {

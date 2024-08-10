@@ -68,14 +68,8 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
 
     @Override
     public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
-        byte[] content = format().getBytes(charset);
-        Subscription nop = new UrlEncodedFormSubscription();
-        subscriber.onSubscribe(nop);
-        try {
-            subscriber.onNext(ByteBuffer.wrap(content));
-        }finally {
-            subscriber.onComplete();
-        }
+        Subscription subscription = new UrlEncodedFormSubscription(subscriber);
+        subscriber.onSubscribe(subscription);
     }
 
     @Override
@@ -124,11 +118,24 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
         UrlEncodedForm build();
     }
 
-    private static class UrlEncodedFormSubscription implements Subscription {
+    private class UrlEncodedFormSubscription implements Subscription {
+
+        private final Subscriber<? super ByteBuffer> subscriber;
+
+        public UrlEncodedFormSubscription(Subscriber<? super ByteBuffer> subscriber) {
+            this.subscriber = subscriber;
+        }
 
         @Override
         public void request(long n) {
-            // no-op
+            if (n > 0) {
+                byte[] content = format().getBytes(charset);
+                try {
+                    subscriber.onNext(ByteBuffer.wrap(content));
+                } finally {
+                    subscriber.onComplete();
+                }
+            }
         }
 
         @Override

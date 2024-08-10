@@ -12,6 +12,20 @@ public final class HttpHeaderConstants {
 
     }
 
+    // ##################### CONTENT TYPE VALUE #####################
+
+    public static final String APPLICATION_JSON_VALUE = "application/json";
+
+    public static final String TEXT_PLAIN_VALUE = "text/plain";
+
+    public static final String APPLICATION_FORM_URLENCODED_VALUE = "application/x-www-form-urlencoded";
+
+    public static final String APPLICATION_OCTET_STREAM_VALUE = "application/octet-stream";
+
+    public static final String MULTIPART_FORM_DATA_VALUE = "multipart/form-data";
+
+    // ##################### HEADER KEY #####################
+
     public static final String HTTP_URL_CONNECTION_STATUS_LINE_KEY = "Huc-Statue-Line";
 
     public static final String ACCEPT_KEY = "Accept";
@@ -25,4 +39,6 @@ public final class HttpHeaderConstants {
     public static final String COOKIE_KEY = "Cookie";
 
     public static final String ALLOW_HEADER_KEY = "Allow";
+
+    public static final String CONTENT_DISPOSITION_KEY = "Content-Disposition";
 }

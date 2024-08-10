@@ -4,10 +4,8 @@ import cn.vlts.solpic.core.common.SolpicConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.HttpRequest;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
-import cn.vlts.solpic.core.util.Ordered;
 import cn.vlts.solpic.core.util.FastUUIDUtils;
-
-import java.util.UUID;
+import cn.vlts.solpic.core.util.Ordered;
 
 /**
  * Tracing HTTP interceptor.
@@ -25,7 +23,7 @@ public class TracingInterceptor implements HttpInterceptor, Ordered {
     @Override
     public void beforeSend(HttpRequest request) {
         if (request.supportHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING)) {
-            request.setAttachment(SolpicConstants.REQUEST_TRACE_ID_KEY, FastUUIDUtils.X.formatUUID(UUID.randomUUID()));
+            request.setAttachment(SolpicConstants.REQUEST_TRACE_ID_KEY, FastUUIDUtils.X.newRandomUUID());
         }
     }
 }

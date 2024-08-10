@@ -1,12 +1,12 @@
 package cn.vlts.solpic.core.http;
 
+import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.util.Cursor;
 import cn.vlts.solpic.core.util.Pair;
 import cn.vlts.solpic.core.util.SimpleLRUCache;
 import cn.vlts.solpic.core.util.Tokenizer;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -65,6 +65,10 @@ public final class ContentType {
 
     public static ContentType newInstance(String mimeType, Charset charset) {
         return create(mimeType, charset);
+    }
+
+    public static ContentType newInstance(String mimeType, Charset charset, Pair[] params) {
+        return create(mimeType, charset, params);
     }
 
     private static ContentType parse0(final CharSequence charSequence, boolean strict) {
@@ -184,10 +188,14 @@ public final class ContentType {
     public static final ContentType APPLICATION_JSON;
     public static final ContentType TEXT_PLAIN;
     public static final ContentType APPLICATION_FORM_URLENCODED;
+    public static final ContentType APPLICATION_OCTET_STREAM;
+    public static final ContentType MULTIPART_FORM_DATA;
 
     static {
-        APPLICATION_JSON = ContentType.create("application/json");
-        TEXT_PLAIN = ContentType.create("text/plain");
-        APPLICATION_FORM_URLENCODED = ContentType.create("application/x-www-form-urlencoded");
+        APPLICATION_JSON = ContentType.create(HttpHeaderConstants.APPLICATION_JSON_VALUE);
+        TEXT_PLAIN = ContentType.create(HttpHeaderConstants.TEXT_PLAIN_VALUE);
+        APPLICATION_FORM_URLENCODED = ContentType.create(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE);
+        APPLICATION_OCTET_STREAM = ContentType.create(HttpHeaderConstants.APPLICATION_OCTET_STREAM_VALUE);
+        MULTIPART_FORM_DATA = ContentType.create(HttpHeaderConstants.MULTIPART_FORM_DATA_VALUE);
     }
 }

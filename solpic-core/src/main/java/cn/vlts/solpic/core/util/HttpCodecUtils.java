@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 
@@ -17,6 +18,14 @@ public enum HttpCodecUtils {
     public String encodeValue(String value, Charset charset) {
         try {
             return URLEncoder.encode(value, charset.name());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public String decodeValue(String value, Charset charset) {
+        try {
+            return URLDecoder.decode(value, charset.name());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

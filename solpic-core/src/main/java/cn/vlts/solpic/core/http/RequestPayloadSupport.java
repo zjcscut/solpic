@@ -9,4 +9,8 @@ package cn.vlts.solpic.core.http;
 public interface RequestPayloadSupport {
 
     long contentLength();
+
+    default ContentType contentType() {
+        return null;
+    }
 }
