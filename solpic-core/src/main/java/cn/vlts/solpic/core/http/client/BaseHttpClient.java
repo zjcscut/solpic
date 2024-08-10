@@ -17,6 +17,7 @@ import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
 import cn.vlts.solpic.core.metrics.Metrics;
 import cn.vlts.solpic.core.spi.SpiLoader;
+import cn.vlts.solpic.core.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -215,7 +216,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             // mark request finished
             changeRequestStatus(request, HttpRequestStatus.FINISHED);
             // copy request attachments to response
-            if (supportHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS)) {
+            if (Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS))) {
                 response.copyAttachable(request);
             }
             // record stats factors
@@ -293,4 +294,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                                                         RequestPayloadSupport payloadPublisher,
                                                         ResponsePayloadSupport<?> payloadSubscriber)
             throws IOException, InterruptedException;
+
+    static {
+        // make sure Solpic init...
+        ReflectionUtils.X.isClassPresent("cn.vlts.solpic.core.Solpic");
+    }
 }
