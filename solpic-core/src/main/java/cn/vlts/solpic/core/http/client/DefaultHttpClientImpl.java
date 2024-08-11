@@ -68,9 +68,9 @@ public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient,
         // create connection
         HttpURLConnection httpConnection = createHttpConnection(request);
         if (httpConnection.getDoOutput()) {
-            long contentLength = payloadPublisher.contentLength();
-            if (contentLength < 0) {
-                contentLength = request.getContentLength();
+            long contentLength = request.getContentLength();
+            if (contentLength <= 0) {
+                contentLength = payloadPublisher.contentLength();
             }
             if (contentLength > 0) {
                 httpConnection.setFixedLengthStreamingMode(contentLength);

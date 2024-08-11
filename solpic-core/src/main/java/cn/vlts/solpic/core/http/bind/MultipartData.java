@@ -82,6 +82,8 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
 
         ContentType getContentType();
 
+        long getContentLength();
+
         void addHeader(String name, String value);
 
         void removeHeader(String name);
@@ -103,7 +105,7 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
 
         Builder addBinaryPart(String name, InputStream value);
 
-        Builder addBinaryPart(String name, InputStream value, ContentType contentType);
+        Builder addBinaryPart(String name, InputStream value, long contentLength, ContentType contentType);
 
         Builder addFilePart(String name, Path path);
 

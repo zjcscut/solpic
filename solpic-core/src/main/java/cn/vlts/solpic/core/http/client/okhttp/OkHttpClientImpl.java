@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.client.okhttp;
 
+import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
@@ -103,9 +104,18 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         } else if (requiresRequestBody) {
             requestBody = RequestBody.create(new byte[0], mediaType);
         }
+        boolean useHeaderContentLength = true;
+        long contentLength = request.getContentLength();
+        if (contentLength <= 0) {
+            contentLength = payloadPublisher.contentLength();
+            useHeaderContentLength = false;
+        }
         Request.Builder requestBuilder = new Request.Builder().url(request.getUri().toURL());
         requestBuilder.method(method, requestBody);
         request.consumeHeaders(httpHeader -> requestBuilder.addHeader(httpHeader.name(), httpHeader.value()));
+        if (contentLength > 0 && !useHeaderContentLength) {
+            requestBuilder.addHeader(HttpHeaderConstants.CONTENT_LENGTH_KEY, String.valueOf(contentLength));
+        }
         Request okHttpRequest = requestBuilder.build();
         Response okHttpResponse = realHttpClient.newCall(okHttpRequest).execute();
         ResponseBody responseBody = okHttpResponse.body();

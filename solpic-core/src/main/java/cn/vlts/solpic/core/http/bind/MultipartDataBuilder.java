@@ -68,18 +68,30 @@ class MultipartDataBuilder implements MultipartData.Builder {
     public MultipartDataBuilder addBinaryPart(String name, byte[] value, ContentType contentType) {
         ArgumentUtils.X.notNull("value", value);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(value);
-        return addBinaryPart(name, inputStream, contentType);
+        return addBinaryPart(name, inputStream, inputStream.available(), contentType);
     }
 
-    public MultipartDataBuilder addBinaryPart(String name, InputStream value) {
-        return addBinaryPart(name, value, ContentType.APPLICATION_OCTET_STREAM);
+    public MultipartDataBuilder addBinaryPart(String name, InputStream inputStream) {
+        return addBinaryPart(name, inputStream, -1, ContentType.APPLICATION_OCTET_STREAM);
     }
 
-    public MultipartDataBuilder addBinaryPart(String name, InputStream value, ContentType contentType) {
+    public MultipartDataBuilder addBinaryPart(String name,
+                                              InputStream inputStream,
+                                              long contentLength,
+                                              ContentType contentType) {
         ArgumentUtils.X.notNull("name", name);
-        ArgumentUtils.X.notNull("value", value);
-        BinaryPart binaryPart = new BinaryPart(name, value);
+        ArgumentUtils.X.notNull("value", inputStream);
+        BinaryPart binaryPart = new BinaryPart(name, inputStream);
         binaryPart.setContentType(contentType);
+        if (contentLength > 0) {
+            binaryPart.setContentLength(contentLength);
+        } else {
+            try {
+                binaryPart.setContentLength(inputStream.available());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         parts.add(binaryPart);
         return this;
     }
@@ -99,12 +111,23 @@ class MultipartDataBuilder implements MultipartData.Builder {
         filename = Optional.ofNullable(filename).orElse(path.toFile().getName());
         filePart.setContentType(contentType);
         filePart.setFileName(filename);
+        try {
+            filePart.setContentLength(Files.size(path));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         parts.add(filePart);
         return this;
     }
 
     private long computeContentLength() {
-        return -1;
+        long contentLength = 0;
+        for (MultipartData.Part part : parts) {
+            if (part.getContentLength() > 0) {
+                contentLength += part.getContentLength();
+            }
+        }
+        return contentLength;
     }
 
     @Override
@@ -112,6 +135,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
         ContentType contentType = ContentType.newInstance(HttpHeaderConstants.MULTIPART_FORM_DATA_VALUE, null,
                 new Pair[]{Pair.of(BOUNDARY_KEY, boundary)});
         long contentLength = computeContentLength();
+        parts.add(new EndPart(boundary));
         return new MultipartData(contentType, contentLength, parts);
     }
 
@@ -122,6 +146,8 @@ class MultipartDataBuilder implements MultipartData.Builder {
         private String fileName;
 
         private ContentType contentType;
+
+        private long contentLength = -1;
 
         private final CaseInsensitiveMap<Cis, String> headers = new CaseInsensitiveMap<>();
 
@@ -151,6 +177,15 @@ class MultipartDataBuilder implements MultipartData.Builder {
         public void setContentType(ContentType contentType) {
             ArgumentUtils.X.notNull("contentType", contentType);
             this.contentType = contentType;
+        }
+
+        @Override
+        public long getContentLength() {
+            return contentLength;
+        }
+
+        public void setContentLength(long contentLength) {
+            this.contentLength = contentLength;
         }
 
         @Override
@@ -198,6 +233,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
             // write part body
             outputStream.write(CR_LF);
             writePartBodyTo(outputStream);
+            outputStream.write(CR_LF);
         }
 
         private void writeHeader(String name, String value, OutputStream out) throws IOException {
@@ -212,16 +248,17 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
     private class TextPart extends BasePart {
 
-        private final String text;
+        private final byte[] content;
 
         public TextPart(String name, String text) {
             super(name);
-            this.text = text;
+            this.content = text.getBytes(charset);
+            setContentLength(this.content.length);
         }
 
         @Override
         protected void writePartBodyTo(OutputStream outputStream) throws IOException {
-            outputStream.write(text.getBytes(charset));
+            outputStream.write(content);
         }
     }
 
@@ -265,6 +302,58 @@ class MultipartDataBuilder implements MultipartData.Builder {
                     outputStream.write(b);
                 }
             }
+        }
+    }
+
+    private class EndPart implements MultipartData.Part {
+
+        private final String boundary;
+
+        EndPart(String boundary) {
+            this.boundary = boundary;
+        }
+
+        @Override
+        public String getName() {
+            return null;
+        }
+
+        @Override
+        public String getFileName() {
+            return null;
+        }
+
+        @Override
+        public ContentType getContentType() {
+            return null;
+        }
+
+        @Override
+        public long getContentLength() {
+            return -1;
+        }
+
+        @Override
+        public void addHeader(String name, String value) {
+
+        }
+
+        @Override
+        public void removeHeader(String name) {
+
+        }
+
+        @Override
+        public List<Pair> getAllHeaders() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void writeTo(OutputStream outputStream) throws IOException {
+            outputStream.write(BOUNDARY_PREFIX);
+            outputStream.write(boundary.getBytes(charset));
+            outputStream.write(BOUNDARY_PREFIX);
+            outputStream.write(CR_LF);
         }
     }
 }

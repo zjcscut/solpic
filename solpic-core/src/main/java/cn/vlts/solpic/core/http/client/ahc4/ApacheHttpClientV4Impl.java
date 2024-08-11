@@ -162,19 +162,19 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         }
         if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
             long contentLength = request.getContentLength();
-            if (contentLength < 0) {
+            if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();
             }
             if (payloadPublisher instanceof PayloadPublisher) {
                 PayloadPublisher publisher = (PayloadPublisher) payloadPublisher;
-                if (contentLength < 0) {
+                if (contentLength <= 0) {
                     builder.setEntity(PayloadPublisherEntityV4.newInstance(publisher, contentType));
                 } else {
                     builder.setEntity(PayloadPublisherEntityV4.newInstance(publisher, contentLength, contentType));
                 }
             } else if (payloadPublisher instanceof FlowPayloadPublisher) {
                 FlowPayloadPublisher flowPublisher = (FlowPayloadPublisher) payloadPublisher;
-                if (contentLength < 0) {
+                if (contentLength <= 0) {
                     builder.setEntity(FlowPayloadPublisherEntityV4.newInstance(flowPublisher, contentType));
                 } else {
                     builder.setEntity(FlowPayloadPublisherEntityV4.newInstance(flowPublisher, contentLength,

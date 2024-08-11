@@ -201,19 +201,19 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
         }
         if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
             long contentLength = request.getContentLength();
-            if (contentLength < 0) {
+            if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();
             }
             if (payloadPublisher instanceof PayloadPublisher) {
                 PayloadPublisher publisher = (PayloadPublisher) payloadPublisher;
-                if (contentLength < 0) {
+                if (contentLength <= 0) {
                     base.setEntity(PayloadPublisherEntityV5.newInstance(publisher, contentType));
                 } else {
                     base.setEntity(PayloadPublisherEntityV5.newInstance(publisher, contentLength, contentType));
                 }
             } else if (payloadPublisher instanceof FlowPayloadPublisher) {
                 FlowPayloadPublisher flowPublisher = (FlowPayloadPublisher) payloadPublisher;
-                if (contentLength < 0) {
+                if (contentLength <= 0) {
                     base.setEntity(FlowPayloadPublisherEntityV5.newInstance(flowPublisher, contentType));
                 } else {
                     base.setEntity(FlowPayloadPublisherEntityV5.newInstance(flowPublisher, contentLength, contentType));
