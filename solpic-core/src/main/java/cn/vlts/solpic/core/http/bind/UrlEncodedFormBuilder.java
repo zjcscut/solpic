@@ -62,7 +62,7 @@ class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
 
     public UrlEncodedForm build() {
         long contentLength = computeContentLength();
-        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE, charset);
+        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE, null);
         return new UrlEncodedForm(charset, contentType, contentLength, pairs);
     }
 }

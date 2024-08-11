@@ -234,6 +234,8 @@ public interface SolpicTemplate {
         Class<?> requestPayloadClazz;
         if (Objects.isNull(requestPayload)) {
             requestPayloadFunction = sp -> PayloadPublishers.DEFAULT.discarding();
+        } else if (requestPayload instanceof PayloadPublisher) {
+            requestPayloadFunction = sp -> (PayloadPublisher) requestPayload;
         } else if (PayloadPublishers.X.containsPayloadPublisher(requestPayloadClazz = requestPayload.getClass())) {
             requestPayloadFunction = PayloadPublishers.X.getPayloadPublisher(requestPayloadClazz);
         } else {

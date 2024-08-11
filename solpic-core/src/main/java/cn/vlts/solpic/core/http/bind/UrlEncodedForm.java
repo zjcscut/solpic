@@ -62,7 +62,8 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
         return index >= 0 && index < size ? pairs.get(index).value() : null;
     }
 
-    public ContentType getContentType() {
+    @Override
+    public ContentType contentType() {
         return contentType;
     }
 
