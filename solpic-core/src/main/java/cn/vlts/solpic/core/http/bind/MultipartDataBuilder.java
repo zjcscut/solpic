@@ -362,7 +362,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
         @Override
         public long getContentLength() {
-            return -1;
+            return 0;
         }
 
         @Override
