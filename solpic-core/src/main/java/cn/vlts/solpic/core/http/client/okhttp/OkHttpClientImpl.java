@@ -99,7 +99,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         String contentTypeValue = request.getContentTypeValue();
         MediaType mediaType = Objects.nonNull(contentTypeValue) ? MediaType.parse(contentTypeValue) : null;
         RequestBody requestBody = null;
-        if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
+        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
             requestBody = new OkHttpRequestBody(mediaType, request.getContentLength(), payloadPublisher);
         } else if (requiresRequestBody) {
             requestBody = RequestBody.create(new byte[0], mediaType);
@@ -205,7 +205,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     public ConnectionPool getConnectionPool() {
         Integer max = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY);
         Integer ttl = getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_TTL);
-        if (Objects.equals(getHttpOptionValue(HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL), Boolean.TRUE) &&
+        if (Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL)) &&
                 Objects.nonNull(max) && Objects.nonNull(ttl)) {
             return new ConnectionPool(max, ttl, TimeUnit.MILLISECONDS);
         }

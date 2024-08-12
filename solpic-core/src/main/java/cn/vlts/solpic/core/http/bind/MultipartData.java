@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Multipart data.
@@ -81,6 +82,10 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
         String getFileName();
 
         ContentType getContentType();
+
+        default Charset getCharset() {
+            return Optional.ofNullable(getContentType()).map(ContentType::getCharset).orElse(null);
+        }
 
         long getContentLength();
 

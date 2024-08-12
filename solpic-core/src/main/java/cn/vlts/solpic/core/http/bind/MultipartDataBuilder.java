@@ -19,9 +19,7 @@ import java.util.*;
  */
 class MultipartDataBuilder implements MultipartData.Builder {
 
-    private static final String BOUNDARY_PREFIX_TEXT = "--";
-
-    private static final byte[] BOUNDARY_PREFIX = BOUNDARY_PREFIX_TEXT.getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] BOUNDARY_PREFIX = "--".getBytes(StandardCharsets.US_ASCII);
 
     private static final byte[] FIELD_SEP = ": ".getBytes(StandardCharsets.US_ASCII);
 
@@ -49,7 +47,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
     }
 
     public MultipartDataBuilder addTextPart(String name, String value) {
-        return addTextPart(name, value, ContentType.newInstance(HttpHeaderConstants.TEXT_PLAIN_VALUE, charset));
+        return addTextPart(name, value, ContentType.TEXT_PLAIN);
     }
 
     public MultipartDataBuilder addTextPart(String name, String value, ContentType contentType) {
@@ -108,25 +106,42 @@ class MultipartDataBuilder implements MultipartData.Builder {
         ArgumentUtils.X.notNull("name", name);
         ArgumentUtils.X.notNull("path", path);
         FilePart filePart = new FilePart(name, path);
-        filename = Optional.ofNullable(filename).orElse(path.toFile().getName());
+        File file = path.toFile();
+        filename = Optional.ofNullable(filename).orElse(file.getName());
         filePart.setContentType(contentType);
         filePart.setFileName(filename);
-        try {
-            filePart.setContentLength(Files.size(path));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        filePart.setContentLength(file.length());
         parts.add(filePart);
         return this;
     }
 
     private long computeContentLength() {
         long contentLength = 0;
+        CountByteOutputStream byteCounter = new CountByteOutputStream();
         for (MultipartData.Part part : parts) {
-            if (part.getContentLength() > 0) {
-                contentLength += part.getContentLength();
+            long partLength = part.getContentLength();
+            if (partLength < 0) {
+                return -1;
+            } else {
+                contentLength += partLength;
+            }
+            if (part instanceof BasePart) {
+                try {
+                    ((BasePart) part).doWriteTo(byteCounter, false);
+                } catch (IOException e) {
+                    // never reach
+                    throw new Error(e);
+                }
+            } else if (part instanceof EndPart) {
+                try {
+                    part.writeTo(byteCounter);
+                } catch (IOException e) {
+                    // never reach
+                    throw new Error(e);
+                }
             }
         }
+        contentLength += byteCounter.getTotal();
         return contentLength;
     }
 
@@ -134,12 +149,12 @@ class MultipartDataBuilder implements MultipartData.Builder {
     public MultipartData build() {
         ContentType contentType = ContentType.newInstance(HttpHeaderConstants.MULTIPART_FORM_DATA_VALUE, null,
                 new Pair[]{Pair.of(BOUNDARY_KEY, boundary)});
-        long contentLength = computeContentLength();
         parts.add(new EndPart(boundary));
+        long contentLength = computeContentLength();
         return new MultipartData(contentType, contentLength, parts);
     }
 
-    private abstract class BasePart implements MultipartData.Part {
+    abstract class BasePart implements MultipartData.Part {
 
         private final String name;
 
@@ -210,6 +225,10 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
         @Override
         public void writeTo(OutputStream outputStream) throws IOException {
+            doWriteTo(outputStream, true);
+        }
+
+        void doWriteTo(OutputStream outputStream, boolean writePartBody) throws IOException {
             // write boundary
             outputStream.write(BOUNDARY_PREFIX);
             outputStream.write(boundary.getBytes(charset));
@@ -232,7 +251,9 @@ class MultipartDataBuilder implements MultipartData.Builder {
             }
             // write part body
             outputStream.write(CR_LF);
-            writePartBodyTo(outputStream);
+            if (writePartBody) {
+                writePartBodyTo(outputStream);
+            }
             outputStream.write(CR_LF);
         }
 
@@ -252,7 +273,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
         public TextPart(String name, String text) {
             super(name);
-            this.content = text.getBytes(charset);
+            this.content = text.getBytes(Optional.ofNullable(getCharset()).orElse(charset));
             setContentLength(this.content.length);
         }
 
@@ -273,7 +294,8 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
         @Override
         protected void writePartBodyTo(OutputStream outputStream) throws IOException {
-            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset))) {
+            Charset charsetToUse = Optional.ofNullable(getCharset()).orElse(charset);
+            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charsetToUse))) {
                 int b;
                 while (-1 != (b = reader.read())) {
                     outputStream.write(b);
@@ -296,10 +318,20 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
         @Override
         protected void writePartBodyTo(OutputStream outputStream) throws IOException {
-            try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
-                int b;
-                while (-1 != (b = reader.read())) {
-                    outputStream.write(b);
+            Charset charsetToUse = getCharset();
+            if (Objects.nonNull(charsetToUse)) {
+                try (BufferedReader reader = Files.newBufferedReader(path, charsetToUse)) {
+                    int b;
+                    while (-1 != (b = reader.read())) {
+                        outputStream.write(b);
+                    }
+                }
+            } else {
+                try (FileInputStream fileInputStream = new FileInputStream(path.toFile())) {
+                    int b;
+                    while (-1 != (b = fileInputStream.read())) {
+                        outputStream.write(b);
+                    }
                 }
             }
         }

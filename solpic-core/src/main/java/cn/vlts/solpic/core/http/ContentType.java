@@ -144,6 +144,14 @@ public final class ContentType {
         return Objects.nonNull(other) && Objects.equals(this.mimeType, other.mimeType);
     }
 
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public ContentType withCharset(Charset charset) {
+        return new ContentType(this.mimeType, charset, this.params);
+    }
+
     private static boolean valid(final String s) {
         for (int i = 0; i < s.length(); i++) {
             final char ch = s.charAt(i);

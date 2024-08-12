@@ -160,7 +160,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         if (Objects.nonNull(contentTypeValue)) {
             contentType = org.apache.http.entity.ContentType.parse(contentTypeValue);
         }
-        if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
+        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
             long contentLength = request.getContentLength();
             if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();

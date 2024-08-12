@@ -27,7 +27,7 @@ public class MultipartDataTest {
     public void testMultipart() {
         MultipartData multipartData = MultipartData.newBuilder()
                 .addTextPart("a", "avalue")
-                .addFilePart("b", Paths.get("D:\\hailuo.jpg"))
+                .addFilePart("b", Paths.get("/Users/throwable/Downloads/银河系.png"))
                 .build();
         HttpResponse<String> r = TEMPLATE.post("http://127.0.0.1:8080/multipart1", multipartData, String.class);
         System.out.println(r.getPayload());

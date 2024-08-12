@@ -136,7 +136,8 @@ public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient,
         }
         httpConnection.setRequestMethod(request.getRawMethod());
         httpConnection.setDoInput(true);
-        if (request.supportPayload() || request.supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
+        if (request.supportPayload() ||
+                Objects.equals(Boolean.TRUE, request.getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
             httpConnection.setDoOutput(true);
         }
         httpConnection.setInstanceFollowRedirects(Objects.equals(request.getMethod(), HttpMethod.GET));

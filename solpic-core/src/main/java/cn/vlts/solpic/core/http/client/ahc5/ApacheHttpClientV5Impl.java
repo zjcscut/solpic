@@ -199,7 +199,7 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
         if (Objects.nonNull(contentTypeValue)) {
             contentType = org.apache.hc.core5.http.ContentType.parse(contentTypeValue);
         }
-        if (request.supportPayload() || supportHttpOption(HttpOptions.HTTP_FORCE_WRITE)) {
+        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
             long contentLength = request.getContentLength();
             if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();
