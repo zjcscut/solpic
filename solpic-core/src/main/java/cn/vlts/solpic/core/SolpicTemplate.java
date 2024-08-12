@@ -4,6 +4,7 @@ import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.util.ReflectionUtils;
 
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
@@ -217,6 +218,11 @@ public interface SolpicTemplate {
                                             Type responsePayloadType) {
         PayloadSubscriber<T> responePayloadSubscriber = Objects.nonNull(responsePayloadType) ?
                 PayloadSubscribers.X.getPayloadSubscriber(responsePayloadType) : PayloadSubscribers.X.discarding();
+        if (Objects.isNull(responePayloadSubscriber) &&
+                ReflectionUtils.X.isAssignableFrom(responsePayloadType, PayloadSubscriber.class)) {
+            responePayloadSubscriber = ReflectionUtils.X.createInstance(
+                    (Class<? extends PayloadSubscriber<T>>) responsePayloadType);
+        }
         if (Objects.isNull(responePayloadSubscriber)) {
             responePayloadSubscriber = (PayloadSubscriber<T>) getCodec().createPayloadSubscriber(responsePayloadType);
         }

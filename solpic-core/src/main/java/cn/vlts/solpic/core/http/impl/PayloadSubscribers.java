@@ -10,11 +10,14 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * Payload subscriber impls.
@@ -25,11 +28,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public enum PayloadSubscribers {
     X;
 
-    private static final ConcurrentMap<Type, PayloadSubscriber<?>> CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Type, Supplier<PayloadSubscriber<?>>> CACHE = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
     public <T> PayloadSubscriber<T> getPayloadSubscriber(Type type) {
-        return (PayloadSubscriber<T>) CACHE.get(type);
+        return Objects.isNull(type) ? discarding() : Optional.ofNullable(CACHE.get(type))
+                .map(supplier -> (PayloadSubscriber<T>) supplier.get())
+                .orElse(null);
     }
 
     public boolean containsPayloadSubscriber(Type type) {
@@ -197,8 +202,8 @@ public enum PayloadSubscribers {
     }
 
     static {
-        CACHE.put(Void.class, PayloadSubscribers.X.discarding());
-        CACHE.put(String.class, PayloadSubscribers.X.ofString());
-        CACHE.put(byte[].class, PayloadSubscribers.X.ofByteArray());
+        CACHE.put(Void.class, PayloadSubscribers.X::discarding);
+        CACHE.put(String.class, PayloadSubscribers.X::ofString);
+        CACHE.put(byte[].class, PayloadSubscribers.X::ofByteArray);
     }
 }

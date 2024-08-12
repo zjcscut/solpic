@@ -70,11 +70,12 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                                     RequestPayloadSupport payloadPublisher,
                                     ResponsePayloadSupport<?> payloadSubscriber) {
         if (!isRunning()) {
-            throw new IllegalStateException("Http client is not running");
+            throw new IllegalStateException(String.format("[%s] - Http client is not running", id()));
         }
-        // attach request content type
+        // preferred request payload content type
+        // if the content type provided by RequestPayloadSupport is not null, use it as the request Content-Type
         ContentType requestContentType = payloadPublisher.contentType();
-        if (Objects.nonNull(requestContentType) && Objects.isNull(request.getContentType())) {
+        if (Objects.nonNull(requestContentType)) {
             request.setContentType(requestContentType);
         }
         triggerBeforeSend(request);
@@ -84,7 +85,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             triggerAfterSend(request, response);
         } catch (Throwable e) {
             triggerOnError(request, e);
-            throw new SolpicHttpException("Send HTTP request failed", e);
+            throw new SolpicHttpException(String.format("[%s] - Send HTTP request failed", id()), e);
         } finally {
             triggerAfterCompletion(request, response);
         }

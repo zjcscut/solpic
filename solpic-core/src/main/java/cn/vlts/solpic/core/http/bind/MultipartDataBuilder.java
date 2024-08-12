@@ -45,7 +45,7 @@ class MultipartDataBuilder implements MultipartData.Builder {
 
     MultipartDataBuilder(String boundary, Charset charset) {
         this.boundary = boundary;
-        this.charset = charset;
+        this.charset = Optional.ofNullable(charset).orElse(Charset.defaultCharset());
     }
 
     public MultipartDataBuilder addTextPart(String name, String value) {

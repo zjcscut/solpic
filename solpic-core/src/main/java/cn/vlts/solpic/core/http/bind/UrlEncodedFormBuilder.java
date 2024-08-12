@@ -4,13 +4,12 @@ import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.HttpCodecUtils;
-import cn.vlts.solpic.core.util.IoUtils;
 import cn.vlts.solpic.core.util.Pair;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Url encoded form builder.
@@ -25,7 +24,7 @@ class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
     private final List<Pair> pairs = new ArrayList<>();
 
     UrlEncodedFormBuilder(Charset charset) {
-        this.charset = charset;
+        this.charset = Optional.ofNullable(charset).orElse(Charset.defaultCharset());
     }
 
     @Override
@@ -62,7 +61,7 @@ class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
 
     public UrlEncodedForm build() {
         long contentLength = computeContentLength();
-        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE, null);
+        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE, charset);
         return new UrlEncodedForm(charset, contentType, contentLength, pairs);
     }
 }

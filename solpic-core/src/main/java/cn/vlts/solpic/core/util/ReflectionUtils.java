@@ -3,6 +3,8 @@ package cn.vlts.solpic.core.util;
 import cn.vlts.solpic.core.spi.DefaultInstanceFactory;
 import cn.vlts.solpic.core.spi.InstanceFactory;
 
+import java.lang.reflect.Type;
+
 /**
  * Reflection utils.
  *
@@ -38,6 +40,13 @@ public enum ReflectionUtils {
             return true;
         } catch (Throwable ignore) {
 
+        }
+        return false;
+    }
+
+    public boolean isAssignableFrom(Type type, Class<?> clazz) {
+        if (type instanceof Class) {
+            return clazz.isAssignableFrom((Class<?>) type);
         }
         return false;
     }

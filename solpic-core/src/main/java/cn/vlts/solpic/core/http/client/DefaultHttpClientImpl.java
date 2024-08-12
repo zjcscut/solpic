@@ -10,13 +10,12 @@ import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -81,6 +80,7 @@ public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient,
         }
         // process request headers
         populateHeaders(httpConnection, request);
+        httpConnection.setUseCaches(false);
         // connect
         httpConnection.connect();
         // write request body
