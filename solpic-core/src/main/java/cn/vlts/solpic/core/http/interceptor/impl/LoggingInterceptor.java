@@ -26,7 +26,7 @@ public class LoggingInterceptor implements HttpInterceptor, Ordered {
     @Override
     public void afterCompletion(HttpRequest request, HttpResponse<?> response) {
         if (request.supportHttpOption(HttpOptions.HTTP_ENABLE_LOGGING)) {
-            if (!Objects.equals(HttpRequestStatus.FINISHED, request.getStatus())) {
+            if (!Objects.equals(HttpRequestStatus.COMPLETED, request.getStatus())) {
                 return;
             }
             StringBuilder template = new StringBuilder("Finish Executing HTTP request, request URL: %s, response status: %d");

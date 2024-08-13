@@ -116,4 +116,16 @@ public abstract class HttpOptionSupport implements HttpOptional {
         }
         this.options.put(httpOption, configValue);
     }
+
+    public void checkMinimumHttpOptions() {
+        if (minimumOpts != -1) {
+            List<HttpOption<?>> minimumOptions = HttpOptions.getMatchedOptions(minimumOpts);
+            Set<HttpOption<?>> optionsToUse = options.keySet();
+            for (HttpOption<?> minimumOption : minimumOptions) {
+                if (!optionsToUse.contains(minimumOption)) {
+                    throw new IllegalArgumentException("HttpOption '" + minimumOption + "' is required");
+                }
+            }
+        }
+    }
 }

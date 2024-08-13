@@ -1,9 +1,11 @@
 package cn.vlts.solpic.core.util;
 
-import cn.vlts.solpic.core.spi.DefaultInstanceFactory;
 import cn.vlts.solpic.core.spi.InstanceFactory;
+import cn.vlts.solpic.core.spi.SpiLoader;
 
 import java.lang.reflect.Type;
+import java.util.ServiceLoader;
+import java.util.stream.StreamSupport;
 
 /**
  * Reflection utils.
@@ -14,7 +16,10 @@ import java.lang.reflect.Type;
 public enum ReflectionUtils {
     X;
 
-    private final InstanceFactory instanceFactory = new DefaultInstanceFactory();
+    private final InstanceFactory instanceFactory = StreamSupport
+            .stream(ServiceLoader.load(InstanceFactory.class).spliterator(), false)
+            .min(Ordered.COMPARATOR)
+            .orElseThrow(() -> new IllegalArgumentException("Load instanceFactory failed"));
 
     public Class<?> forName(String className) {
         try {

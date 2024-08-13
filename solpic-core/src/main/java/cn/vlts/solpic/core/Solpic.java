@@ -117,15 +117,16 @@ public abstract class Solpic {
                                                S requestPayload,
                                                Function<S, PayloadPublisher> requestPayloadFunction,
                                                PayloadSubscriber<T> responsePayloadSubscriber) {
+            HttpClient httpClientToUse = getHttpClient();
             PayloadPublisher requestPayloadPublisher = requestPayloadFunction.apply(requestPayload);
-            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), getHttpClient());
+            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), httpClientToUse);
             if (Objects.nonNull(requestContentType)) {
                 request.setContentType(requestContentType);
             }
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            return ReadOnlyHttpResponse.of(getHttpClient().send(request, requestPayloadPublisher,
+            return ReadOnlyHttpResponse.of(httpClientToUse.send(request, requestPayloadPublisher,
                     responsePayloadSubscriber));
         }
     }
@@ -197,15 +198,16 @@ public abstract class Solpic {
                                  List<HttpHeader> requestHeaders,
                                  S requestPayload,
                                  Function<S, PayloadPublisher> requestPayloadFunction) {
+            HttpClient httpClientToUse = getHttpClient();
             PayloadPublisher requestPayloadPublisher = requestPayloadFunction.apply(requestPayload);
-            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), getHttpClient());
+            DefaultHttpRequest request = new DefaultHttpRequest(requestMethod, URI.create(requestUrl), httpClientToUse);
             if (Objects.nonNull(requestContentType)) {
                 request.setContentType(requestContentType);
             }
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            getHttpClient().send(request, requestPayloadPublisher, PayloadSubscribers.X.discarding());
+            httpClientToUse.send(request, requestPayloadPublisher, PayloadSubscribers.X.discarding());
         }
     }
 

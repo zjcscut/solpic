@@ -41,7 +41,7 @@ public class TestOkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         okHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = okHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
+        HttpResponse<String> response = okHttpClientImpl.send(request, PayloadPublishers.X.discarding(),
                 PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());

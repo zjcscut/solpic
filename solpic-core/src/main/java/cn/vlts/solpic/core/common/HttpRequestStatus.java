@@ -10,9 +10,9 @@ public enum HttpRequestStatus {
 
     INIT,
 
-    PROCESSING,
+    ACTIVE,
 
-    FINISHED,
+    COMPLETED,
 
     FAILED
 }

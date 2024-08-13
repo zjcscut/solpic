@@ -27,10 +27,9 @@ public enum PayloadPublishers {
 
     private static final ConcurrentMap<Type, Function<?, PayloadPublisher>> CACHE = new ConcurrentHashMap<>();
 
-    public static final DefaultPayloadPublishers DEFAULT;
 
     public <T> Function<T, PayloadPublisher> getPayloadPublisher(Type type) {
-        return Objects.nonNull(type) ? (Function<T, PayloadPublisher>) CACHE.get(type) : null;
+        return Objects.nonNull(type) ? (Function<T, PayloadPublisher>) CACHE.get(type) : s -> discarding();
     }
 
     public boolean containsPayloadPublisher(Type type) {
@@ -116,52 +115,49 @@ public enum PayloadPublishers {
         }
     }
 
-    public static class DefaultPayloadPublishers {
+    public PayloadPublisher discarding() {
+        return new DiscardingPayloadPublisher();
+    }
 
-        public PayloadPublisher discarding() {
-            return new DiscardingPayloadPublisher();
-        }
+    public PayloadPublisher ofString(String content) {
+        return ofString(content, StandardCharsets.UTF_8);
+    }
 
-        public PayloadPublisher ofString(String content) {
-            return ofString(content, StandardCharsets.UTF_8);
-        }
+    public PayloadPublisher ofString(String content, Charset charset) {
+        return ofByteArray(content.getBytes(charset));
+    }
 
-        public PayloadPublisher ofString(String content, Charset charset) {
-            return ofByteArray(content.getBytes(charset));
-        }
+    public PayloadPublisher ofByteArray(byte[] bytes) {
+        return ofByteArray(bytes, 0, bytes.length);
+    }
 
-        public PayloadPublisher ofByteArray(byte[] bytes) {
-            return ofByteArray(bytes, 0, bytes.length);
+    public PayloadPublisher ofByteArray(byte[] bytes, int offset, int length) {
+        int sl = bytes.length;
+        if (offset == 0 && sl == length) {
+            return new ByteArrayPayloadPublisher(bytes);
         }
+        return new ByteArrayPayloadPublisher(bytes, offset, length);
+    }
 
-        public PayloadPublisher ofByteArray(byte[] bytes, int offset, int length) {
-            int sl = bytes.length;
-            if (offset == 0 && sl == length) {
-                return new ByteArrayPayloadPublisher(bytes);
-            }
-            return new ByteArrayPayloadPublisher(bytes, offset, length);
-        }
+    public PayloadPublisher ofInputStream(InputStream in) {
+        return new InputStreamPayloadPublisher(() -> in);
+    }
 
-        public PayloadPublisher ofInputStream(InputStream in) {
-            return new InputStreamPayloadPublisher(() -> in);
+    public PayloadPublisher ofFile(Path path) {
+        InputStream inputStream;
+        try {
+            inputStream = Files.newInputStream(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        public PayloadPublisher ofFile(Path path) {
-            InputStream inputStream;
-            try {
-                inputStream = Files.newInputStream(path);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            return new InputStreamPayloadPublisher(() -> inputStream);
-        }
+        return new InputStreamPayloadPublisher(() -> inputStream);
     }
 
     static {
-        DEFAULT = new DefaultPayloadPublishers();
-        CACHE.put(String.class, (String s) -> DEFAULT.ofString(s));
-        CACHE.put(byte[].class, (byte[] bytes) -> DEFAULT.ofByteArray(bytes));
-        CACHE.put(InputStream.class, (InputStream in) -> DEFAULT.ofInputStream(in));
-        CACHE.put(Path.class, (Path path) -> DEFAULT.ofFile(path));
+        CACHE.put(String.class, (String s) -> PayloadPublishers.X.ofString(s));
+        CACHE.put(Void.class, (Void v) -> PayloadPublishers.X.discarding());
+        CACHE.put(byte[].class, (byte[] bytes) -> PayloadPublishers.X.ofByteArray(bytes));
+        CACHE.put(InputStream.class, (InputStream in) -> PayloadPublishers.X.ofInputStream(in));
+        CACHE.put(Path.class, (Path path) -> PayloadPublishers.X.ofFile(path));
     }
 }

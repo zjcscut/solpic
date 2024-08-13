@@ -36,7 +36,7 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.DEFAULT.discarding(),
+        HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.X.discarding(),
                 PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
@@ -68,7 +68,7 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         httpClient.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = httpClient.send(request, PayloadPublishers.DEFAULT.discarding(),
+        HttpResponse<String> response = httpClient.send(request, PayloadPublishers.X.discarding(),
                 PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());

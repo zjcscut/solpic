@@ -72,6 +72,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (!isRunning()) {
             throw new IllegalStateException(String.format("[%s] - Http client is not running", id()));
         }
+        // check minimum options
+        checkMinimumHttpOptions();
         // preferred request payload content type
         // if the content type provided by RequestPayloadSupport is not null, use it as the request Content-Type
         ContentType requestContentType = payloadPublisher.contentType();
@@ -194,10 +196,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected void triggerBeforeSend(HttpRequest request) {
-        changeRequestStatus(request, HttpRequestStatus.PROCESSING);
-        String clientId = id();
-        Metrics.X.initHttpClientStats(clientId);
-        Metrics.X.increaseTotalRequestCount(clientId);
+        changeRequestStatus(request, HttpRequestStatus.ACTIVE);
+        Metrics.X.increaseTotalRequestCount(id());
         triggerInterceptorsBeforeSend(request);
     }
 
@@ -215,7 +215,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         triggerInterceptorsAfterCompletion(request, response);
         if (Objects.nonNull(response)) {
             // mark request finished
-            changeRequestStatus(request, HttpRequestStatus.FINISHED);
+            changeRequestStatus(request, HttpRequestStatus.COMPLETED);
             // copy request attachments to response
             if (Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS))) {
                 response.copyAttachable(request);
@@ -246,6 +246,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         } else {
             this.id = getClass().getSimpleName() + "-" + INDEX.incrementAndGet();
         }
+        Metrics.X.initHttpClientStats(id());
     }
 
     @Override
@@ -270,8 +271,12 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public void close() throws IOException {
         if (running.compareAndSet(true, false)) {
-            this.interceptors.clear();
-            closeInternal();
+            try {
+                closeInternal();
+            } finally {
+                Metrics.X.removeHttpClientStats(id());
+                this.interceptors.clear();
+            }
         }
     }
 

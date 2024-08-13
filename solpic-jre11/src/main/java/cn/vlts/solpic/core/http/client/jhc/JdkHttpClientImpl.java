@@ -5,6 +5,8 @@ import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
+import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
+import cn.vlts.solpic.core.http.flow.FlowPayloadPublishers;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 import cn.vlts.solpic.core.util.ReflectionUtils;
 
@@ -133,9 +135,22 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         if (requestTimeoutToUse > 0) {
             requestBuilder.timeout(Duration.ofMillis(requestTimeoutToUse));
         }
+        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
+            long contentLength = payloadPublisher.contentLength();
+            if (contentLength <= 0) {
+                contentLength = request.getContentLength();
+            }
+            if (contentLength > 0) {
+                requestBuilder
+            }
+            BodyPublisherAdapter bodyPublisherAdapter = BodyPublisherAdapter.newInstance(payloadPublisher);
+            requestBuilder.method(request.getRawMethod(), bodyPublisherAdapter);
+        } else {
+            BodyPublisherAdapter bodyPublisherAdapter =
+                    BodyPublisherAdapter.newInstance(FlowPayloadPublishers.X.discarding());
+            requestBuilder.method(request.getRawMethod(), bodyPublisherAdapter);
+        }
         request.consumeHeaders(httpHeader -> requestBuilder.header(httpHeader.name(), httpHeader.value()));
-        BodyPublisherAdapter bodyPublisherAdapter = BodyPublisherAdapter.newInstance(payloadPublisher);
-        requestBuilder.method(request.getRawMethod(), bodyPublisherAdapter);
         java.net.http.HttpRequest httpRequest = requestBuilder.build();
         BodyHandlerAdapter<T> bodyHandlerAdapter = BodyHandlerAdapter.newInstance(responsePayloadSupport);
         java.net.http.HttpResponse<T> httpResponse = realHttpClient.send(httpRequest, bodyHandlerAdapter);
