@@ -29,4 +29,6 @@ public interface HttpOptional {
     boolean supportHttpOption(HttpOption<?> httpOption);
 
     <T> T getHttpOptionValue(HttpOption<T> httpOption);
+
+    void validateMinimumHttpOptions();
 }

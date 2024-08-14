@@ -117,7 +117,8 @@ public abstract class HttpOptionSupport implements HttpOptional {
         this.options.put(httpOption, configValue);
     }
 
-    public void checkMinimumHttpOptions() {
+    @Override
+    public void validateMinimumHttpOptions() {
         if (minimumOpts != -1) {
             List<HttpOption<?>> minimumOptions = HttpOptions.getMatchedOptions(minimumOpts);
             Set<HttpOption<?>> optionsToUse = options.keySet();

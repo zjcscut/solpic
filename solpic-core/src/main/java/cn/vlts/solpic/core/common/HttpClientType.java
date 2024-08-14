@@ -50,6 +50,6 @@ public enum HttpClientType {
                 return httpClientType;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

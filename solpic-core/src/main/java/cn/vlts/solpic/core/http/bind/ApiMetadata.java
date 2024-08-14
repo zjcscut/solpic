@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.bind.annotation.Opt;
 import cn.vlts.solpic.core.util.Pair;
@@ -26,6 +27,10 @@ public class ApiMetadata {
     private Method method;
 
     private HttpMethod httpMethod;
+
+    private ContentType produce;
+
+    private ContentType consume;
 
     private List<Opt> opts;
 

@@ -4,6 +4,7 @@ import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.codec.CodecFactory;
 import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.http.bind.ApiBuilder;
 import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
@@ -47,6 +48,10 @@ public abstract class Solpic {
 
     public static OneWaySolpicTemplateBuilder newOneWaySolpicTemplateBuilder() {
         return new DefaultOneWaySolpicTemplateBuilder();
+    }
+
+    public static ApiBuilder newApiBuilder() {
+        return ApiBuilder.newBuilder();
     }
 
     public interface SolpicTemplateBuilder {
@@ -211,12 +216,6 @@ public abstract class Solpic {
         }
     }
 
-    public interface ApiBuilder {
-
-        ApiBuilder httpClient(HttpClient httpClient);
-
-        <T> T build(Class<T> type);
-    }
 
     public interface HttpClientBuilder {
 

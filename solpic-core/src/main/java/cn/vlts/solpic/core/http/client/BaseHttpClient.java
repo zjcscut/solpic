@@ -72,8 +72,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (!isRunning()) {
             throw new IllegalStateException(String.format("[%s] - Http client is not running", id()));
         }
-        // check minimum options
-        checkMinimumHttpOptions();
+        // validate request minimum options
+        request.validateMinimumHttpOptions();
         // preferred request payload content type
         // if the content type provided by RequestPayloadSupport is not null, use it as the request Content-Type
         ContentType requestContentType = payloadPublisher.contentType();
@@ -257,6 +257,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public void init() {
         initInternal();
+        // validate minimum options
+        validateMinimumHttpOptions();
     }
 
     protected void initInternal() {
