@@ -136,13 +136,6 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
             requestBuilder.timeout(Duration.ofMillis(requestTimeoutToUse));
         }
         if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
-            long contentLength = payloadPublisher.contentLength();
-            if (contentLength <= 0) {
-                contentLength = request.getContentLength();
-            }
-            if (contentLength > 0) {
-                requestBuilder
-            }
             BodyPublisherAdapter bodyPublisherAdapter = BodyPublisherAdapter.newInstance(payloadPublisher);
             requestBuilder.method(request.getRawMethod(), bodyPublisherAdapter);
         } else {

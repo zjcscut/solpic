@@ -47,7 +47,7 @@ public enum PayloadPublishers {
 
         @Override
         public long contentLength() {
-            return -1;
+            return 0;
         }
     }
 

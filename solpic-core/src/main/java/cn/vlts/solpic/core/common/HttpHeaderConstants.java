@@ -36,9 +36,17 @@ public final class HttpHeaderConstants {
 
     public static final String CONTENT_ENCODING_KEY = "Content-Encoding";
 
+    public static final String TRANSFER_ENCODING_KEY = "Transfer-Encoding";
+
     public static final String COOKIE_KEY = "Cookie";
 
     public static final String ALLOW_HEADER_KEY = "Allow";
 
     public static final String CONTENT_DISPOSITION_KEY = "Content-Disposition";
+
+    // ##################### HEADER VALUE #####################
+
+    public static final String TRANSFER_ENCODING_CHUNKED_VALUE = "chunked";
+
+    public static final String CONTENT_ENCODING_GZIP_VALUE = "gzip";
 }

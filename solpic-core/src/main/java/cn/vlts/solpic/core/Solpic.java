@@ -211,6 +211,13 @@ public abstract class Solpic {
         }
     }
 
+    public interface ApiBuilder {
+
+        ApiBuilder httpClient(HttpClient httpClient);
+
+        <T> T build(Class<T> type);
+    }
+
     public interface HttpClientBuilder {
 
     }

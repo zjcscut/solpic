@@ -30,7 +30,8 @@ public final class FlowPayloadPublisherEntityV4 extends AbstractHttpEntity {
 
     public static FlowPayloadPublisherEntityV4 newInstance(FlowPayloadPublisher flowPayloadPublisher,
                                                            ContentType contentType) {
-        return new FlowPayloadPublisherEntityV4(flowPayloadPublisher, -1, contentType, null);
+        return new FlowPayloadPublisherEntityV4(flowPayloadPublisher, -1, contentType,
+                null);
     }
 
     private FlowPayloadPublisherEntityV4(FlowPayloadPublisher flowPayloadPublisher,

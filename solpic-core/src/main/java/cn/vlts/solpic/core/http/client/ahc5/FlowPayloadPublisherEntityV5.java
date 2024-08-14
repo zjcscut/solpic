@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+
 /**
  * FlowPayloadPublisher entity.
  *
@@ -29,7 +30,8 @@ public final class FlowPayloadPublisherEntityV5 extends AbstractHttpEntity {
 
     public static FlowPayloadPublisherEntityV5 newInstance(FlowPayloadPublisher flowPayloadPublisher,
                                                            ContentType contentType) {
-        return new FlowPayloadPublisherEntityV5(flowPayloadPublisher, -1, contentType, null);
+        return new FlowPayloadPublisherEntityV5(flowPayloadPublisher, -1, contentType,
+                null);
     }
 
     private FlowPayloadPublisherEntityV5(FlowPayloadPublisher flowPayloadPublisher,

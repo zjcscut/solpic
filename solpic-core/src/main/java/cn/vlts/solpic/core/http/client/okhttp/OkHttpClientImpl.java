@@ -98,24 +98,30 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         boolean requiresRequestBody = HttpMethod.requiresRequestBody(method);
         String contentTypeValue = request.getContentTypeValue();
         MediaType mediaType = Objects.nonNull(contentTypeValue) ? MediaType.parse(contentTypeValue) : null;
+        Request.Builder requestBuilder = new Request.Builder().url(request.getUri().toURL());
         RequestBody requestBody = null;
         if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
+            boolean useHeaderContentLength = true;
+            long contentLength = request.getContentLength();
+            if (contentLength < 0) {
+                contentLength = payloadPublisher.contentLength();
+                useHeaderContentLength = false;
+            }
+            if (contentLength >= 0 && !useHeaderContentLength) {
+                requestBuilder.header(HttpHeaderConstants.CONTENT_LENGTH_KEY, String.valueOf(contentLength));
+            }
+            // chunked
+            if (contentLength < 0) {
+                requestBuilder.header(HttpHeaderConstants.TRANSFER_ENCODING_KEY,
+                        HttpHeaderConstants.TRANSFER_ENCODING_CHUNKED_VALUE);
+            }
             requestBody = new OkHttpRequestBody(mediaType, request.getContentLength(), payloadPublisher);
         } else if (requiresRequestBody) {
             requestBody = RequestBody.create(new byte[0], mediaType);
+            requestBuilder.header(HttpHeaderConstants.CONTENT_LENGTH_KEY, "0");
         }
-        boolean useHeaderContentLength = true;
-        long contentLength = request.getContentLength();
-        if (contentLength <= 0) {
-            contentLength = payloadPublisher.contentLength();
-            useHeaderContentLength = false;
-        }
-        Request.Builder requestBuilder = new Request.Builder().url(request.getUri().toURL());
         requestBuilder.method(method, requestBody);
         request.consumeHeaders(httpHeader -> requestBuilder.addHeader(httpHeader.name(), httpHeader.value()));
-        if (contentLength > 0 && !useHeaderContentLength) {
-            requestBuilder.addHeader(HttpHeaderConstants.CONTENT_LENGTH_KEY, String.valueOf(contentLength));
-        }
         Request okHttpRequest = requestBuilder.build();
         Response okHttpResponse = realHttpClient.newCall(okHttpRequest).execute();
         ResponseBody responseBody = okHttpResponse.body();
