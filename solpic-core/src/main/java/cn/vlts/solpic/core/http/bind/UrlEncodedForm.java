@@ -43,6 +43,14 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
         this.size = pairs.size();
     }
 
+    public static Builder newBuilder() {
+        return newBuilder(StandardCharsets.UTF_8);
+    }
+
+    public static Builder newBuilder(Charset charset) {
+        return new UrlEncodedFormBuilder(charset);
+    }
+
     public void consume(Consumer<Pair> consumer) {
         for (int i = 0; i < size; i++) {
             Pair pair = pairs.get(i);
@@ -100,14 +108,6 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
             buf.append(pair.name()).append(UriBuilder.PARAM_VALUE_SEPARATOR).append(pair.value());
         }
         return buf.toString();
-    }
-
-    public static Builder newBuilder() {
-        return newBuilder(StandardCharsets.UTF_8);
-    }
-
-    public static Builder newBuilder(Charset charset) {
-        return new UrlEncodedFormBuilder(charset);
     }
 
     public interface Builder {

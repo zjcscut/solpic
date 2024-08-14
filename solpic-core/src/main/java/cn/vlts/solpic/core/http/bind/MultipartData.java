@@ -38,6 +38,14 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
         this.parts = parts;
     }
 
+    public static Builder newBuilder() {
+        return new MultipartDataBuilder();
+    }
+
+    public static Builder newBuilder(String boundary, Charset charset) {
+        return new MultipartDataBuilder(boundary, charset);
+    }
+
     @Override
     public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
         Subscription subscription = new MultipartDataSubscription(subscriber);
@@ -65,14 +73,6 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
     @Override
     public long contentLength() {
         return contentLength;
-    }
-
-    public static Builder newBuilder() {
-        return new MultipartDataBuilder();
-    }
-
-    public static Builder newBuilder(String boundary, Charset charset) {
-        return new MultipartDataBuilder(boundary, charset);
     }
 
     public interface Part {
