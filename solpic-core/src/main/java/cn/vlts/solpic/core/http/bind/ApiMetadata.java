@@ -3,12 +3,11 @@ package cn.vlts.solpic.core.http.bind;
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpMethod;
-import cn.vlts.solpic.core.util.Pair;
 import lombok.Data;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Api metadata.
@@ -35,9 +34,9 @@ public class ApiMetadata {
 
     private ContentType consume;
 
-    private final List<HttpOption<?>> options = new ArrayList<>();
+    private final Map<HttpOption<?>, Object> options = new HashMap<>();
 
-    private final List<Pair> queries = new ArrayList<>();
-
-    private final List<Pair> headers = new ArrayList<>();
+    public <T> void addHttpOption(HttpOption<T> option, T value) {
+        options.put(option, value);
+    }
 }

@@ -1,13 +1,18 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.config.HttpOption;
+import cn.vlts.solpic.core.config.HttpOptionParser;
+import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.http.ContentType;
 import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.bind.annotation.*;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 /**
  * Api metadata parser.
@@ -30,6 +35,7 @@ public enum ApiMetadataParser {
             parseRequestAnnotation(apiMetadata, type, m);
             parseProduceAnnotation(apiMetadata, type, m);
             parseConsumeAnnotation(apiMetadata, type, m);
+            parseHttpOptionAnnotation(apiMetadata, type, m);
             return apiMetadata;
         });
     }
@@ -102,6 +108,37 @@ public enum ApiMetadataParser {
             apiMetadata.setConsume(ContentType.parse(methodConsume.value()));
         } else if (Objects.nonNull(typeConsume)) {
             apiMetadata.setConsume(ContentType.parse(typeConsume.value()));
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void parseHttpOptionAnnotation(ApiMetadata apiMetadata, Class<?> type, Method method) {
+        Opts methodOpts = method.getAnnotation(Opts.class);
+        Opts typeOpts = type.getAnnotation(Opts.class);
+        Consumer<Opt> optConsumer = opt -> {
+            HttpOption httpOption = null;
+            if (opt.id() > 0) {
+                httpOption = HttpOptions.getById(opt.id());
+            } else if (!opt.key().isEmpty()) {
+                httpOption = HttpOptions.getByKey(opt.key());
+            }
+            if (Objects.nonNull(httpOption)) {
+                Object configValue = Optional.ofNullable(opt.value())
+                        .map(httpOption::parseValueFromString)
+                        .orElse(null);
+                Object optionValue = HttpOptionParser.X.parseOptionValue(httpOption, configValue);
+                apiMetadata.addHttpOption(httpOption, optionValue);
+            }
+        };
+        if (Objects.nonNull(typeOpts)) {
+            for (Opt typeOpt : typeOpts.value()) {
+                optConsumer.accept(typeOpt);
+            }
+        }
+        if (Objects.nonNull(methodOpts)) {
+            for (Opt methodOpt : methodOpts.value()) {
+                optConsumer.accept(methodOpt);
+            }
         }
     }
 

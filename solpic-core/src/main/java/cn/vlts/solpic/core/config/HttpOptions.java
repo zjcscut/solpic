@@ -5,6 +5,7 @@ import cn.vlts.solpic.core.http.HttpVersion;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Internal HTTP options.
@@ -272,6 +273,24 @@ public final class HttpOptions {
             }
         }
         return Collections.unmodifiableList(options);
+    }
+
+    public static HttpOption<?> getById(long id) {
+        for (HttpOption<?> httpOption : OPTIONS) {
+            if (httpOption.id() == id) {
+                return httpOption;
+            }
+        }
+        return null;
+    }
+
+    public static HttpOption<?> getByKey(String key) {
+        for (HttpOption<?> httpOption : OPTIONS) {
+            if (Objects.equals(httpOption.key(), key)) {
+                return httpOption;
+            }
+        }
+        return null;
     }
 
     private static final List<HttpOption<?>> OPTIONS = new ArrayList<>();
