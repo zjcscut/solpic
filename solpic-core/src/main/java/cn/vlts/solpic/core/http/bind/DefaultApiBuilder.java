@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http.bind;
 
 import cn.vlts.solpic.core.concurrent.FutureListener;
+import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.http.HttpClient;
 import cn.vlts.solpic.core.http.HttpRequest;
 import cn.vlts.solpic.core.http.RequestPayloadSupport;
@@ -204,6 +205,12 @@ public class DefaultApiBuilder implements ApiBuilder {
                 }
             }
             requestBuilder.method(apiMetadata.getHttpMethod());
+            Map<HttpOption<?>, Object> options = apiMetadata.getOptions();
+            for (Map.Entry<HttpOption<?>, Object> entry : options.entrySet()) {
+                HttpOption key = entry.getKey();
+                requestBuilder.option(key, entry.getValue());
+            }
+            // request context vars
             Map<ApiMetadata.ApiVar, Object> vars = new HashMap<>();
             int argumentCount = argsToUse.length;
             RequestParameterHandler<Object>[] handlers = (RequestParameterHandler<Object>[])
