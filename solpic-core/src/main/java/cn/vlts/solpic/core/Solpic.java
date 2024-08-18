@@ -131,8 +131,8 @@ public abstract class Solpic {
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            return ReadOnlyHttpResponse.of(httpClientToUse.send(request, requestPayloadPublisher,
-                    responsePayloadSubscriber));
+            request.setPayloadPublisher(requestPayloadPublisher);
+            return ReadOnlyHttpResponse.of(httpClientToUse.send(request, responsePayloadSubscriber));
         }
     }
 
@@ -212,7 +212,8 @@ public abstract class Solpic {
             if (Objects.nonNull(requestHeaders)) {
                 requestHeaders.forEach(request::addHeader);
             }
-            httpClientToUse.send(request, requestPayloadPublisher, PayloadSubscribers.X.discarding());
+            request.setPayloadPublisher(requestPayloadPublisher);
+            httpClientToUse.send(request, PayloadSubscribers.X.discarding());
         }
     }
 

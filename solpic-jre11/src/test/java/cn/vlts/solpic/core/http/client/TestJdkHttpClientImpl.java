@@ -36,8 +36,8 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadPublishers.X.discarding(),
-                PayloadSubscribers.X.ofString());
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
+        HttpResponse<String> response = jdkHttpClientImpl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -53,8 +53,8 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         jdkHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = jdkHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
-                FlowPayloadSubscribers.X.ofString());
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
+        HttpResponse<String> response = jdkHttpClientImpl.send(request, FlowPayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -68,8 +68,8 @@ public class TestJdkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         httpClient.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = httpClient.send(request, PayloadPublishers.X.discarding(),
-                PayloadSubscribers.X.ofString());
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
+        HttpResponse<String> response = httpClient.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());

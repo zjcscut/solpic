@@ -1,7 +1,10 @@
 package cn.vlts.solpic.core.http;
 
 import cn.vlts.solpic.core.common.HttpRequestStatus;
+import cn.vlts.solpic.core.config.HttpOption;
+import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.util.Attachable;
+import cn.vlts.solpic.core.util.AttachmentKey;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,7 +44,40 @@ public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
         return Objects.nonNull(method) && METHODS_WITH_BODY.contains(method);
     }
 
+    <S extends RequestPayloadSupport> S getPayloadPublisher();
+
     HttpClient getHttpClient();
 
     HttpRequestStatus getStatus();
+
+    static Builder newBuilder() {
+        return new DefaultHttpRequest.Builder();
+    }
+
+    interface Builder {
+
+        Builder minimumOption(HttpOption<?> httpOption);
+
+        Builder availableOption(HttpOption<?> httpOption);
+
+        <H> Builder option(HttpOption<H> httpOption, H value);
+
+        <A> Builder attachment(AttachmentKey key, A value);
+
+        Builder uri(URI uri);
+
+        Builder method(HttpMethod method);
+
+        Builder header(HttpHeader header);
+
+        Builder header(String name, String value);
+
+        Builder query(String name, String value);
+
+        Builder path(String path);
+
+        <S extends RequestPayloadSupport> Builder payloadPublisher(S payloadPublisher);
+
+        HttpRequest build();
+    }
 }

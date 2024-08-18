@@ -1,6 +1,10 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.http.HttpClient;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 /**
  * Api builder.
@@ -14,7 +18,15 @@ public interface ApiBuilder {
 
     ApiBuilder loadEagerly();
 
+    ApiBuilder delay(long delay);
+
+    ApiBuilder promise(Supplier<CompletableFuture> promise);
+
+    ApiBuilder listener(Supplier<FutureListener> listener);
+
     ApiBuilder httpClient(HttpClient httpClient);
+
+    ApiBuilder converterFactory(ConverterFactory converterFactory);
 
     <T> T build(Class<T> type);
 

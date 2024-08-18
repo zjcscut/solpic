@@ -243,7 +243,7 @@ public final class UriBuilder {
     private void setPathString(String pathString) {
         this.dirty = true;
         resetSchemeSpecificPart();
-        String encodePaths = URLEncoder.encode(pathString);
+        String encodePaths = encodeValue(pathString);
         if (removeTrailingSlash) {
             boolean matched = encodePaths.endsWith(PATH_SEPARATOR);
             if (matched) {

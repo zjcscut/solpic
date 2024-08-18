@@ -22,7 +22,7 @@ public enum HttpClientFactory {
                 .stream()
                 .findFirst()
                 .map(serviceName -> getSpiLoader().getService(serviceName))
-                .orElse(null);
+                .orElseThrow(() -> new IllegalStateException("Unable to load any available HttpClient"));
     }
 
     private SpiLoader<HttpClient> getSpiLoader() {

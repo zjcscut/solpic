@@ -203,6 +203,7 @@ public enum PayloadSubscribers {
 
     static {
         CACHE.put(Void.class, PayloadSubscribers.X::discarding);
+        CACHE.put(void.class, PayloadSubscribers.X::discarding);
         CACHE.put(String.class, PayloadSubscribers.X::ofString);
         CACHE.put(byte[].class, PayloadSubscribers.X::ofByteArray);
     }

@@ -14,6 +14,4 @@ import java.lang.annotation.*;
 public @interface Header {
 
     String value();
-
-    boolean encoded() default false;
 }

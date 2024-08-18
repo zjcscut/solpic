@@ -16,4 +16,14 @@ public enum ArgumentUtils {
             throw new IllegalArgumentException("Argument '" + name + "' must not be null");
         }
     }
+
+    public void isTrue(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    public boolean hasLength(String string) {
+        return string != null && !string.isEmpty();
+    }
 }

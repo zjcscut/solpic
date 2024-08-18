@@ -41,8 +41,8 @@ public class TestOkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         okHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = okHttpClientImpl.send(request, PayloadPublishers.X.discarding(),
-                PayloadSubscribers.X.ofString());
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
+        HttpResponse<String> response = okHttpClientImpl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -55,8 +55,8 @@ public class TestOkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         okHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = okHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
-                FlowPayloadSubscribers.X.ofString());
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
+        HttpResponse<String> response = okHttpClientImpl.send(request, FlowPayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -71,8 +71,8 @@ public class TestOkHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING, true);
         okHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<HttpBinResult> response = okHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
-                codec.createFlowPayloadSubscriber(HttpBinResult.class));
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
+        HttpResponse<HttpBinResult> response = okHttpClientImpl.send(request, codec.createFlowPayloadSubscriber(HttpBinResult.class));
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -95,7 +95,8 @@ public class TestOkHttpClientImpl {
                 System.out.printf("result => %s\n", response.getPayload());
             }
         });
-        ScheduledFuture<HttpResponse<HttpBinResult>> response = okHttpClientImpl.scheduledSend(request, FlowPayloadPublishers.X.discarding(),
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
+        ScheduledFuture<HttpResponse<HttpBinResult>> response = okHttpClientImpl.scheduledSend(request,
                 codec.createFlowPayloadSubscriber(HttpBinResult.class), 3, TimeUnit.SECONDS, promise);
         Assert.assertNotNull(response);
         Thread.sleep(5000);

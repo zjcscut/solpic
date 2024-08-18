@@ -3,7 +3,7 @@ package cn.vlts.solpic.core.util;
 import lombok.Data;
 
 /**
- * Box.
+ * Box, volatile container.
  *
  * @author throwable
  * @since 2024/7/21 19:14

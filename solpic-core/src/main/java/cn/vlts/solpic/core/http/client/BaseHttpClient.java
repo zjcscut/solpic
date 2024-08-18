@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author throwable
  * @since 2024/7/24 星期三 11:24
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOptional, HttpClient {
 
     private static final AtomicLong INDEX = new AtomicLong();
@@ -67,11 +68,11 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     @Override
     public <T> HttpResponse<T> send(HttpRequest request,
-                                    RequestPayloadSupport payloadPublisher,
                                     ResponsePayloadSupport<?> payloadSubscriber) {
         if (!isRunning()) {
             throw new IllegalStateException(String.format("[%s] - Http client is not running", id()));
         }
+        RequestPayloadSupport payloadPublisher = request.getPayloadPublisher();
         // validate request minimum options
         request.validateMinimumHttpOptions();
         // preferred request payload content type
@@ -95,24 +96,39 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     @Override
-    public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                            RequestPayloadSupport payloadPublisher,
-                                                            ResponsePayloadSupport<?> payloadSubscriber) {
-        return CompletableFuture.supplyAsync(() -> send(request, payloadPublisher, payloadSubscriber), getThreadPool());
+    public <T> T sendSimple(HttpRequest request,
+                            ResponsePayloadSupport<?> payloadSubscriber) {
+        return (T) send(request, payloadSubscriber).getPayload();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
+                                                            ResponsePayloadSupport<?> payloadSubscriber) {
+        return CompletableFuture.supplyAsync(() -> send(request, payloadSubscriber), getThreadPool());
+    }
+
+    @Override
+    public <T> CompletableFuture<T> sendAsyncSimple(HttpRequest request,
+                                                    ResponsePayloadSupport<?> payloadSubscriber) {
+        return CompletableFuture.supplyAsync(() -> sendSimple(request, payloadSubscriber),
+                getThreadPool());
+    }
+
     @Override
     public <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
-                                                         RequestPayloadSupport payloadPublisher,
                                                          ResponsePayloadSupport<?> payloadSubscriber,
                                                          FutureListener... listeners) {
-        return getThreadPool().submit(() -> send(request, payloadPublisher, payloadSubscriber), listeners);
+        return getThreadPool().submit(() -> send(request, payloadSubscriber), listeners);
+    }
+
+    @Override
+    public <T> ListenableFuture<T> enqueueSimple(HttpRequest request,
+                                                 ResponsePayloadSupport<?> payloadSubscriber, FutureListener... listeners) {
+        return getThreadPool().submit(() -> sendSimple(request, payloadSubscriber), listeners);
     }
 
     @Override
     public <T> ScheduledFuture<HttpResponse<T>> scheduledSend(HttpRequest request,
-                                                              RequestPayloadSupport payloadPublisher,
                                                               ResponsePayloadSupport<?> payloadSubscriber,
                                                               long delay,
                                                               TimeUnit unit,
@@ -120,12 +136,30 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         return getScheduledThreadPool().schedule(() -> {
             HttpResponse<T> response = null;
             try {
-                response = send(request, payloadPublisher, payloadSubscriber);
+                response = send(request, payloadSubscriber);
                 promise.complete(response);
             } catch (Throwable throwable) {
                 promise.completeExceptionally(throwable);
             }
             return response;
+        }, delay, unit);
+    }
+
+    @Override
+    public <T> ScheduledFuture<T> scheduledSendSimple(HttpRequest request,
+                                                      ResponsePayloadSupport<?> payloadSubscriber,
+                                                      long delay,
+                                                      TimeUnit unit,
+                                                      CompletableFuture<T> promise) {
+        return getScheduledThreadPool().schedule(() -> {
+            T result = null;
+            try {
+                result = sendSimple(request, payloadSubscriber);
+                promise.complete(result);
+            } catch (Throwable throwable) {
+                promise.completeExceptionally(throwable);
+            }
+            return result;
         }, delay, unit);
     }
 
@@ -198,6 +232,11 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     protected void triggerBeforeSend(HttpRequest request) {
         changeRequestStatus(request, HttpRequestStatus.ACTIVE);
         Metrics.X.increaseTotalRequestCount(id());
+        if (Objects.isNull(request.getHttpClient())) {
+            if (request instanceof DefaultHttpRequest) {
+                ((DefaultHttpRequest) request).setHttpClient(this);
+            }
+        }
         triggerInterceptorsBeforeSend(request);
     }
 

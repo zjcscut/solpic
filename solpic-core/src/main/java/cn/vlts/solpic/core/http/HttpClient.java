@@ -26,25 +26,38 @@ public interface HttpClient extends HttpOptional, Closeable, InitialingBean, Dis
     String id();
 
     <T> HttpResponse<T> send(HttpRequest request,
-                             RequestPayloadSupport payloadPublisher,
                              ResponsePayloadSupport<?> payloadSubscriber);
 
+    <T> T sendSimple(HttpRequest request,
+                     ResponsePayloadSupport<?> payloadSubscriber);
+
     <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request,
-                                                     RequestPayloadSupport payloadPublisher,
                                                      ResponsePayloadSupport<?> payloadSubscriber);
+
+    <T> CompletableFuture<T> sendAsyncSimple(HttpRequest request,
+                                             ResponsePayloadSupport<?> payloadSubscriber);
 
     @SuppressWarnings("rawtypes")
     <T> ListenableFuture<HttpResponse<T>> enqueue(HttpRequest request,
-                                                  RequestPayloadSupport payloadPublisher,
                                                   ResponsePayloadSupport<?> payloadSubscriber,
                                                   FutureListener... listeners);
 
+    @SuppressWarnings("rawtypes")
+    <T> ListenableFuture<T> enqueueSimple(HttpRequest request,
+                                          ResponsePayloadSupport<?> payloadSubscriber,
+                                          FutureListener... listeners);
+
     <T> ScheduledFuture<HttpResponse<T>> scheduledSend(HttpRequest request,
-                                                       RequestPayloadSupport payloadPublisher,
                                                        ResponsePayloadSupport<?> payloadSubscriber,
                                                        long delay,
                                                        TimeUnit unit,
                                                        CompletableFuture<HttpResponse<T>> promise);
+
+    <T> ScheduledFuture<T> scheduledSendSimple(HttpRequest request,
+                                               ResponsePayloadSupport<?> payloadSubscriber,
+                                               long delay,
+                                               TimeUnit unit,
+                                               CompletableFuture<T> promise);
 
     boolean isRunning();
 

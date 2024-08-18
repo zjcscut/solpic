@@ -66,6 +66,11 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
     }
 
     @Override
+    public <S extends RequestPayloadSupport> S getPayloadPublisher() {
+        return request.getPayloadPublisher();
+    }
+
+    @Override
     public HttpClient getHttpClient() {
         return request.getHttpClient();
     }
@@ -287,6 +292,11 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
 
     @Override
     public <T> void setHttpOption(HttpOption<T> httpOption, T configValue) {
+
+    }
+
+    @Override
+    public void validateMinimumHttpOptions() {
 
     }
 }

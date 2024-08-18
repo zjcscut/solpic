@@ -31,9 +31,9 @@ public class TestApacheHttpClientV5Impl {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), apacheHttpClientV5Impl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
         apacheHttpClientV5Impl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = apacheHttpClientV5Impl.send(request, PayloadPublishers.X.discarding(),
-                PayloadSubscribers.X.ofString());
+        HttpResponse<String> response = apacheHttpClientV5Impl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());

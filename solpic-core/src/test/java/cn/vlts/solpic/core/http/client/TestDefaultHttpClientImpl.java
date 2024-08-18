@@ -40,9 +40,9 @@ public class TestDefaultHttpClientImpl {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
         defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = defaultHttpClientImpl.send(request, PayloadPublishers.X.discarding(),
-                PayloadSubscribers.X.ofString());
+        HttpResponse<String> response = defaultHttpClientImpl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -54,9 +54,9 @@ public class TestDefaultHttpClientImpl {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
         defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<String> response = defaultHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
-                FlowPayloadSubscribers.X.ofString());
+        HttpResponse<String> response = defaultHttpClientImpl.send(request, FlowPayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
         System.out.println(response.getContentLength());
@@ -70,8 +70,9 @@ public class TestDefaultHttpClientImpl {
         request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_TRACING, true);
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
         defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
-        HttpResponse<HttpBinResult> response = defaultHttpClientImpl.send(request, FlowPayloadPublishers.X.discarding(),
+        HttpResponse<HttpBinResult> response = defaultHttpClientImpl.send(request,
                 codec.createFlowPayloadSubscriber(HttpBinResult.class));
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());
@@ -95,7 +96,8 @@ public class TestDefaultHttpClientImpl {
                 System.out.printf("result => %s\n", response.getPayload());
             }
         });
-        ScheduledFuture<HttpResponse<HttpBinResult>> response = defaultHttpClientImpl.scheduledSend(request, FlowPayloadPublishers.X.discarding(),
+        request.setPayloadPublisher(FlowPayloadPublishers.X.discarding());
+        ScheduledFuture<HttpResponse<HttpBinResult>> response = defaultHttpClientImpl.scheduledSend(request,
                 codec.createFlowPayloadSubscriber(HttpBinResult.class), 3, TimeUnit.SECONDS, promise);
         Assert.assertNotNull(response);
         Thread.sleep(5000);
