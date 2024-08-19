@@ -161,7 +161,7 @@ public enum ApiMetadataParser {
         int c = apiMetadata.getParameterCount();
         RequestParameterHandler<?>[] handlers = new RequestParameterHandler<?>[c];
         for (int i = 0; i < c; i++) {
-            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(builder, i, parameterTypes[i],
+            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(apiMetadata, builder, i, parameterTypes[i],
                     methodParameterAnnotations[i], method);
             handlers[i] = requestParameterHandler;
         }
@@ -169,7 +169,8 @@ public enum ApiMetadataParser {
     }
 
     @SuppressWarnings("unchecked")
-    private RequestParameterHandler<?> parseMethodParameter(DefaultApiBuilder builder,
+    private RequestParameterHandler<?> parseMethodParameter(ApiMetadata apiMetadata,
+                                                            DefaultApiBuilder builder,
                                                             int index,
                                                             Type type,
                                                             Annotation[] annotations,
@@ -260,9 +261,10 @@ public enum ApiMetadataParser {
                 if (RequestPayloadSupport.class.isAssignableFrom(rawType)) {
                     return new RequestParameterHandler.PayloadSupport();
                 }
-                Converter<?, RequestPayloadSupport> converter =
-                        builder.getRequestPayloadConverter(type, annotations, method.getAnnotations());
-                if (Objects.nonNull(converter)) {
+                ApiParameterMetadata apiParameterMetadata = apiMetadata.newApiParameterMetadata(index);
+                Converter<?, RequestPayloadSupport> converter;
+                if (builder.supportRequestPayloadConverter(apiParameterMetadata) &&
+                        Objects.nonNull(converter = builder.getRequestPayloadConverter(apiParameterMetadata))) {
                     return new RequestParameterHandler.Payload(converter);
                 }
                 if (PayloadPublishers.X.containsPayloadPublisher(rawType)) {
@@ -293,81 +295,75 @@ public enum ApiMetadataParser {
                                         Method method) {
         ApiMetadata.SendMode sendMode = ApiMetadata.SendMode.SYNC;
         Type returnType = apiMetadata.getReturnType();
-        Class<?> rawType = ReflectionUtils.X.getRawType(returnType);
-        ResponsePayloadSupport<?> payloadSupport = builder.getResponsePayloadSupplier(returnType,
-                method.getAnnotations());
-        apiMetadata.setRawResponseType(rawType);
-        boolean hasPayloadSupport = false;
+        ReflectionUtils.ParameterizedTypeInfo pti = ReflectionUtils.X.getParameterizedTypeInfo(returnType);
+        Class<?> rawReturnType = ReflectionUtils.X.getRawType(returnType);
+        apiMetadata.setRawReturnType(rawReturnType);
+        boolean hasPayloadSupport = builder.supportResponsePayloadSupplier(apiMetadata.newApiReturnMetadata());
         boolean wrapByHttpResponse = false;
-        if (Objects.nonNull(payloadSupport)) {
-            hasPayloadSupport = true;
-        }
-        // just like HttpResponse<T>
-        if (hasPayloadSupport && HttpResponse.class.isAssignableFrom(rawType)) {
-            if (!(returnType instanceof ParameterizedType)) {
-                throw new IllegalArgumentException("Invalid type to apply response payload: " + method);
-            }
-            ParameterizedType parameterizedType = (ParameterizedType) returnType;
-            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-            if (Objects.nonNull(actualTypeArguments) && actualTypeArguments.length == 1) {
-                wrapByHttpResponse = true;
+        // sync mode
+        if (hasPayloadSupport && Objects.equals(pti.getRawClass(1, 0), HttpResponse.class)) {
+            // just like HttpResponse or HttpResponse<?>
+            if (1 == pti.getMaxDepth() && Objects.equals(HttpResponse.class, pti.getRawClass(1, 0))) {
+                hasPayloadSupport = false;
+            } else if (2 <= pti.getMaxDepth()) {
+                // just like HttpResponse<T> or others
+                if (Objects.equals(HttpResponse.class, pti.getRawClass(1, 0))) {
+                    wrapByHttpResponse = true;
+                }
             }
         }
         // async mode
-        if (hasPayloadSupport && CompletableFuture.class.isAssignableFrom(rawType)) {
-            // CompletableFuture
-            if (!(returnType instanceof ParameterizedType)) {
+        if (hasPayloadSupport && CompletableFuture.class.isAssignableFrom(rawReturnType)) {
+            // just like CompletableFuture or CompletableFuture<?>
+            if (1 == pti.getMaxDepth() && Objects.equals(CompletableFuture.class, pti.getRawClass(1, 0))) {
                 hasPayloadSupport = false;
-            } else {
-                ParameterizedType parameterizedType = (ParameterizedType) returnType;
-                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                if (Objects.nonNull(actualTypeArguments) && actualTypeArguments.length == 1) {
-                    Type actualTypeArgument = actualTypeArguments[0];
-                    // CompletableFuture<HttpResponse<T>>
-                    if (actualTypeArgument instanceof HttpResponse) {
-                        wrapByHttpResponse = true;
-                    }
+            } else if (2 <= pti.getMaxDepth()) {
+                // just like CompletableFuture<HttpResponse<T>>
+                if (Objects.equals(CompletableFuture.class, pti.getRawClass(1, 0)) &&
+                        Objects.equals(HttpResponse.class, pti.getRawClass(2, 0))) {
+                    wrapByHttpResponse = true;
+                } else {
+                    // just like CompletableFuture<T> or others
+                    wrapByHttpResponse = false;
                 }
             }
             sendMode = ApiMetadata.SendMode.ASYNC;
         }
         // enqueue mode
-        if (hasPayloadSupport && ListenableFuture.class.isAssignableFrom(rawType)) {
-            // ListenableFuture
-            if (!(returnType instanceof ParameterizedType)) {
+        if (hasPayloadSupport && ListenableFuture.class.isAssignableFrom(rawReturnType)) {
+            // just like ListenableFuture or ListenableFuture<?>
+            if (1 == pti.getMaxDepth() && Objects.equals(ListenableFuture.class, pti.getRawClass(1, 0))) {
                 hasPayloadSupport = false;
-            } else {
-                ParameterizedType parameterizedType = (ParameterizedType) returnType;
-                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                if (Objects.nonNull(actualTypeArguments) && actualTypeArguments.length == 1) {
-                    Type actualTypeArgument = actualTypeArguments[0];
-                    // ListenableFuture<HttpResponse<T>>
-                    if (actualTypeArgument instanceof HttpResponse) {
-                        wrapByHttpResponse = true;
-                    }
+            } else if (2 <= pti.getMaxDepth()) {
+                // just like ListenableFuture<HttpResponse<T>>
+                if (Objects.equals(ListenableFuture.class, pti.getRawClass(1, 0)) &&
+                        Objects.equals(HttpResponse.class, pti.getRawClass(2, 0))) {
+                    wrapByHttpResponse = true;
+                } else {
+                    // just like ListenableFuture<T> or others
+                    wrapByHttpResponse = false;
                 }
             }
             sendMode = ApiMetadata.SendMode.ENQUEUE;
         }
         // scheduled mode
-        if (hasPayloadSupport && ScheduledFuture.class.isAssignableFrom(rawType)) {
-            // ScheduledFuture
-            if (!(returnType instanceof ParameterizedType)) {
+        if (hasPayloadSupport && ScheduledFuture.class.isAssignableFrom(rawReturnType)) {
+            // just like  ScheduledFuture or ScheduledFuture<?>
+            if (1 == pti.getMaxDepth() && Objects.equals(ScheduledFuture.class, pti.getRawClass(1, 0))) {
                 hasPayloadSupport = false;
-            } else {
-                ParameterizedType parameterizedType = (ParameterizedType) returnType;
-                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                if (Objects.nonNull(actualTypeArguments) && actualTypeArguments.length == 1) {
-                    Type actualTypeArgument = actualTypeArguments[0];
-                    // ScheduledFuture<HttpResponse<T>>
-                    if (actualTypeArgument instanceof HttpResponse) {
-                        wrapByHttpResponse = true;
-                    }
+            } else if (2 <= pti.getMaxDepth()) {
+                // just like ScheduledFuture<HttpResponse<T>>
+                if (Objects.equals(ScheduledFuture.class, pti.getRawClass(1, 0)) &&
+                        Objects.equals(HttpResponse.class, pti.getRawClass(2, 0))) {
+                    wrapByHttpResponse = true;
+                } else {
+                    // just like ScheduledFuture<T> or others
+                    wrapByHttpResponse = false;
                 }
             }
             sendMode = ApiMetadata.SendMode.SCHEDULED;
         }
-        if (void.class.isAssignableFrom(rawType) || Void.class.isAssignableFrom(rawType)) {
+        if (void.class.isAssignableFrom(rawReturnType) || Void.class.isAssignableFrom(rawReturnType)) {
             hasPayloadSupport = false;
         }
         apiMetadata.setSendMode(sendMode);

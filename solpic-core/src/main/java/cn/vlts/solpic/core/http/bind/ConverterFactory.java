@@ -15,14 +15,19 @@ import java.util.function.Supplier;
  */
 public abstract class ConverterFactory<S, T> {
 
-    public Converter<S, RequestPayloadSupport> newRequestConverter(Type type,
-                                                                   Annotation[] methodAnnotations,
-                                                                   Annotation[] parameterAnnotations) {
+    public boolean supportRequestConverter(ApiParameterMetadata metadata) {
+        return false;
+    }
+
+    public Converter<S, RequestPayloadSupport> newRequestConverter(ApiParameterMetadata metadata) {
         return null;
     }
 
-    public Supplier<ResponsePayloadSupport<T>> newResponseSupplier(Type type,
-                                                                   Annotation[] methodAnnotations) {
+    public boolean supportResponseSupplier(ApiParameterMetadata metadata) {
+        return false;
+    }
+
+    public Supplier<ResponsePayloadSupport<T>> newResponseSupplier(ApiParameterMetadata metadata) {
         return null;
     }
 }

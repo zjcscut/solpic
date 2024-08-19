@@ -2,14 +2,15 @@ package cn.vlts.solpic.core.util;
 
 import cn.vlts.solpic.core.spi.InstanceFactory;
 import cn.vlts.solpic.core.spi.SpiLoader;
+import lombok.Data;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
-import java.util.Objects;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
 
 /**
@@ -22,6 +23,8 @@ public enum ReflectionUtils {
     X;
 
     private static final ConcurrentMap<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new ConcurrentHashMap<>();
+
+    private static final SimpleLRUCache<Type, ParameterizedTypeInfo> PTI_CACHE = new SimpleLRUCache<>(64);
 
     private static Method PRIVATE_LOOKUP_IN_METHOD = null;
 
@@ -89,7 +92,7 @@ public enum ReflectionUtils {
             ParameterizedType parameterizedType = (ParameterizedType) type;
             Type rawType = parameterizedType.getRawType();
             if (!(rawType instanceof Class)) {
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Unsupported type to find its raw type: " + type);
             }
             return (Class<?>) rawType;
         }
@@ -118,6 +121,66 @@ public enum ReflectionUtils {
         return targetType;
     }
 
+    public ParameterizedTypeInfo getParameterizedTypeInfo(Type type) {
+        return PTI_CACHE.computeIfAbsent(type, t -> {
+            ParameterizedTypeInfo info = new ParameterizedTypeInfo();
+            info.setMaxDepth(0);
+            info.setRootType(t);
+            info.setItems(new ArrayList<>());
+            AtomicInteger depth = new AtomicInteger();
+            if (t instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) t;
+                parseParameterizedTypeInfo(info, pt, depth, 0);
+                info.setMaxDepth(info.getItems().size());
+            } else if (t instanceof Class) {
+                info.setMaxDepth(1);
+                ParameterizedTypeItem classItem = new ParameterizedTypeItem();
+                classItem.setDepth(1);
+                classItem.setPosition(0);
+                classItem.setRawClass((Class<?>) t);
+                classItem.setRawType(t);
+                info.getItems().add(classItem);
+            }
+            return info;
+        });
+    }
+
+    private void parseParameterizedTypeInfo(ParameterizedTypeInfo info, ParameterizedType pt, AtomicInteger depth, int position) {
+        int d = depth.incrementAndGet();
+        ParameterizedTypeItem item = new ParameterizedTypeItem();
+        info.getItems().add(item);
+        Type rawType = pt.getRawType();
+        Type ownerType = pt.getOwnerType();
+        Type[] actualTypeArguments = pt.getActualTypeArguments();
+        if (actualTypeArguments.length > 0) {
+            item.setActualTypes(new ArrayList<>(Arrays.asList(actualTypeArguments)));
+            for (int p = 0; p < actualTypeArguments.length; p++) {
+                Type actualTypeArgument = actualTypeArguments[p];
+                if (actualTypeArgument instanceof ParameterizedType) {
+                    ParameterizedType ppt = (ParameterizedType) actualTypeArgument;
+                    parseParameterizedTypeInfo(info, ppt, depth, p);
+                } else if (actualTypeArgument instanceof Class) {
+                    int classDepth = d + 1;
+                    Class klass = (Class) actualTypeArgument;
+                    ParameterizedTypeItem classItem = new ParameterizedTypeItem();
+                    classItem.setDepth(classDepth);
+                    classItem.setPosition(p);
+                    classItem.setRawType(klass);
+                    classItem.setRawClass(klass);
+                    classItem.setActualTypes(null);
+                    info.getItems().add(classItem);
+                }
+            }
+        }
+        item.setDepth(d);
+        item.setPosition(position);
+        item.setOwnerType(ownerType);
+        item.setRawType(rawType);
+        if (rawType instanceof Class) {
+            item.setRawClass((Class<?>) rawType);
+        }
+    }
+
     public MethodHandles.Lookup lookup(Class<?> callerClass) {
         if (Objects.nonNull(PRIVATE_LOOKUP_IN_METHOD)) {
             try {
@@ -142,6 +205,50 @@ public enum ReflectionUtils {
         } catch (IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Data
+    public static class ParameterizedTypeInfo {
+
+        private int maxDepth;
+
+        private List<ParameterizedTypeItem> items;
+
+        private Type rootType;
+
+        public Class<?> getRawClass(int depth, int position) {
+            return items.stream().filter(item -> item.getDepth() == depth && item.getPosition() == position)
+                    .findFirst()
+                    .map(ParameterizedTypeItem::getRawClass)
+                    .orElse(null);
+        }
+
+        public Type getRawType(int depth, int position) {
+            return items.stream().filter(item -> item.getDepth() == depth && item.getPosition() == position)
+                    .findFirst()
+                    .map(ParameterizedTypeItem::getRawType)
+                    .orElse(null);
+        }
+
+        public int getMaxDepth() {
+            return maxDepth;
+        }
+    }
+
+    @Data
+    public static class ParameterizedTypeItem {
+
+        private int depth;
+
+        private int position;
+
+        private List<Type> actualTypes;
+
+        private Type rawType;
+
+        private Type ownerType;
+
+        private Class<?> rawClass;
     }
 
     static {

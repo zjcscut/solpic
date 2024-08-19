@@ -208,24 +208,30 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
 
         @Override
         public HttpRequest.Builder minimumOption(HttpOption<?> httpOption) {
+            ArgumentUtils.X.notNull("httpOption", httpOption);
             this.minimumOptions.add(httpOption);
             return this;
         }
 
         @Override
         public HttpRequest.Builder availableOption(HttpOption<?> httpOption) {
+            ArgumentUtils.X.notNull("httpOption", httpOption);
             this.availableOptions.add(httpOption);
             return this;
         }
 
         @Override
         public <H> HttpRequest.Builder option(HttpOption<H> httpOption, H value) {
+            ArgumentUtils.X.notNull("httpOption", httpOption);
+            ArgumentUtils.X.notNull("value", value);
             this.options.put(httpOption, value);
             return this;
         }
 
         @Override
         public <A> HttpRequest.Builder attachment(AttachmentKey key, A value) {
+            ArgumentUtils.X.notNull("key", key);
+            ArgumentUtils.X.notNull("value", value);
             this.attachments.put(key, value);
             return this;
         }

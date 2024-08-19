@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -38,6 +40,8 @@ public class ApiMetadata {
 
     private Type returnType;
 
+    private Class<?> rawReturnType;
+
     private String path;
 
     private String absoluteUrl;
@@ -58,8 +62,6 @@ public class ApiMetadata {
 
     private boolean hasResponsePayload = true;
 
-    private Class<?> rawResponseType;
-
     public <T> void addHttpOption(HttpOption<T> option, T value) {
         options.put(option, value);
     }
@@ -68,10 +70,46 @@ public class ApiMetadata {
         this.requestParameterHandlers = requestParameterHandlers;
     }
 
+    public ApiParameterMetadata newApiReturnMetadata() {
+        return newApiParameterMetadata(-1);
+    }
+
+    public ApiParameterMetadata newApiParameterMetadata(int parameterIndex) {
+        if (parameterIndex == -1) {
+            return new DefaultApiParameterMetadata(
+                    type,
+                    method.getName(),
+                    -1,
+                    -1,
+                    methodAnnotations,
+                    null,
+                    null,
+                    returnType
+            );
+        }
+        if (parameterCount == 0) {
+            throw new IllegalStateException("Except parameter index: " + parameterIndex +
+                    ", actual parameter count: " + parameterIndex);
+        }
+        return new DefaultApiParameterMetadata(
+                type,
+                method.getName(),
+                parameterIndex,
+                parameterCount,
+                methodAnnotations,
+                methodParameterAnnotations[parameterIndex],
+                parameterTypes[parameterIndex],
+                returnType
+        );
+    }
+
     public enum SendMode {
         SYNC,
+
         ASYNC,
+
         ENQUEUE,
+
         SCHEDULED
     }
 
@@ -109,6 +147,83 @@ public class ApiMetadata {
                 }
             }
             return false;
+        }
+    }
+
+    private static class DefaultApiParameterMetadata implements ApiParameterMetadata {
+
+        private final Class<?> type;
+
+        private final String methodName;
+
+        private final int parameterIndex;
+
+        private final int parameterCount;
+
+        private final Annotation[] methodAnnotations;
+
+        private final Annotation[] parameterAnnotations;
+
+        private final Type parameterType;
+
+        private final Type returnType;
+
+        public DefaultApiParameterMetadata(Class<?> type,
+                                           String methodName,
+                                           int parameterIndex,
+                                           int parameterCount,
+                                           Annotation[] methodAnnotations,
+                                           Annotation[] parameterAnnotations,
+                                           Type parameterType,
+                                           Type returnType) {
+            this.type = type;
+            this.methodName = methodName;
+            this.parameterIndex = parameterIndex;
+            this.parameterCount = parameterCount;
+            this.methodAnnotations = methodAnnotations;
+            this.parameterAnnotations = parameterAnnotations;
+            this.parameterType = parameterType;
+            this.returnType = returnType;
+        }
+
+        @Override
+        public Class<?> getType() {
+            return type;
+        }
+
+        @Override
+        public String getMethodName() {
+            return methodName;
+        }
+
+        @Override
+        public int getParameterIndex() {
+            return parameterIndex;
+        }
+
+        @Override
+        public int getParameterCount() {
+            return parameterCount;
+        }
+
+        @Override
+        public Annotation[] getMethodAnnotations() {
+            return methodAnnotations;
+        }
+
+        @Override
+        public Annotation[] getParameterAnnotations() {
+            return parameterAnnotations;
+        }
+
+        @Override
+        public Type getParameterType() {
+            return parameterType;
+        }
+
+        @Override
+        public Type getReturnType() {
+            return returnType;
         }
     }
 }

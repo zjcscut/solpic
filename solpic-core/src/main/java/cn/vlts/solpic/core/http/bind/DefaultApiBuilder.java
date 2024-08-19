@@ -11,12 +11,10 @@ import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.ReflectionUtils;
 
-import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -31,7 +29,7 @@ import java.util.function.Supplier;
  * @author throwable
  * @since 2024/8/14 23:54
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class DefaultApiBuilder implements ApiBuilder {
 
     private final Object[] noneArgs = new Object[0];
@@ -126,11 +124,13 @@ public class DefaultApiBuilder implements ApiBuilder {
         return baseUrl;
     }
 
-    public <S> Converter<S, RequestPayloadSupport> getRequestPayloadConverter(Type type,
-                                                                              Annotation[] parameterAnnotations,
-                                                                              Annotation[] methodAnnotations) {
+    public boolean supportRequestPayloadConverter(ApiParameterMetadata metadata) {
+        return converterFactories.stream().anyMatch(cf -> cf.supportRequestConverter(metadata));
+    }
+
+    public <S> Converter<S, RequestPayloadSupport> getRequestPayloadConverter(ApiParameterMetadata metadata) {
         for (ConverterFactory converterFactory : converterFactories) {
-            Converter converter = converterFactory.newRequestConverter(type, parameterAnnotations, methodAnnotations);
+            Converter converter = converterFactory.newRequestConverter(metadata);
             if (Objects.nonNull(converter)) {
                 return (Converter<S, RequestPayloadSupport>) converter;
             }
@@ -138,10 +138,13 @@ public class DefaultApiBuilder implements ApiBuilder {
         return null;
     }
 
-    public <T> ResponsePayloadSupport<T> getResponsePayloadSupplier(Type type,
-                                                                    Annotation[] methodAnnotations) {
+    public boolean supportResponsePayloadSupplier(ApiParameterMetadata metadata) {
+        return converterFactories.stream().anyMatch(cf -> cf.supportResponseSupplier(metadata));
+    }
+
+    public <T> ResponsePayloadSupport<T> getResponsePayloadSupplier(ApiParameterMetadata metadata) {
         for (ConverterFactory converterFactory : converterFactories) {
-            Supplier<ResponsePayloadSupport<T>> supplier = converterFactory.newResponseSupplier(type, methodAnnotations);
+            Supplier<ResponsePayloadSupport<T>> supplier = converterFactory.newResponseSupplier(metadata);
             if (Objects.nonNull(supplier)) {
                 return supplier.get();
             }
@@ -183,11 +186,11 @@ public class DefaultApiBuilder implements ApiBuilder {
             }
             ApiMetadata apiMetadata = apiMetadataCache.computeIfAbsent(method,
                     m -> ApiMetadataParser.X.parse(this, type, m));
-            ResponsePayloadSupport<?> responsePayloadSupport =
-                    getResponsePayloadSupplier(type, apiMetadata.getMethodAnnotations());
+            ApiParameterMetadata returnMetadata = apiMetadata.newApiReturnMetadata();
+            ResponsePayloadSupport<?> responsePayloadSupport = getResponsePayloadSupplier(returnMetadata);
             if (Objects.isNull(responsePayloadSupport)) {
-                if (PayloadSubscribers.X.containsPayloadSubscriber(apiMetadata.getRawResponseType())) {
-                    responsePayloadSupport = PayloadSubscribers.X.getPayloadSubscriber(apiMetadata.getRawResponseType());
+                if (PayloadSubscribers.X.containsPayloadSubscriber(apiMetadata.getRawReturnType())) {
+                    responsePayloadSupport = PayloadSubscribers.X.getPayloadSubscriber(apiMetadata.getRawReturnType());
                 } else if (!apiMetadata.isHasResponsePayload()) {
                     responsePayloadSupport = PayloadSubscribers.X.discarding();
                 } else {
@@ -225,17 +228,22 @@ public class DefaultApiBuilder implements ApiBuilder {
                 handler.apply(() -> argument, requestBuilder);
                 if (handler instanceof RequestParameterHandler.Var) {
                     RequestParameterHandler.Var vh = (RequestParameterHandler.Var) handler;
-                    vars.put(vh.getVar(), vh.getVarValue());
+                    Object varValue = vh.getVarValue();
+                    if (Objects.nonNull(varValue)) {
+                        vars.put(vh.getVar(), varValue);
+                    }
                 }
             }
             HttpRequest httpRequest = requestBuilder.build();
             ApiMetadata.SendMode sendMode = apiMetadata.getSendMode();
+            // async mode
             if (ApiMetadata.SendMode.ASYNC == sendMode) {
                 if (apiMetadata.isWrapResponse()) {
                     return httpClient.sendAsync(httpRequest, responsePayloadSupport);
                 }
                 return httpClient.sendAsyncSimple(httpRequest, responsePayloadSupport);
             }
+            // enqueue mode
             if (ApiMetadata.SendMode.ENQUEUE == sendMode) {
                 FutureListener futureListenerToUse = (FutureListener) vars.getOrDefault(ApiMetadata.ApiVar.LISTENER,
                         listener.get());
@@ -244,6 +252,7 @@ public class DefaultApiBuilder implements ApiBuilder {
                 }
                 return httpClient.enqueueSimple(httpRequest, responsePayloadSupport, futureListenerToUse);
             }
+            // scheduled mode
             if (ApiMetadata.SendMode.SCHEDULED == sendMode) {
                 Long delayToUse = (Long) vars.getOrDefault(ApiMetadata.ApiVar.DELAY, delay);
                 CompletableFuture promiseToUse = (CompletableFuture) vars.getOrDefault(ApiMetadata.ApiVar.PROMISE,
