@@ -125,7 +125,7 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
             }
             ApiMetadata apiMetadata = apiMetadataCache.computeIfAbsent(method,
                     m -> ApiMetadataParser.X.parse(this, type, m));
-            ApiParameterMetadata returnTypeMetadata = apiMetadata.newApiReturnMetadata();
+            ApiParameterMetadata returnTypeMetadata = apiMetadata.newApiReturnTypeMetadata();
             ResponsePayloadSupport<?> responsePayloadSupport = getResponsePayloadSupplier(returnTypeMetadata);
             ContentType consume = apiMetadata.getConsume();
             if (Objects.isNull(responsePayloadSupport)) {

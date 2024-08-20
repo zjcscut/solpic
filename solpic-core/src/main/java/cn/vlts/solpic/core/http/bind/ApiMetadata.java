@@ -70,7 +70,7 @@ public class ApiMetadata {
         this.requestParameterHandlers = requestParameterHandlers;
     }
 
-    public ApiParameterMetadata newApiReturnMetadata() {
+    public ApiParameterMetadata newApiReturnTypeMetadata() {
         return newApiParameterMetadata(-1);
     }
 

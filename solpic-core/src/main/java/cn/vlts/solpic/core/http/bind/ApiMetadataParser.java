@@ -305,7 +305,7 @@ public enum ApiMetadataParser {
         ReflectionUtils.ParameterizedTypeInfo pti = ReflectionUtils.X.getParameterizedTypeInfo(returnType);
         Class<?> rawReturnType = ReflectionUtils.X.getRawType(returnType);
         apiMetadata.setRawReturnType(rawReturnType);
-        boolean hasPayloadSupport = enhancerSupport.supportResponsePayloadSupplier(apiMetadata.newApiReturnMetadata());
+        boolean hasPayloadSupport = enhancerSupport.supportResponsePayloadSupplier(apiMetadata.newApiReturnTypeMetadata());
         if (!hasPayloadSupport) {
             hasPayloadSupport = PayloadSubscribers.X.containsPayloadSubscriber(returnType);
         }
