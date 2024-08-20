@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * @author throwable
  * @since 2024/8/18 23:30
  */
-public class ApiBuilderTest {
+public class ApiEnhancerBuilderTest {
 
     @Test
     public void testReflection1() throws Exception {
@@ -51,10 +51,11 @@ public class ApiBuilderTest {
 
     @Test
     public void testHttpBinApiGetString() {
-        HttpBinApi httpBinApi = Solpic.newApiBuilder()
+        ApiEnhancer apiEnhancer = Solpic.newApiEnhancerBuilder()
                 .baseUrl("https://httpbin.org")
                 .addConverterFactory(new HttpBinConverterFactory())
-                .build(HttpBinApi.class);
+                .build();
+        HttpBinApi httpBinApi = apiEnhancer.enhance(HttpBinApi.class);
         Assert.assertNotNull(httpBinApi);
         String sr = httpBinApi.getString("bar");
         System.out.println(sr);
@@ -64,10 +65,11 @@ public class ApiBuilderTest {
 
     @Test
     public void testAsyncGetForResponseObject() throws Exception{
-        HttpBinApi httpBinApi = Solpic.newApiBuilder()
+        ApiEnhancer apiEnhancer = Solpic.newApiEnhancerBuilder()
                 .baseUrl("https://httpbin.org")
                 .addConverterFactory(new HttpBinConverterFactory())
-                .build(HttpBinApi.class);
+                .build();
+        HttpBinApi httpBinApi = apiEnhancer.enhance(HttpBinApi.class);
         CompletableFuture<HttpResponse<HttpBinResult>> r = httpBinApi.asyncGetForResponseObject("bar");
         HttpResponse<HttpBinResult> response = r.get();
         System.out.println(response.getPayload());

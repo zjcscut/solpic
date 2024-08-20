@@ -4,7 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 /**
- * Api convert metadata.
+ * Api parameter metadata.
  *
  * @author throwable
  * @since 2024/8/19 星期一 15:02

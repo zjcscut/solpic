@@ -5,7 +5,7 @@ import cn.vlts.solpic.core.codec.CodecFactory;
 import cn.vlts.solpic.core.codec.CodecType;
 import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
-import cn.vlts.solpic.core.http.bind.ApiBuilder;
+import cn.vlts.solpic.core.http.bind.ApiEnhancerBuilder;
 import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
@@ -52,8 +52,8 @@ public abstract class Solpic {
         return new DefaultOneWaySolpicTemplateBuilder();
     }
 
-    public static ApiBuilder newApiBuilder() {
-        return ApiBuilder.newBuilder();
+    public static ApiEnhancerBuilder newApiEnhancerBuilder() {
+        return ApiEnhancerBuilder.newBuilder();
     }
 
     public static <S, T> Codec<S, T> newCodec(String codecName) {

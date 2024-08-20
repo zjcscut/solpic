@@ -75,6 +75,7 @@ public class ApiMetadata {
     }
 
     public ApiParameterMetadata newApiParameterMetadata(int parameterIndex) {
+        // return type metadata
         if (parameterIndex == -1) {
             return new DefaultApiParameterMetadata(
                     type,
@@ -91,6 +92,7 @@ public class ApiMetadata {
             throw new IllegalStateException("Except parameter index: " + parameterIndex +
                     ", actual parameter count: " + parameterIndex);
         }
+        // parameter metadata
         return new DefaultApiParameterMetadata(
                 type,
                 method.getName(),

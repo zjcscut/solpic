@@ -4,7 +4,6 @@ import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.http.*;
-import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.ReflectionUtils;
@@ -22,154 +21,61 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * Default api builder.
+ * Default api enhancer.
  *
  * @author throwable
- * @since 2024/8/14 23:54
+ * @since 2024/8/21 00:08
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class DefaultApiBuilder implements ApiBuilder {
+class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
 
-    private final Object[] noneArgs = new Object[0];
-
-    private boolean loadEagerly = false;
-
-    private String baseUrl;
-
-    private HttpClient httpClient;
-
-    private Codec codec;
-
-    private Long delay = 0L;
-
-    private Supplier<CompletableFuture> promise = CompletableFuture::new;
-
-    private Supplier<FutureListener> listener = () -> f -> {
-    };
-
-    private final List<ConverterFactory> converterFactories = new ArrayList<>();
+    private final List<ConverterFactory> converterFactoriesCache = new ArrayList<>();
 
     private final ConcurrentMap<Method, ApiMetadata> apiMetadataCache = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<Method, MethodHandle> defaultMethodCache = new ConcurrentHashMap<>();
 
-    @Override
-    public ApiBuilder baseUrl(String baseUrl) {
+    private final Object[] noneArgs = new Object[0];
+
+    private final boolean loadEagerly;
+
+    private final String baseUrl;
+
+    private final HttpClient httpClient;
+
+    private final Codec codec;
+
+    private final Long defaultDelayMillis;
+
+    private final Supplier<CompletableFuture> promiseSupplier;
+
+    private final Supplier<FutureListener> futureListenerSupplier;
+
+    public DefaultApiEnhancer(boolean loadEagerly,
+                              String baseUrl,
+                              HttpClient httpClient,
+                              Codec codec,
+                              Long defaultDelayMillis,
+                              Supplier<CompletableFuture> promiseSupplier,
+                              Supplier<FutureListener> futureListenerSupplier,
+                              List<ConverterFactory> converterFactories) {
+        this.loadEagerly = loadEagerly;
         this.baseUrl = baseUrl;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder loadEagerly() {
-        this.loadEagerly = true;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder delay(long delay) {
-        ArgumentUtils.X.isTrue(delay > 0, "delay must be greater than 0");
-        this.delay = delay;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder promise(Supplier<CompletableFuture> promise) {
-        ArgumentUtils.X.notNull("promise", promise);
-        this.promise = promise;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder listener(Supplier<FutureListener> listener) {
-        ArgumentUtils.X.notNull("listener", listener);
-        this.listener = listener;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder httpClient(HttpClient httpClient) {
-        ArgumentUtils.X.notNull("httpClient", httpClient);
         this.httpClient = httpClient;
-        return this;
-    }
-
-    @Override
-    public ApiBuilder codec(Codec codec) {
-        ArgumentUtils.X.notNull("codec", codec);
         this.codec = codec;
-        return this;
+        this.defaultDelayMillis = defaultDelayMillis;
+        this.promiseSupplier = promiseSupplier;
+        this.futureListenerSupplier = futureListenerSupplier;
+        if (Objects.nonNull(converterFactories)) {
+            this.converterFactoriesCache.addAll(converterFactories);
+        }
     }
 
     @Override
-    public ApiBuilder addConverterFactory(ConverterFactory converterFactory) {
-        ArgumentUtils.X.notNull("converterFactory", converterFactory);
-        converterFactories.add(converterFactory);
-        return this;
-    }
-
-    @Override
-    public <T> T build(Class<T> type) {
-        ArgumentUtils.X.notNull("baseUrl", baseUrl);
+    public <T> T enhance(Class<T> type) {
         validate(type);
-        if (Objects.isNull(httpClient)) {
-            httpClient = HttpClientFactory.X.loadBestMatchedHttpClient();
-        }
-        if (isLoadEagerly()) {
-            Method[] declaredMethods = type.getDeclaredMethods();
-            for (Method method : declaredMethods) {
-                if (!method.isDefault()
-                        && !Modifier.isStatic(method.getModifiers())
-                        && !method.isSynthetic()) {
-                    apiMetadataCache.computeIfAbsent(method, m -> ApiMetadataParser.X.parse(this, type, m));
-                }
-            }
-        }
-        return enhance(type);
-    }
-
-    public boolean isLoadEagerly() {
-        return loadEagerly;
-    }
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-
-    public HttpClient getHttpClient() {
-        return httpClient;
-    }
-
-    public Codec getCodec() {
-        return codec;
-    }
-
-    public boolean supportRequestPayloadConverter(ApiParameterMetadata metadata) {
-        return converterFactories.stream().anyMatch(cf -> cf.supportRequestConverter(metadata));
-    }
-
-    public <S> Converter<S, RequestPayloadSupport> getRequestPayloadConverter(ApiParameterMetadata metadata) {
-        for (ConverterFactory converterFactory : converterFactories) {
-            Converter converter = converterFactory.newRequestConverter(metadata);
-            if (Objects.nonNull(converter)) {
-                return (Converter<S, RequestPayloadSupport>) converter;
-            }
-        }
-        return null;
-    }
-
-    public boolean supportResponsePayloadSupplier(ApiParameterMetadata metadata) {
-        return converterFactories.stream().anyMatch(cf -> cf.supportResponseSupplier(metadata));
-    }
-
-    public <T> ResponsePayloadSupport<T> getResponsePayloadSupplier(ApiParameterMetadata metadata) {
-        for (ConverterFactory converterFactory : converterFactories) {
-            Supplier<ResponsePayloadSupport<T>> supplier = converterFactory.newResponseSupplier(metadata);
-            if (Objects.nonNull(supplier)) {
-                return supplier.get();
-            }
-        }
-        return null;
+        loadEagerlyIfNecessary(type);
+        return enhanceApi(type);
     }
 
     private void validate(Class<?> type) {
@@ -192,7 +98,20 @@ public class DefaultApiBuilder implements ApiBuilder {
         }
     }
 
-    private <T> T enhance(Class<T> type) {
+    private void loadEagerlyIfNecessary(Class<?> type) {
+        if (loadEagerly) {
+            Method[] declaredMethods = type.getDeclaredMethods();
+            for (Method method : declaredMethods) {
+                if (!method.isDefault()
+                        && !Modifier.isStatic(method.getModifiers())
+                        && !method.isSynthetic()) {
+                    apiMetadataCache.computeIfAbsent(method, m -> ApiMetadataParser.X.parse(this, type, m));
+                }
+            }
+        }
+    }
+
+    private <T> T enhanceApi(Class<T> type) {
         return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, (proxy, method, args) -> {
             if (Object.class == method.getDeclaringClass()) {
                 return method.invoke(this, args);
@@ -206,16 +125,16 @@ public class DefaultApiBuilder implements ApiBuilder {
             }
             ApiMetadata apiMetadata = apiMetadataCache.computeIfAbsent(method,
                     m -> ApiMetadataParser.X.parse(this, type, m));
-            ApiParameterMetadata returnMetadata = apiMetadata.newApiReturnMetadata();
-            ResponsePayloadSupport<?> responsePayloadSupport = getResponsePayloadSupplier(returnMetadata);
+            ApiParameterMetadata returnTypeMetadata = apiMetadata.newApiReturnMetadata();
+            ResponsePayloadSupport<?> responsePayloadSupport = getResponsePayloadSupplier(returnTypeMetadata);
             ContentType consume = apiMetadata.getConsume();
             if (Objects.isNull(responsePayloadSupport)) {
                 if (PayloadSubscribers.X.containsPayloadSubscriber(apiMetadata.getRawReturnType())) {
                     responsePayloadSupport = PayloadSubscribers.X.getPayloadSubscriber(apiMetadata.getRawReturnType());
                 } else if (Objects.nonNull(consume) &&
                         consume.hasSameMimeType(ContentType.APPLICATION_JSON) &&
-                        Objects.nonNull(getCodec())) {
-                    responsePayloadSupport = getCodec().createPayloadSubscriber(apiMetadata.getRawReturnType());
+                        Objects.nonNull(codec)) {
+                    responsePayloadSupport = codec.createPayloadSubscriber(apiMetadata.getRawReturnType());
                 } else if (!apiMetadata.isHasResponsePayload()) {
                     responsePayloadSupport = PayloadSubscribers.X.discarding();
                 } else {
@@ -272,7 +191,7 @@ public class DefaultApiBuilder implements ApiBuilder {
             // enqueue mode
             if (ApiMetadata.SendMode.ENQUEUE == sendMode) {
                 FutureListener futureListenerToUse = (FutureListener) vars.getOrDefault(ApiMetadata.ApiVar.LISTENER,
-                        listener.get());
+                        futureListenerSupplier.get());
                 if (apiMetadata.isWrapResponse()) {
                     return httpClient.enqueue(httpRequest, responsePayloadSupport, futureListenerToUse);
                 }
@@ -280,9 +199,9 @@ public class DefaultApiBuilder implements ApiBuilder {
             }
             // scheduled mode
             if (ApiMetadata.SendMode.SCHEDULED == sendMode) {
-                Long delayToUse = (Long) vars.getOrDefault(ApiMetadata.ApiVar.DELAY, delay);
+                Long delayToUse = (Long) vars.getOrDefault(ApiMetadata.ApiVar.DELAY, defaultDelayMillis);
                 CompletableFuture promiseToUse = (CompletableFuture) vars.getOrDefault(ApiMetadata.ApiVar.PROMISE,
-                        promise.get());
+                        promiseSupplier.get());
                 if (apiMetadata.isWrapResponse()) {
                     return httpClient.scheduledSend(httpRequest, responsePayloadSupport,
                             delayToUse, TimeUnit.MILLISECONDS, promiseToUse);
@@ -296,5 +215,47 @@ public class DefaultApiBuilder implements ApiBuilder {
             }
             return httpClient.sendSimple(httpRequest, responsePayloadSupport);
         });
+    }
+
+    @Override
+    public boolean supportRequestPayloadConverter(ApiParameterMetadata metadata) {
+        return converterFactoriesCache.stream().anyMatch(cf -> cf.supportRequestConverter(metadata));
+    }
+
+    @Override
+    public <S> Converter<S, RequestPayloadSupport> getRequestPayloadConverter(ApiParameterMetadata metadata) {
+        for (ConverterFactory converterFactory : converterFactoriesCache) {
+            Converter converter = converterFactory.newRequestConverter(metadata);
+            if (Objects.nonNull(converter)) {
+                return (Converter<S, RequestPayloadSupport>) converter;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean supportResponsePayloadSupplier(ApiParameterMetadata metadata) {
+        return converterFactoriesCache.stream().anyMatch(cf -> cf.supportResponseSupplier(metadata));
+    }
+
+    @Override
+    public <T> ResponsePayloadSupport<T> getResponsePayloadSupplier(ApiParameterMetadata metadata) {
+        for (ConverterFactory converterFactory : converterFactoriesCache) {
+            Supplier<ResponsePayloadSupport<T>> supplier = converterFactory.newResponseSupplier(metadata);
+            if (Objects.nonNull(supplier)) {
+                return supplier.get();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Codec getCodec() {
+        return codec;
+    }
+
+    @Override
+    public HttpClient getHttpClient() {
+        return httpClient;
     }
 }

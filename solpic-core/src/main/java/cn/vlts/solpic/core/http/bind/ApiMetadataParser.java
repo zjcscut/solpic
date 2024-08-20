@@ -34,7 +34,7 @@ import java.util.function.Function;
 public enum ApiMetadataParser {
     X;
 
-    public ApiMetadata parse(DefaultApiBuilder builder, Class<?> type, Method m) {
+    public ApiMetadata parse(ApiEnhanceSupport enhancerSupport, Class<?> type, Method m) {
         ApiMetadata apiMetadata = new ApiMetadata();
         apiMetadata.setType(type);
         apiMetadata.setMethod(m);
@@ -48,8 +48,8 @@ public enum ApiMetadataParser {
         parseProduceAnnotation(apiMetadata, type, m);
         parseConsumeAnnotation(apiMetadata, type, m);
         parseHttpOptionAnnotation(apiMetadata, type, m);
-        parseMethodAnnotations(builder, apiMetadata, type, m);
-        parseMethodReturnValue(builder, apiMetadata, type, m);
+        parseMethodAnnotations(enhancerSupport, apiMetadata, type, m);
+        parseMethodReturnValue(enhancerSupport, apiMetadata, type, m);
         return apiMetadata;
     }
 
@@ -156,13 +156,13 @@ public enum ApiMetadataParser {
         }
     }
 
-    private void parseMethodAnnotations(DefaultApiBuilder builder, ApiMetadata apiMetadata, Class<?> type, Method method) {
+    private void parseMethodAnnotations(ApiEnhanceSupport enhancerSupport, ApiMetadata apiMetadata, Class<?> type, Method method) {
         Type[] parameterTypes = apiMetadata.getParameterTypes();
         Annotation[][] methodParameterAnnotations = apiMetadata.getMethodParameterAnnotations();
         int c = apiMetadata.getParameterCount();
         RequestParameterHandler<?>[] handlers = new RequestParameterHandler<?>[c];
         for (int i = 0; i < c; i++) {
-            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(apiMetadata, builder, i,
+            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(apiMetadata, enhancerSupport, i,
                     parameterTypes[i], methodParameterAnnotations[i], method);
             handlers[i] = requestParameterHandler;
         }
@@ -171,7 +171,7 @@ public enum ApiMetadataParser {
 
     @SuppressWarnings("unchecked")
     private RequestParameterHandler<?> parseMethodParameter(ApiMetadata apiMetadata,
-                                                            DefaultApiBuilder builder,
+                                                            ApiEnhanceSupport enhancerSupport,
                                                             int index,
                                                             Type type,
                                                             Annotation[] annotations,
@@ -262,15 +262,15 @@ public enum ApiMetadataParser {
                     }
                     ApiParameterMetadata apiParameterMetadata = apiMetadata.newApiParameterMetadata(index);
                     Converter<?, RequestPayloadSupport> converter;
-                    if (builder.supportRequestPayloadConverter(apiParameterMetadata) &&
-                            Objects.nonNull(converter = builder.getRequestPayloadConverter(apiParameterMetadata))) {
+                    if (enhancerSupport.supportRequestPayloadConverter(apiParameterMetadata) &&
+                            Objects.nonNull(converter = enhancerSupport.getRequestPayloadConverter(apiParameterMetadata))) {
                         return new RequestParameterHandler.Payload(converter);
                     }
                     ContentType produce = apiMetadata.getProduce();
                     if (Objects.nonNull(produce) &&
                             produce.hasSameMimeType(ContentType.APPLICATION_JSON) &&
-                            Objects.nonNull(builder.getCodec())) {
-                        return new RequestParameterHandler.Payload(s -> builder.getCodec().createPayloadPublisher(s));
+                            Objects.nonNull(enhancerSupport.getCodec())) {
+                        return new RequestParameterHandler.Payload(s -> enhancerSupport.getCodec().createPayloadPublisher(s));
                     }
                     if (PayloadPublishers.X.containsPayloadPublisher(rawType)) {
                         Function<Object, PayloadPublisher> payloadPublisher = PayloadPublishers.X.getPayloadPublisher(rawType);
@@ -296,7 +296,7 @@ public enum ApiMetadataParser {
                 "of type: %s", index, type));
     }
 
-    private void parseMethodReturnValue(DefaultApiBuilder builder,
+    private void parseMethodReturnValue(ApiEnhanceSupport enhancerSupport,
                                         ApiMetadata apiMetadata,
                                         Class<?> type,
                                         Method method) {
@@ -305,7 +305,7 @@ public enum ApiMetadataParser {
         ReflectionUtils.ParameterizedTypeInfo pti = ReflectionUtils.X.getParameterizedTypeInfo(returnType);
         Class<?> rawReturnType = ReflectionUtils.X.getRawType(returnType);
         apiMetadata.setRawReturnType(rawReturnType);
-        boolean hasPayloadSupport = builder.supportResponsePayloadSupplier(apiMetadata.newApiReturnMetadata());
+        boolean hasPayloadSupport = enhancerSupport.supportResponsePayloadSupplier(apiMetadata.newApiReturnMetadata());
         if (!hasPayloadSupport) {
             hasPayloadSupport = PayloadSubscribers.X.containsPayloadSubscriber(returnType);
         }
@@ -313,7 +313,7 @@ public enum ApiMetadataParser {
             ContentType consume = apiMetadata.getConsume();
             if (Objects.nonNull(consume) &&
                     consume.hasSameMimeType(ContentType.APPLICATION_JSON) &&
-                    Objects.nonNull(builder.getCodec())) {
+                    Objects.nonNull(enhancerSupport.getCodec())) {
                 hasPayloadSupport = true;
             }
         }
