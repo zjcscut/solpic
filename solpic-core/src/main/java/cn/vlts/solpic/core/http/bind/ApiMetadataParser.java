@@ -8,6 +8,7 @@ import cn.vlts.solpic.core.config.OptionLevel;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.bind.annotation.*;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
+import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.Pair;
 import cn.vlts.solpic.core.util.ReflectionUtils;
@@ -161,8 +162,8 @@ public enum ApiMetadataParser {
         int c = apiMetadata.getParameterCount();
         RequestParameterHandler<?>[] handlers = new RequestParameterHandler<?>[c];
         for (int i = 0; i < c; i++) {
-            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(apiMetadata, builder, i, parameterTypes[i],
-                    methodParameterAnnotations[i], method);
+            RequestParameterHandler<?> requestParameterHandler = parseMethodParameter(apiMetadata, builder, i,
+                    parameterTypes[i], methodParameterAnnotations[i], method);
             handlers[i] = requestParameterHandler;
         }
         apiMetadata.setRequestParameterHandlers(handlers);
@@ -175,118 +176,124 @@ public enum ApiMetadataParser {
                                                             Type type,
                                                             Annotation[] annotations,
                                                             Method method) {
-        if (Objects.isNull(annotations)) {
-            return null;
-        }
-        for (Annotation annotation : annotations) {
-            if (annotation instanceof Form) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                if (UrlEncodedForm.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.Form();
-                }
-                if (Map.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.FormMap();
-                }
-                throw new IllegalArgumentException(String.format("Parse @Form error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Multipart) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                if (MultipartData.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.Multipart();
-                }
-                throw new IllegalArgumentException(String.format("Parse @Multipart error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Header) {
-                Header header = (Header) annotation;
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                if (!String.class.isAssignableFrom(rawType)) {
-                    throw new IllegalArgumentException("Invalid type to apply header: " + type);
-                }
-                return new RequestParameterHandler.Header(header.value());
-            }
-            if (annotation instanceof Headers) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                // header map
-                if (Map.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.HeaderMap();
-                }
-                // iterable http header
-                if (Iterable.class.isAssignableFrom(rawType)) {
-                    if (!(type instanceof ParameterizedType)) {
-                        throw new IllegalArgumentException("Invalid type to apply headers: " + type);
+        if (Objects.nonNull(annotations)) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof Form) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    if (UrlEncodedForm.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.Form();
                     }
-                    Type elementType = ReflectionUtils.X.getParameterizedIndexType(0, (ParameterizedType) type);
-                    if (elementType instanceof Class && HttpHeader.class.isAssignableFrom((Class) elementType)) {
-                        return new RequestParameterHandler.Headers();
+                    if (Map.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.FormMap();
                     }
+                    throw new IllegalArgumentException(String.format("Parse @Form error, please check parameters#-%d " +
+                            "of type: %s", index, type));
                 }
-                throw new IllegalArgumentException(String.format("Parse @Headers error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Query) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                if (String.class.isAssignableFrom(rawType)) {
-                    Query query = (Query) annotation;
-                    String queryName = query.value();
-                    boolean encoded = query.encoded();
-                    return new RequestParameterHandler.Query(queryName, encoded);
-                }
-                throw new IllegalArgumentException(String.format("Parse @Query error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Queries) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                Queries queries = (Queries) annotation;
-                // query map
-                if (Map.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.QueryMap(queries.encoded());
-                }
-                // iterable query
-                if (Iterable.class.isAssignableFrom(rawType)) {
-                    if (!(type instanceof ParameterizedType)) {
-                        throw new IllegalArgumentException("Invalid type to apply queries: " + type);
+                if (annotation instanceof Multipart) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    if (MultipartData.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.Multipart();
                     }
-                    Type elementType = ReflectionUtils.X.getParameterizedIndexType(0, (ParameterizedType) type);
-                    if (elementType instanceof Class && Pair.class.isAssignableFrom((Class) elementType)) {
-                        return new RequestParameterHandler.Queries(queries.encoded());
+                    throw new IllegalArgumentException(String.format("Parse @Multipart error, please check parameters#-%d " +
+                            "of type: %s", index, type));
+                }
+                if (annotation instanceof Header) {
+                    Header header = (Header) annotation;
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    if (!String.class.isAssignableFrom(rawType)) {
+                        throw new IllegalArgumentException("Invalid type to apply header: " + type);
                     }
+                    return new RequestParameterHandler.Header(header.value());
                 }
-                throw new IllegalArgumentException(String.format("Parse @Queries error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Payload) {
-                Class<?> rawType = ReflectionUtils.X.getRawType(type);
-                if (RequestPayloadSupport.class.isAssignableFrom(rawType)) {
-                    return new RequestParameterHandler.PayloadSupport();
+                if (annotation instanceof Headers) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    // header map
+                    if (Map.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.HeaderMap();
+                    }
+                    // iterable http header
+                    if (Iterable.class.isAssignableFrom(rawType)) {
+                        if (!(type instanceof ParameterizedType)) {
+                            throw new IllegalArgumentException("Invalid type to apply headers: " + type);
+                        }
+                        Type elementType = ReflectionUtils.X.getParameterizedIndexType(0, (ParameterizedType) type);
+                        if (elementType instanceof Class && HttpHeader.class.isAssignableFrom((Class) elementType)) {
+                            return new RequestParameterHandler.Headers();
+                        }
+                    }
+                    throw new IllegalArgumentException(String.format("Parse @Headers error, please check parameters#-%d " +
+                            "of type: %s", index, type));
                 }
-                ApiParameterMetadata apiParameterMetadata = apiMetadata.newApiParameterMetadata(index);
-                Converter<?, RequestPayloadSupport> converter;
-                if (builder.supportRequestPayloadConverter(apiParameterMetadata) &&
-                        Objects.nonNull(converter = builder.getRequestPayloadConverter(apiParameterMetadata))) {
-                    return new RequestParameterHandler.Payload(converter);
+                if (annotation instanceof Query) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    if (String.class.isAssignableFrom(rawType)) {
+                        Query query = (Query) annotation;
+                        String queryName = query.value();
+                        boolean encoded = query.encoded();
+                        return new RequestParameterHandler.Query(queryName, encoded);
+                    }
+                    throw new IllegalArgumentException(String.format("Parse @Query error, please check parameters#-%d " +
+                            "of type: %s", index, type));
                 }
-                if (PayloadPublishers.X.containsPayloadPublisher(rawType)) {
-                    Function<Object, PayloadPublisher> payloadPublisher = PayloadPublishers.X.getPayloadPublisher(rawType);
-                    return new RequestParameterHandler.Payload(payloadPublisher::apply);
+                if (annotation instanceof Queries) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    Queries queries = (Queries) annotation;
+                    // query map
+                    if (Map.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.QueryMap(queries.encoded());
+                    }
+                    // iterable query
+                    if (Iterable.class.isAssignableFrom(rawType)) {
+                        if (!(type instanceof ParameterizedType)) {
+                            throw new IllegalArgumentException("Invalid type to apply queries: " + type);
+                        }
+                        Type elementType = ReflectionUtils.X.getParameterizedIndexType(0, (ParameterizedType) type);
+                        if (elementType instanceof Class && Pair.class.isAssignableFrom((Class) elementType)) {
+                            return new RequestParameterHandler.Queries(queries.encoded());
+                        }
+                    }
+                    throw new IllegalArgumentException(String.format("Parse @Queries error, please check parameters#-%d " +
+                            "of type: %s", index, type));
                 }
-                throw new IllegalArgumentException(String.format("Parse @Payload error, please check parameters#-%d " +
-                        "of type: %s", index, type));
-            }
-            if (annotation instanceof Var) {
-                Var var = (Var) annotation;
-                String varName = var.value();
-                String varDefaultValue = var.defaultValue();
-                if (ArgumentUtils.X.hasLength(varName) && ApiMetadata.ApiVar.exist(varName)) {
-                    return new RequestParameterHandler.Var<>(varName, varDefaultValue);
+                if (annotation instanceof Payload) {
+                    Class<?> rawType = ReflectionUtils.X.getRawType(type);
+                    if (RequestPayloadSupport.class.isAssignableFrom(rawType)) {
+                        return new RequestParameterHandler.PayloadSupport();
+                    }
+                    ApiParameterMetadata apiParameterMetadata = apiMetadata.newApiParameterMetadata(index);
+                    Converter<?, RequestPayloadSupport> converter;
+                    if (builder.supportRequestPayloadConverter(apiParameterMetadata) &&
+                            Objects.nonNull(converter = builder.getRequestPayloadConverter(apiParameterMetadata))) {
+                        return new RequestParameterHandler.Payload(converter);
+                    }
+                    ContentType produce = apiMetadata.getProduce();
+                    if (Objects.nonNull(produce) &&
+                            produce.hasSameMimeType(ContentType.APPLICATION_JSON) &&
+                            Objects.nonNull(builder.getCodec())) {
+                        return new RequestParameterHandler.Payload(s -> builder.getCodec().createPayloadPublisher(s));
+                    }
+                    if (PayloadPublishers.X.containsPayloadPublisher(rawType)) {
+                        Function<Object, PayloadPublisher> payloadPublisher = PayloadPublishers.X.getPayloadPublisher(rawType);
+                        return new RequestParameterHandler.Payload(payloadPublisher::apply);
+                    }
+                    throw new IllegalArgumentException(String.format("Parse @Payload error, please check parameters#-%d " +
+                            "of type: %s", index, type));
                 }
-                throw new IllegalArgumentException(String.format("Parse @Var error, please check parameters#-%d " +
-                        "of type: %s", index, type));
+                if (annotation instanceof Var) {
+                    Var var = (Var) annotation;
+                    String varName = var.value();
+                    String varDefaultValue = var.defaultValue();
+                    if (ArgumentUtils.X.hasLength(varName) && ApiMetadata.ApiVar.exist(varName)) {
+                        return new RequestParameterHandler.Var<>(varName, varDefaultValue);
+                    }
+                    throw new IllegalArgumentException(String.format("Parse @Var error, please check parameters#-%d " +
+                            "of type: %s", index, type));
+                }
             }
         }
         // ignore parsing parameter
-        return null;
+        throw new IllegalArgumentException(String.format("Parse method parameter failed, please check parameters#-%d " +
+                "of type: %s", index, type));
     }
 
     private void parseMethodReturnValue(DefaultApiBuilder builder,
@@ -299,6 +306,17 @@ public enum ApiMetadataParser {
         Class<?> rawReturnType = ReflectionUtils.X.getRawType(returnType);
         apiMetadata.setRawReturnType(rawReturnType);
         boolean hasPayloadSupport = builder.supportResponsePayloadSupplier(apiMetadata.newApiReturnMetadata());
+        if (!hasPayloadSupport) {
+            hasPayloadSupport = PayloadSubscribers.X.containsPayloadSubscriber(returnType);
+        }
+        if (!hasPayloadSupport) {
+            ContentType consume = apiMetadata.getConsume();
+            if (Objects.nonNull(consume) &&
+                    consume.hasSameMimeType(ContentType.APPLICATION_JSON) &&
+                    Objects.nonNull(builder.getCodec())) {
+                hasPayloadSupport = true;
+            }
+        }
         boolean wrapByHttpResponse = false;
         // sync mode
         if (hasPayloadSupport && Objects.equals(pti.getRawClass(1, 0), HttpResponse.class)) {

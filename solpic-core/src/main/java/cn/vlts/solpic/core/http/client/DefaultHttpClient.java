@@ -15,7 +15,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -24,7 +23,7 @@ import java.util.*;
  * @author throwable
  * @since 2024/7/24 00:27
  */
-public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient, HttpOptional {
+public class DefaultHttpClient extends BaseHttpClient implements HttpClient, HttpOptional {
 
     private static final int DEFAULT_CHUNK_SIZE = 4 * 1024;
 
@@ -34,7 +33,7 @@ public class DefaultHttpClientImpl extends BaseHttpClient implements HttpClient,
 
     private int chunkSize = DEFAULT_CHUNK_SIZE;
 
-    public DefaultHttpClientImpl() {
+    public DefaultHttpClient() {
         super();
     }
 

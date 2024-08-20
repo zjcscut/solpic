@@ -2,6 +2,7 @@ package cn.vlts.solpic.core;
 
 import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.http.*;
+import cn.vlts.solpic.core.http.bind.MultipartData;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.ReflectionUtils;
@@ -202,6 +203,29 @@ public interface SolpicTemplate {
                                             S requestPayload) {
         return exchange(url, requestMethod, requestContentType, requestHeaders, requestPayload,
                 PayloadSubscribers.X.ofFile(targetFile, charset));
+    }
+
+    default <S> HttpResponse<Void> upload(String url, String name, Path sourceFile) {
+        MultipartData multipartData = MultipartData.newBuilder().addFilePart(name, sourceFile).build();
+        return exchange(url, HttpMethod.PUT, null, null, multipartData, Void.class);
+    }
+
+    default <T> HttpResponse<T> upload(String url, String name, Path sourceFile, Type responsePayloadType) {
+        MultipartData multipartData = MultipartData.newBuilder().addFilePart(name, sourceFile).build();
+        return exchange(url, HttpMethod.PUT, null, null, multipartData, responsePayloadType);
+    }
+
+    default <T> HttpResponse<T> upload(String url,
+                                       String name,
+                                       Path sourceFile,
+                                       Charset charset,
+                                       List<HttpHeader> requestHeaders,
+                                       ContentType partContentType,
+                                       Type responsePayloadType) {
+        MultipartData multipartData = MultipartData.newBuilder(charset)
+                .addFilePart(name, sourceFile, partContentType)
+                .build();
+        return exchange(url, HttpMethod.PUT, null, requestHeaders, multipartData, responsePayloadType);
     }
 
     // ##################### BASE METHOD #####################

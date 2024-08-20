@@ -46,6 +46,10 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
         return new MultipartDataBuilder(boundary, charset);
     }
 
+    public static Builder newBuilder(Charset charset) {
+        return new MultipartDataBuilder(charset);
+    }
+
     @Override
     public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
         Subscription subscription = new MultipartDataSubscription(subscriber);

@@ -16,6 +16,19 @@ public enum HttpClientFactory {
 
     private volatile SpiLoader<HttpClient> spiLoader;
 
+    public HttpClient loadHttpClient(String httpClientName) {
+        if (Objects.nonNull(httpClientName)) {
+            if (getSpiLoader().getAvailableServiceNames().contains(httpClientName)) {
+                return getSpiLoader().getService(httpClientName);
+            }
+        }
+        HttpClient httpClient = loadBestMatchedHttpClient();
+        if (Objects.nonNull(httpClient)) {
+            return httpClient;
+        }
+        throw new IllegalArgumentException("Failed to load httpClient");
+    }
+
     public HttpClient loadBestMatchedHttpClient() {
         return getSpiLoader()
                 .getAvailableServiceNames()
@@ -28,7 +41,9 @@ public enum HttpClientFactory {
     private SpiLoader<HttpClient> getSpiLoader() {
         if (Objects.isNull(spiLoader)) {
             synchronized (this) {
-                spiLoader = SpiLoader.getSpiLoader(HttpClient.class);
+                if (Objects.isNull(spiLoader)) {
+                    spiLoader = SpiLoader.getSpiLoader(HttpClient.class);
+                }
             }
         }
         return spiLoader;

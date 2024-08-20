@@ -1,11 +1,9 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.config.HttpOption;
-import cn.vlts.solpic.core.http.HttpClient;
-import cn.vlts.solpic.core.http.HttpRequest;
-import cn.vlts.solpic.core.http.RequestPayloadSupport;
-import cn.vlts.solpic.core.http.ResponsePayloadSupport;
+import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.util.ArgumentUtils;
@@ -39,6 +37,8 @@ public class DefaultApiBuilder implements ApiBuilder {
     private String baseUrl;
 
     private HttpClient httpClient;
+
+    private Codec codec;
 
     private Long delay = 0L;
 
@@ -74,24 +74,35 @@ public class DefaultApiBuilder implements ApiBuilder {
 
     @Override
     public ApiBuilder promise(Supplier<CompletableFuture> promise) {
+        ArgumentUtils.X.notNull("promise", promise);
         this.promise = promise;
         return this;
     }
 
     @Override
     public ApiBuilder listener(Supplier<FutureListener> listener) {
+        ArgumentUtils.X.notNull("listener", listener);
         this.listener = listener;
         return this;
     }
 
     @Override
     public ApiBuilder httpClient(HttpClient httpClient) {
+        ArgumentUtils.X.notNull("httpClient", httpClient);
         this.httpClient = httpClient;
         return this;
     }
 
     @Override
-    public ApiBuilder converterFactory(ConverterFactory converterFactory) {
+    public ApiBuilder codec(Codec codec) {
+        ArgumentUtils.X.notNull("codec", codec);
+        this.codec = codec;
+        return this;
+    }
+
+    @Override
+    public ApiBuilder addConverterFactory(ConverterFactory converterFactory) {
+        ArgumentUtils.X.notNull("converterFactory", converterFactory);
         converterFactories.add(converterFactory);
         return this;
     }
@@ -122,6 +133,15 @@ public class DefaultApiBuilder implements ApiBuilder {
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+
+    public HttpClient getHttpClient() {
+        return httpClient;
+    }
+
+    public Codec getCodec() {
+        return codec;
     }
 
     public boolean supportRequestPayloadConverter(ApiParameterMetadata metadata) {
@@ -188,9 +208,14 @@ public class DefaultApiBuilder implements ApiBuilder {
                     m -> ApiMetadataParser.X.parse(this, type, m));
             ApiParameterMetadata returnMetadata = apiMetadata.newApiReturnMetadata();
             ResponsePayloadSupport<?> responsePayloadSupport = getResponsePayloadSupplier(returnMetadata);
+            ContentType consume = apiMetadata.getConsume();
             if (Objects.isNull(responsePayloadSupport)) {
                 if (PayloadSubscribers.X.containsPayloadSubscriber(apiMetadata.getRawReturnType())) {
                     responsePayloadSupport = PayloadSubscribers.X.getPayloadSubscriber(apiMetadata.getRawReturnType());
+                } else if (Objects.nonNull(consume) &&
+                        consume.hasSameMimeType(ContentType.APPLICATION_JSON) &&
+                        Objects.nonNull(getCodec())) {
+                    responsePayloadSupport = getCodec().createPayloadSubscriber(apiMetadata.getRawReturnType());
                 } else if (!apiMetadata.isHasResponsePayload()) {
                     responsePayloadSupport = PayloadSubscribers.X.discarding();
                 } else {
@@ -222,6 +247,7 @@ public class DefaultApiBuilder implements ApiBuilder {
                 throw new IllegalArgumentException(String.format("Arguments count (%d) does not match " +
                         "expected number of parameters (%d)", argumentCount, handlers.length));
             }
+            // apply request parameter handlers
             for (int i = 0; i < argumentCount; i++) {
                 Object argument = argsToUse[i];
                 RequestParameterHandler<Object> handler = handlers[i];

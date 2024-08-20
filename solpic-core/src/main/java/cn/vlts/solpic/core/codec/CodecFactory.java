@@ -51,7 +51,9 @@ public enum CodecFactory {
     private SpiLoader<Codec> getSpiLoader() {
         if (Objects.isNull(spiLoader)) {
             synchronized (this) {
-                spiLoader = SpiLoader.getSpiLoader(Codec.class);
+                if (Objects.isNull(spiLoader)) {
+                    spiLoader = SpiLoader.getSpiLoader(Codec.class);
+                }
             }
         }
         return spiLoader;

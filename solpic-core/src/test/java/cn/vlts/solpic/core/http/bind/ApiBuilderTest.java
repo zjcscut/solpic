@@ -53,7 +53,7 @@ public class ApiBuilderTest {
     public void testHttpBinApiGetString() {
         HttpBinApi httpBinApi = Solpic.newApiBuilder()
                 .baseUrl("https://httpbin.org")
-                .converterFactory(new HttpBinConverterFactory())
+                .addConverterFactory(new HttpBinConverterFactory())
                 .build(HttpBinApi.class);
         Assert.assertNotNull(httpBinApi);
         String sr = httpBinApi.getString("bar");
@@ -66,7 +66,7 @@ public class ApiBuilderTest {
     public void testAsyncGetForResponseObject() throws Exception{
         HttpBinApi httpBinApi = Solpic.newApiBuilder()
                 .baseUrl("https://httpbin.org")
-                .converterFactory(new HttpBinConverterFactory())
+                .addConverterFactory(new HttpBinConverterFactory())
                 .build(HttpBinApi.class);
         CompletableFuture<HttpResponse<HttpBinResult>> r = httpBinApi.asyncGetForResponseObject("bar");
         HttpResponse<HttpBinResult> response = r.get();

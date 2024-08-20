@@ -2,6 +2,7 @@ package cn.vlts.solpic.core;
 
 import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.codec.CodecFactory;
+import cn.vlts.solpic.core.codec.CodecType;
 import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.bind.ApiBuilder;
@@ -9,6 +10,7 @@ import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
+import cn.vlts.solpic.core.util.ArgumentUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -30,8 +32,8 @@ public abstract class Solpic {
 
     public static SolpicTemplate newSolpicTemplate() {
         return new DefaultSolpicTemplateBuilder()
-                .httpClient(HttpClientFactory.X.loadBestMatchedHttpClient())
-                .codec(CodecFactory.X.loadBestMatchedCodec())
+                .httpClient(newHttpClient())
+                .codec(newCodec())
                 .build();
     }
 
@@ -41,8 +43,8 @@ public abstract class Solpic {
 
     public static OneWaySolpicTemplate newOneWaySolpicTemplate() {
         return new DefaultOneWaySolpicTemplateBuilder()
-                .httpClient(HttpClientFactory.X.loadBestMatchedHttpClient())
-                .codec(CodecFactory.X.loadBestMatchedCodec())
+                .httpClient(newHttpClient())
+                .codec(newCodec())
                 .build();
     }
 
@@ -52,6 +54,31 @@ public abstract class Solpic {
 
     public static ApiBuilder newApiBuilder() {
         return ApiBuilder.newBuilder();
+    }
+
+    public static <S, T> Codec<S, T> newCodec(String codecName) {
+        ArgumentUtils.X.notNull("codecName", codecName);
+        CodecType codecTypeToUse = null;
+        for (CodecType codecType : CodecType.values()) {
+            if (codecType.name().equalsIgnoreCase(codecName)) {
+                codecTypeToUse = codecType;
+                break;
+            }
+        }
+        return CodecFactory.X.loadCodec(codecTypeToUse, codecName);
+    }
+
+    public static <S, T> Codec<S, T> newCodec() {
+        return CodecFactory.X.loadBestMatchedCodec();
+    }
+
+    public static HttpClient newHttpClient(String httpClientName) {
+        ArgumentUtils.X.notNull("httpClientName", httpClientName);
+        return HttpClientFactory.X.loadHttpClient(httpClientName);
+    }
+
+    public static HttpClient newHttpClient() {
+        return HttpClientFactory.X.loadBestMatchedHttpClient();
     }
 
     public interface SolpicTemplateBuilder {
@@ -83,12 +110,8 @@ public abstract class Solpic {
 
         @Override
         public SolpicTemplate build() {
-            if (Objects.isNull(this.codec)) {
-                throw new IllegalArgumentException("Codec must not be null");
-            }
-            if (Objects.isNull(this.httpClient)) {
-                throw new IllegalArgumentException("HttpClient must not be null");
-            }
+            ArgumentUtils.X.notNull("code", codec);
+            ArgumentUtils.X.notNull("httpClient", httpClient);
             return new DefaultSolpicTemplate(this.codec, this.httpClient);
         }
     }
@@ -165,12 +188,8 @@ public abstract class Solpic {
 
         @Override
         public OneWaySolpicTemplate build() {
-            if (Objects.isNull(this.codec)) {
-                throw new IllegalArgumentException("Codec must not be null");
-            }
-            if (Objects.isNull(this.httpClient)) {
-                throw new IllegalArgumentException("HttpClient must not be null");
-            }
+            ArgumentUtils.X.notNull("code", codec);
+            ArgumentUtils.X.notNull("httpClient", httpClient);
             return new DefaultOneWaySolpicTemplate(this.codec, this.httpClient);
         }
     }
@@ -215,11 +234,6 @@ public abstract class Solpic {
             request.setPayloadPublisher(requestPayloadPublisher);
             httpClientToUse.send(request, PayloadSubscribers.X.discarding());
         }
-    }
-
-
-    public interface HttpClientBuilder {
-
     }
 
     static {

@@ -41,6 +41,10 @@ class MultipartDataBuilder implements MultipartData.Builder {
         this(boundary, StandardCharsets.UTF_8);
     }
 
+    MultipartDataBuilder(Charset charset) {
+        this(FastUUIDUtils.X.newRandomUUIDWithoutSeq(), charset);
+    }
+
     MultipartDataBuilder(String boundary, Charset charset) {
         this.boundary = boundary;
         this.charset = Optional.ofNullable(charset).orElse(Charset.defaultCharset());

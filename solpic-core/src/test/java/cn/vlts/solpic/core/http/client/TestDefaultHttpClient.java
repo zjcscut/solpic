@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author throwable
  * @since 2024/7/28 22:37
  */
-public class TestDefaultHttpClientImpl {
+public class TestDefaultHttpClient {
 
     private final HttpClient defaultHttpClientImpl = SpiLoader.getSpiLoader(HttpClient.class)
             .getService(HttpClientType.DEFAULT.getCode());

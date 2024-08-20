@@ -1,5 +1,6 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.http.HttpClient;
 
@@ -26,7 +27,9 @@ public interface ApiBuilder {
 
     ApiBuilder httpClient(HttpClient httpClient);
 
-    ApiBuilder converterFactory(ConverterFactory converterFactory);
+    ApiBuilder codec(Codec codec);
+
+    ApiBuilder addConverterFactory(ConverterFactory converterFactory);
 
     <T> T build(Class<T> type);
 

@@ -9,6 +9,7 @@ import cn.vlts.solpic.core.http.flow.ByteBufferConsumerOutputStream;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.flow.PullingInputStream;
+import cn.vlts.solpic.core.spi.Spi;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author throwable
  * @since 2024/7/26 星期五 14:36
  */
+@Spi
 public interface Codec<S, T> {
 
     byte[] toByteArray(S s);
