@@ -11,7 +11,7 @@
     </parent>
     <packaging>pom</packaging>
     <artifactId>solpic-dependencies</artifactId>
-    <name>Solpic dependencies ${project.version}</name>
+    <name>solpic-dependencies ${project.version}</name>
     <description>dependencies for Solpic built with Maven</description>
     <properties>
         <lombok.version>1.18.34</lombok.version>

@@ -10,7 +10,7 @@
     </parent>
     <artifactId>solpic-core</artifactId>
     <packaging>jar</packaging>
-    <name>Solpic core ${project.version}</name>
+    <name>solpic-core ${project.version}</name>
     <description>core module of Solpic project</description>
     <properties>
         <java.version>22</java.version>
