@@ -30,7 +30,7 @@ public class SolpicShutdownHook extends Thread {
     @Override
     public void run() {
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Shutdown hook callback now");
+            LOGGER.info("Solpic shutdown hook callback now...");
         }
         if (destroyed.compareAndSet(false, true)) {
             GLOBAL_ACTIONS.forEach(shutdownHookAction -> {

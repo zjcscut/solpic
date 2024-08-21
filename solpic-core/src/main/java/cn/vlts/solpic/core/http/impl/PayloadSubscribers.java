@@ -146,14 +146,16 @@ public enum PayloadSubscribers {
 
     private static class DiscardingPayloadSubscriber<T> implements PayloadSubscriber<T> {
 
+        private final CompletableFuture<T> cf = new MinimalFuture<>();
+
         @Override
         public void readFrom(InputStream inputStream, boolean autoClose) {
-
+            cf.complete(null);
         }
 
         @Override
         public CompletionStage<T> getPayload() {
-            return null;
+            return cf;
         }
     }
 

@@ -102,6 +102,11 @@ public enum ApiMetadataParser {
         } else {
             throw new IllegalArgumentException("Request method annotation is required");
         }
+        if (!ArgumentUtils.X.hasLength(apiMetadata.getPath()) &&
+                !ArgumentUtils.X.hasLength(apiMetadata.getAbsoluteUrl())) {
+            // both absolute url and path are empty, use method name as path
+            apiMetadata.setPath(method.getName());
+        }
     }
 
     private void parseProduceAnnotation(ApiMetadata apiMetadata, Class<?> type, Method method) {

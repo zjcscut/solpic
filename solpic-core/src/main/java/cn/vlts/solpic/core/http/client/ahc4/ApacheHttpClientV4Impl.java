@@ -54,6 +54,8 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
 
     private int connectionRequestTimeout = -1;
 
+    private int connectionTtl = -1;
+
     private int connectionMaxTotal = -1;
 
     private int connectionIdleTime = -1;
@@ -68,22 +70,33 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         super();
     }
 
+    @Override
     protected void initInternal() {
         // support HTTP/0.9, HTTP/1.0, HTTP/1.1, HTTP/2.0
         addHttpVersions(HttpVersion.HTTP_0_9, HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options
         addAvailableHttpOptions(
+                // common options -- start
                 HttpOptions.HTTP_CLIENT_ID,
+                HttpOptions.HTTP_THREAD_POOL,
+                HttpOptions.HTTP_SCHEDULED_THREAD_POOL,
+                HttpOptions.HTTP_PROTOCOL_VERSION,
+                HttpOptions.HTTP_SSL_CONFIG,
                 HttpOptions.HTTP_PROXY,
                 HttpOptions.HTTP_ENABLE_LOGGING,
                 HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE,
                 HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
                 HttpOptions.HTTP_FORCE_WRITE,
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
-                HttpOptions.HTTP_CONNECT_TIMEOUT,
+                // common options -- end
+                // connection pool options -- start
                 HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL,
                 HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY,
-                HttpOptions.HTTP_CLIENT_CONNECTION_TTL
+                HttpOptions.HTTP_CLIENT_CONNECTION_TTL,
+                // connection pool options -- end
+                HttpOptions.HTTP_CONNECT_TIMEOUT,
+                HttpOptions.HTTP_SOCKET_TIMEOUT,
+                HttpOptions.HTTP_CONNECTION_REQUEST_TIMEOUT
         );
         // build real client
         rebuildRealClient();
@@ -110,8 +123,14 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
             socketFactoryRegistryBuilder.register(UriScheme.HTTP.getValue(), new PlainConnectionSocketFactory());
             SSLConnectionSocketFactory sslConnectionSocketFactory = createSSLConnectionSocketFactory();
             socketFactoryRegistryBuilder.register(UriScheme.HTTPS.getValue(), sslConnectionSocketFactory);
-            PoolingHttpClientConnectionManager connectionManager
-                    = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build());
+            PoolingHttpClientConnectionManager connectionManager;
+            int connectionTtlToUse = getConnectionTtl();
+            if (connectionTtlToUse > 0) {
+                connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build(),
+                        null, null, null, connectionTtlToUse, TimeUnit.MILLISECONDS);
+            } else {
+                connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build());
+            }
             int connectionMaxTotalToUse = getConnectionMaxTotal();
             if (connectionMaxTotalToUse > 0) {
                 connectionManager.setMaxTotal(connectionMaxTotalToUse);
@@ -160,7 +179,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         if (Objects.nonNull(contentTypeValue)) {
             contentType = org.apache.http.entity.ContentType.parse(contentTypeValue);
         }
-        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
+        if (request.supportPayload() || isForceWriteRequestPayload()) {
             long contentLength = request.getContentLength();
             if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();
@@ -249,6 +268,15 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
     public int getSocketTimeout() {
         return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_SOCKET_TIMEOUT))
                 .orElse(this.socketTimeout);
+    }
+
+    public void setConnectionTtl(int connectionTtl) {
+        this.connectionTtl = connectionTtl;
+    }
+
+    public int getConnectionTtl() {
+        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CLIENT_CONNECTION_TTL))
+                .orElse(this.connectionTtl);
     }
 
     public void setConnectionMaxTotal(int connectionMaxTotal) {

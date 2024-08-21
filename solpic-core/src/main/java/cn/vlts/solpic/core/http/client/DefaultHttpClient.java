@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.client;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.SSLConfig;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
 import cn.vlts.solpic.core.http.flow.FlowOutputStreamSubscriber;
@@ -10,7 +11,12 @@ import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 
-import java.io.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -37,22 +43,27 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         super();
     }
 
+    @Override
     protected void initInternal() {
         // HttpURLConnection only support HTTP/1.0 and HTTP/1.1
         addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1);
         // minimum options and available options
         addAvailableHttpOptions(
+                // common options -- start
                 HttpOptions.HTTP_CLIENT_ID,
+                HttpOptions.HTTP_THREAD_POOL,
+                HttpOptions.HTTP_SCHEDULED_THREAD_POOL,
+                HttpOptions.HTTP_PROTOCOL_VERSION,
+                HttpOptions.HTTP_SSL_CONFIG,
                 HttpOptions.HTTP_PROXY,
                 HttpOptions.HTTP_ENABLE_LOGGING,
                 HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE,
                 HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
                 HttpOptions.HTTP_FORCE_WRITE,
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
+                // common options -- end
                 HttpOptions.HTTP_CONNECT_TIMEOUT,
-                HttpOptions.HTTP_REQUEST_CONNECT_TIMEOUT,
                 HttpOptions.HTTP_READ_TIMEOUT,
-                HttpOptions.HTTP_REQUEST_READ_TIMEOUT,
                 HttpOptions.HTTP_CHUNK_SIZE
         );
     }
@@ -125,6 +136,21 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
             throw new IllegalStateException("Require HttpURLConnection, but got: " + urlConnection);
         }
         HttpURLConnection httpConnection = (HttpURLConnection) urlConnection;
+        SSLConfig sslConfigToUse = getHttpOptionValue(HttpOptions.HTTP_SSL_CONFIG);
+        if (Objects.nonNull(sslConfigToUse) &&
+                !Objects.equals(sslConfigToUse, SSLConfig.NO) &&
+                httpConnection instanceof HttpsURLConnection) {
+            if (Objects.nonNull(sslConfigToUse.getContext())) {
+                HttpsURLConnection httpsConnection = (HttpsURLConnection) httpConnection;
+                HostnameVerifier hostnameVerifier = sslConfigToUse.getHostnameVerifier();
+                if (Objects.isNull(hostnameVerifier)) {
+                    hostnameVerifier = (hostname, session) -> true;
+                }
+                SSLSocketFactory socketFactory = sslConfigToUse.getContext().getSocketFactory();
+                httpsConnection.setSSLSocketFactory(socketFactory);
+                httpsConnection.setHostnameVerifier(hostnameVerifier);
+            }
+        }
         int connectTimeoutToUse = getConnectTimeout();
         if (connectTimeoutToUse > 0) {
             httpConnection.setConnectTimeout(connectTimeoutToUse);
@@ -135,8 +161,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         }
         httpConnection.setRequestMethod(request.getRawMethod());
         httpConnection.setDoInput(true);
-        if (request.supportPayload() ||
-                Objects.equals(Boolean.TRUE, request.getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
+        if (request.supportPayload() || isForceWriteRequestPayload()) {
             httpConnection.setDoOutput(true);
         }
         httpConnection.setInstanceFollowRedirects(Objects.equals(request.getMethod(), HttpMethod.GET));

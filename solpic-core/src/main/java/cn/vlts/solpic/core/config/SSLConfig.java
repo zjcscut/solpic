@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * SSL config.
@@ -22,4 +23,6 @@ public final class SSLConfig {
     private SSLParameters params;
 
     private HostnameVerifier hostnameVerifier;
+
+    private X509TrustManager trustManager;
 }

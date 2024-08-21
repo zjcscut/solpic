@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.client.okhttp;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.SSLConfig;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
@@ -16,6 +17,7 @@ import okhttp3.*;
 import okhttp3.internal.http.HttpMethod;
 import okio.BufferedSink;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.Proxy;
 import java.util.List;
@@ -46,24 +48,33 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         super();
     }
 
+    @Override
     protected void initInternal() {
         // support HTTP/1.0, HTTP/1.1, HTTP/2.0
         addHttpVersions(HttpVersion.HTTP_1, HttpVersion.HTTP_1_1, HttpVersion.HTTP_2);
         // minimum options and available options
         addAvailableHttpOptions(
+                // common options -- start
                 HttpOptions.HTTP_CLIENT_ID,
+                HttpOptions.HTTP_THREAD_POOL,
+                HttpOptions.HTTP_SCHEDULED_THREAD_POOL,
+                HttpOptions.HTTP_PROTOCOL_VERSION,
+                HttpOptions.HTTP_SSL_CONFIG,
                 HttpOptions.HTTP_PROXY,
                 HttpOptions.HTTP_ENABLE_LOGGING,
                 HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE,
                 HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
                 HttpOptions.HTTP_FORCE_WRITE,
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
-                HttpOptions.HTTP_CONNECT_TIMEOUT,
-                HttpOptions.HTTP_READ_TIMEOUT,
-                HttpOptions.HTTP_WRITE_TIMEOUT,
+                // common options -- end
+                // connection pool options -- start
                 HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL,
                 HttpOptions.HTTP_CLIENT_CONNECTION_POOL_CAPACITY,
-                HttpOptions.HTTP_CLIENT_CONNECTION_TTL
+                HttpOptions.HTTP_CLIENT_CONNECTION_TTL,
+                // connection pool options -- end
+                HttpOptions.HTTP_CONNECT_TIMEOUT,
+                HttpOptions.HTTP_READ_TIMEOUT,
+                HttpOptions.HTTP_WRITE_TIMEOUT
         );
         int connectTimeoutToUse = getConnectTimeout();
         int readTimeoutToUse = getReadTimeout();
@@ -86,6 +97,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         if (Objects.nonNull(connectionPoolToUse)) {
             builder.connectionPool(connectionPoolToUse);
         }
+        SSLConfig sslConfig = getHttpOptionValue(HttpOptions.HTTP_SSL_CONFIG);
+        if (Objects.nonNull(sslConfig) && Objects.nonNull(sslConfig.getContext()) && Objects.nonNull(sslConfig.getTrustManager())) {
+            SSLSocketFactory socketFactory = sslConfig.getContext().getSocketFactory();
+            builder.sslSocketFactory(socketFactory, sslConfig.getTrustManager());
+        }
         this.realHttpClient = builder.build();
     }
 
@@ -100,7 +116,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         MediaType mediaType = Objects.nonNull(contentTypeValue) ? MediaType.parse(contentTypeValue) : null;
         Request.Builder requestBuilder = new Request.Builder().url(request.getUri().toURL());
         RequestBody requestBody = null;
-        if (request.supportPayload() || Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE))) {
+        if (request.supportPayload() || isForceWriteRequestPayload()) {
             boolean useHeaderContentLength = true;
             long contentLength = request.getContentLength();
             if (contentLength < 0) {

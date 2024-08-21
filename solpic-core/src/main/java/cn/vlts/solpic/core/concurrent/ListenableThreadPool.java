@@ -12,6 +12,7 @@ import java.util.stream.Stream;
  * @author throwable
  * @since 2024/7/22 星期一 9:59
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public interface ListenableThreadPool extends Executor {
 
     default <V> ListenableFuture<V> execute(Runnable command, V result, FutureListener<V>... listeners) {

@@ -3,6 +3,7 @@ package cn.vlts.solpic.core.http.bind;
 import cn.vlts.solpic.core.http.HttpHeader;
 import cn.vlts.solpic.core.http.HttpRequest;
 import cn.vlts.solpic.core.http.RequestPayloadSupport;
+import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.HttpCodecUtils;
 import cn.vlts.solpic.core.util.Pair;
 
@@ -233,7 +234,10 @@ public interface RequestParameterHandler<T> {
         }
 
         public T getVarValue() {
-            return Optional.ofNullable(varValue).orElse((T) var.getDefaultFunction().apply(defaultValue));
+            if (ArgumentUtils.X.hasLength(defaultValue)) {
+                return Optional.ofNullable(varValue).orElse((T) var.getDefaultFunction().apply(defaultValue));
+            }
+            return varValue;
         }
     }
 }

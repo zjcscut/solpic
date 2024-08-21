@@ -15,9 +15,18 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Request {
 
+    /**
+     * HTTP method.
+     */
     HttpMethod method();
 
-    String url() default "";
-
+    /**
+     * URI path.
+     */
     String path() default "";
+
+    /**
+     * Absolute URL.
+     */
+    String url() default "";
 }

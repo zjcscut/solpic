@@ -56,4 +56,9 @@ public final class DefaultHttpStatusCode implements HttpStatusCode {
     public boolean isError() {
         return isClientError() || isServerError();
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
 }

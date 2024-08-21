@@ -1,9 +1,9 @@
 package cn.vlts.solpic.core.http.bind;
 
+import cn.vlts.solpic.core.Solpic;
 import cn.vlts.solpic.core.codec.Codec;
 import cn.vlts.solpic.core.concurrent.FutureListener;
 import cn.vlts.solpic.core.http.HttpClient;
-import cn.vlts.solpic.core.http.client.HttpClientFactory;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ class DefaultApiEnhancerBuilder implements ApiEnhancerBuilder {
     public ApiEnhancer build() {
         ArgumentUtils.X.notNull("baseUrl", baseUrl);
         if (Objects.isNull(httpClient)) {
-            httpClient = HttpClientFactory.X.loadBestMatchedHttpClient();
+            httpClient = Solpic.newHttpClient();
         }
         ArgumentUtils.X.notNull("httpClient", httpClient);
         return new DefaultApiEnhancer(

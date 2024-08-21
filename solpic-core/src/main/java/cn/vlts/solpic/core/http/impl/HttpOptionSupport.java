@@ -26,7 +26,7 @@ public abstract class HttpOptionSupport implements HttpOptional {
 
     @Override
     public boolean supportHttpVersion(HttpVersion httpVersion) {
-        return httpVersions.stream().anyMatch(hv -> hv.isSameAs(httpVersion));
+        return httpVersions.isEmpty() || httpVersions.stream().anyMatch(hv -> hv.isSameAs(httpVersion));
     }
 
     @Override

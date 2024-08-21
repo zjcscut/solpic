@@ -13,7 +13,13 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Head {
 
-    String url() default "";
-
+    /**
+     * URI path.
+     */
     String path() default "";
+
+    /**
+     * Absolute URL.
+     */
+    String url() default "";
 }

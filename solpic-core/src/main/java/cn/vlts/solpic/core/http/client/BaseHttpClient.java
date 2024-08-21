@@ -15,6 +15,8 @@ import cn.vlts.solpic.core.http.impl.HttpOptionSupport;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpRequest;
 import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
+import cn.vlts.solpic.core.logging.Logger;
+import cn.vlts.solpic.core.logging.LoggerFactory;
 import cn.vlts.solpic.core.metrics.Metrics;
 import cn.vlts.solpic.core.spi.SpiLoader;
 import cn.vlts.solpic.core.util.ReflectionUtils;
@@ -46,6 +48,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     private final AtomicBoolean running = new AtomicBoolean();
 
     private final List<HttpInterceptor> interceptors = new ArrayList<>();
+
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     private volatile ThreadPool threadPool;
 
@@ -81,12 +85,24 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (Objects.nonNull(requestContentType)) {
             request.setContentType(requestContentType);
         }
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("[%s] - Prepare to send HTTP request, method: %s, uri: %s",
+                    id(), request.getMethod(), request.getRawUri()));
+        }
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
             response = sendInternal(request, payloadPublisher, payloadSubscriber);
+            if (logger.isDebugEnabled()) {
+                logger.debug(String.format("[%s] - Receive HTTP response, method: %s, uri: %s, status: %d",
+                        id(), request.getMethod(), request.getRawUri(), response.getStatusCode().value()));
+            }
             triggerAfterSend(request, response);
         } catch (Throwable e) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(String.format("[%s] - Error to send HTTP request, method: %s, uri: %s",
+                        id(), request.getMethod(), request.getRawUri()), e);
+            }
             triggerOnError(request, e);
             throw new SolpicHttpException(String.format("[%s] - Send HTTP request failed", id()), e);
         } finally {
@@ -335,6 +351,11 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                 .map(proxyConfig -> new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfig.getHostname(),
                         proxyConfig.getPort())))
                 .orElse(this.proxy);
+    }
+
+    public boolean isForceWriteRequestPayload() {
+        return Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_REQUEST_FORCE_WRITE)) ||
+                Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE));
     }
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,

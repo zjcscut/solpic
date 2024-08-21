@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 @SuppressWarnings({"unchecked", "rawtypes"})
 class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
 
-    private final List<ConverterFactory> converterFactoriesCache = new ArrayList<>();
+    private final List<ConverterFactory> converterFactoryCache = new ArrayList<>();
 
     private final ConcurrentMap<Method, ApiMetadata> apiMetadataCache = new ConcurrentHashMap<>();
 
@@ -67,7 +67,7 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
         this.promiseSupplier = promiseSupplier;
         this.futureListenerSupplier = futureListenerSupplier;
         if (Objects.nonNull(converterFactories)) {
-            this.converterFactoriesCache.addAll(converterFactories);
+            this.converterFactoryCache.addAll(converterFactories);
         }
     }
 
@@ -200,6 +200,7 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
             // scheduled mode
             if (ApiMetadata.SendMode.SCHEDULED == sendMode) {
                 Long delayToUse = (Long) vars.getOrDefault(ApiMetadata.ApiVar.DELAY, defaultDelayMillis);
+                ArgumentUtils.X.isTrue(delayToUse >= 0, "delay must be grater than or equal to 0");
                 CompletableFuture promiseToUse = (CompletableFuture) vars.getOrDefault(ApiMetadata.ApiVar.PROMISE,
                         promiseSupplier.get());
                 if (apiMetadata.isWrapResponse()) {
@@ -219,12 +220,12 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
 
     @Override
     public boolean supportRequestPayloadConverter(ApiParameterMetadata metadata) {
-        return converterFactoriesCache.stream().anyMatch(cf -> cf.supportRequestConverter(metadata));
+        return converterFactoryCache.stream().anyMatch(cf -> cf.supportRequestConverter(metadata));
     }
 
     @Override
     public <S> Converter<S, RequestPayloadSupport> getRequestPayloadConverter(ApiParameterMetadata metadata) {
-        for (ConverterFactory converterFactory : converterFactoriesCache) {
+        for (ConverterFactory converterFactory : converterFactoryCache) {
             Converter converter = converterFactory.newRequestConverter(metadata);
             if (Objects.nonNull(converter)) {
                 return (Converter<S, RequestPayloadSupport>) converter;
@@ -235,12 +236,12 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
 
     @Override
     public boolean supportResponsePayloadSupplier(ApiParameterMetadata metadata) {
-        return converterFactoriesCache.stream().anyMatch(cf -> cf.supportResponseSupplier(metadata));
+        return converterFactoryCache.stream().anyMatch(cf -> cf.supportResponseSupplier(metadata));
     }
 
     @Override
     public <T> ResponsePayloadSupport<T> getResponsePayloadSupplier(ApiParameterMetadata metadata) {
-        for (ConverterFactory converterFactory : converterFactoriesCache) {
+        for (ConverterFactory converterFactory : converterFactoryCache) {
             Supplier<ResponsePayloadSupport<T>> supplier = converterFactory.newResponseSupplier(metadata);
             if (Objects.nonNull(supplier)) {
                 return supplier.get();
