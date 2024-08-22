@@ -17,13 +17,16 @@ import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
 import cn.vlts.solpic.core.logging.Logger;
 import cn.vlts.solpic.core.logging.LoggerFactory;
-import cn.vlts.solpic.core.metrics.Metrics;
+import cn.vlts.solpic.core.metrics.MetricsHandler;
+import cn.vlts.solpic.core.metrics.StatsFactorInfo;
 import cn.vlts.solpic.core.spi.SpiLoader;
 import cn.vlts.solpic.core.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +36,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Base HTTP client.
@@ -54,6 +58,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     private volatile ThreadPool threadPool;
 
     private volatile ScheduledThreadPool scheduledThreadPool;
+
+    private volatile MetricsHandler metricsHandler;
 
     private String id;
 
@@ -215,6 +221,23 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         return this.scheduledThreadPool;
     }
 
+    protected MetricsHandler getMetricsHandler() {
+        if (Objects.isNull(this.metricsHandler)) {
+            synchronized (this) {
+                if (Objects.isNull(this.metricsHandler)) {
+                    this.metricsHandler = MetricsHandler.NONE;
+                    if (supportHttpOption(HttpOptions.HTTP_CLIENT_METRICS)) {
+                        Boolean enableClientMetrics = getHttpOptionValue(HttpOptions.HTTP_CLIENT_METRICS);
+                        if (Objects.equals(Boolean.TRUE, enableClientMetrics)) {
+                            this.metricsHandler = MetricsHandler.DEFAULT;
+                        }
+                    }
+                }
+            }
+        }
+        return this.metricsHandler;
+    }
+
     public void addInterceptor(HttpInterceptor interceptor) {
         this.interceptors.add(interceptor);
     }
@@ -241,13 +264,14 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     private void triggerInterceptorsAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         ReadOnlyHttpRequest readOnlyHttpRequest = ReadOnlyHttpRequest.of(request);
-        ReadOnlyHttpResponse<?> readOnlyHttpResponse = Objects.nonNull(response) ? ReadOnlyHttpResponse.of(response) : null;
+        ReadOnlyHttpResponse<?> readOnlyHttpResponse = Optional.ofNullable(response).map(ReadOnlyHttpResponse::of)
+                .orElse(null);
         this.interceptors.forEach(interceptor -> interceptor.afterCompletion(readOnlyHttpRequest, readOnlyHttpResponse));
     }
 
     protected void triggerBeforeSend(HttpRequest request) {
         changeRequestStatus(request, HttpRequestStatus.ACTIVE);
-        Metrics.X.increaseTotalRequestCount(id());
+        getMetricsHandler().increaseTotalRequestCount(id());
         if (Objects.isNull(request.getHttpClient())) {
             if (request instanceof DefaultHttpRequest) {
                 ((DefaultHttpRequest) request).setHttpClient(this);
@@ -262,7 +286,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     protected void triggerOnError(HttpRequest request, Throwable throwable) {
         changeRequestStatus(request, HttpRequestStatus.FAILED);
-        Metrics.X.increaseFailedRequestCount(id());
+        getMetricsHandler().increaseFailedRequestCount(id());
         triggerInterceptorsOnError(request, throwable);
     }
 
@@ -277,9 +301,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             }
             // record stats factors
             String clientId = id();
-            Metrics.X.increaseCompletedRequestCount(clientId);
+            getMetricsHandler().increaseCompletedRequestCount(clientId);
             Optional.ofNullable(response.getStatusCode()).map(HttpStatusCode::series)
-                    .ifPresent(series -> Metrics.X.increaseHttpStatusSeriesCount(clientId, series));
+                    .ifPresent(series -> getMetricsHandler().increaseHttpStatusSeriesCount(clientId, series));
         }
     }
 
@@ -301,7 +325,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         } else {
             this.id = getClass().getSimpleName() + "-" + INDEX.incrementAndGet();
         }
-        Metrics.X.initHttpClientStats(id());
     }
 
     @Override
@@ -331,7 +354,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             try {
                 closeInternal();
             } finally {
-                Metrics.X.removeHttpClientStats(id());
+                metricsHandler.reset(id());
                 this.interceptors.clear();
             }
         }
@@ -356,6 +379,26 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     public boolean isForceWriteRequestPayload() {
         return Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_REQUEST_FORCE_WRITE)) ||
                 Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE));
+    }
+
+    @Override
+    public LocalDateTime getLoadTime() {
+        return getMetricsHandler().getLoadTime(id);
+    }
+
+    @Override
+    public Duration getUpDuration() {
+        return getMetricsHandler().getUpDuration(id);
+    }
+
+    @Override
+    public void consumeStats(Consumer<StatsFactorInfo> consumer) {
+        getMetricsHandler().consumeStats(id, consumer);
+    }
+
+    @Override
+    public List<StatsFactorInfo> getStats() {
+        return getMetricsHandler().getStats(id);
     }
 
     protected abstract <T> HttpResponse<T> sendInternal(HttpRequest request,

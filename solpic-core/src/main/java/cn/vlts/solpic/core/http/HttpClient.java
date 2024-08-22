@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2024/7/23 星期二 17:59
  */
 @Spi(value = HttpClient.DEFAULT, singleton = false)
-public interface HttpClient extends HttpOptional, Closeable, InitialingBean, DisposableBean {
+public interface HttpClient extends HttpOptional, MetricsSupport, Closeable, InitialingBean, DisposableBean {
 
     String DEFAULT = "default";
 

@@ -66,6 +66,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
                 HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
                 HttpOptions.HTTP_FORCE_WRITE,
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
+                HttpOptions.HTTP_CLIENT_METRICS,
                 // common options -- end
                 // connection pool options -- start
                 HttpOptions.HTTP_CLIENT_ENABLE_CONNECTION_POOL,

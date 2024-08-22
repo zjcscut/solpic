@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author throwable
  * @since 2024/7/27 21:19
  */
-public enum Metrics {
+enum Metrics {
     X;
 
     private static final ConcurrentMap<String, HttpClientStats> CLIENT_CACHE = new ConcurrentHashMap<>();

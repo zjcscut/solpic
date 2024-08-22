@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  * @author throwable
  * @since 2024/8/8 星期四 10:53
  */
-public class HttpClientStats {
+class HttpClientStats {
 
     private final String id;
 
@@ -27,11 +27,11 @@ public class HttpClientStats {
 
     private final ConcurrentMap<HttpStatusSeries, StatsFactor> seriesFactors = new ConcurrentHashMap<>();
 
-    public static HttpClientStats newInstance(String id, LocalDateTime loadTime) {
+    static HttpClientStats newInstance(String id, LocalDateTime loadTime) {
         return new HttpClientStats(id, loadTime);
     }
 
-    public static HttpClientStats newInstance(String id) {
+    static HttpClientStats newInstance(String id) {
         return new HttpClientStats(id, LocalDateTime.now());
     }
 
@@ -41,35 +41,35 @@ public class HttpClientStats {
         initFactors();
     }
 
-    public String getId() {
+    String getId() {
         return id;
     }
 
-    public LocalDateTime getLoadTime() {
+    LocalDateTime getLoadTime() {
         return loadTime;
     }
 
-    public Duration getUpTime() {
+    Duration getUpDuration() {
         return Duration.between(loadTime, LocalDateTime.now());
     }
 
-    public void increment(StatsFactorType factorType) {
+    void increment(StatsFactorType factorType) {
         Optional.ofNullable(statsFactors.get(factorType)).ifPresent(StatsFactor::increment);
     }
 
-    public void decrement(StatsFactorType factorType) {
+    void decrement(StatsFactorType factorType) {
         Optional.ofNullable(statsFactors.get(factorType)).ifPresent(StatsFactor::decrement);
     }
 
-    public void incrementSeries(HttpStatusSeries series) {
+    void incrementSeries(HttpStatusSeries series) {
         Optional.ofNullable(seriesFactors.get(series)).ifPresent(StatsFactor::increment);
     }
 
-    public void consume(Consumer<StatsFactorInfo> consumer) {
+    void consume(Consumer<StatsFactorInfo> consumer) {
         getStatsFactors().forEach(consumer);
     }
 
-    public List<StatsFactorInfo> getStatsFactors() {
+    List<StatsFactorInfo> getStatsFactors() {
         List<StatsFactorInfo> list = new ArrayList<>();
         statsFactors.forEach((k, v) -> list.add(new StatsFactorInfo(k.name(), v.getValue())));
         seriesFactors.forEach((k, v) -> list.add(new StatsFactorInfo(k.name(), v.getValue())));

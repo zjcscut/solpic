@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.LongAdder;
  * @author throwable
  * @since 2024/8/8 星期四 10:42
  */
-public class StatsFactor {
+class StatsFactor {
 
     private final LongAdder counter = new LongAdder();
 

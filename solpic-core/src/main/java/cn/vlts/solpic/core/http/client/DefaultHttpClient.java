@@ -61,6 +61,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
                 HttpOptions.HTTP_ENABLE_EXECUTE_TRACING,
                 HttpOptions.HTTP_FORCE_WRITE,
                 HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS,
+                HttpOptions.HTTP_CLIENT_METRICS,
                 // common options -- end
                 HttpOptions.HTTP_CONNECT_TIMEOUT,
                 HttpOptions.HTTP_READ_TIMEOUT,

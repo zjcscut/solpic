@@ -104,17 +104,25 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Boolean> HTTP_RESPONSE_COPY_ATTACHMENTS = BoolHttpOption.builder()
-            .id(1L << 11L)
+            .id(1L << 11)
             .key("HTTP_RESPONSE_COPY_ATTACHMENTS")
             .propertyKey("solpic.http.response.copy.attachments")
             .level(OptionLevel.CLIENT)
             .defaultValue(true)
             .build();
 
+    public static final HttpOption<Boolean> HTTP_CLIENT_METRICS = BoolHttpOption.builder()
+            .id(1L << 12)
+            .key("HTTP_CLIENT_METRICS")
+            .propertyKey("solpic.http.client.metrics")
+            .level(OptionLevel.CLIENT)
+            .defaultValue(false)
+            .build();
+
     // ##################### CONNECTION POOL OPTIONS #####################
 
     public static final HttpOption<Boolean> HTTP_CLIENT_ENABLE_CONNECTION_POOL = BoolHttpOption.builder()
-            .id(1L << 12)
+            .id(1L << 13)
             .key("HTTP_CLIENT_ENABLE_CONNECTION_POOL")
             .propertyKey("solpic.http.client.enable.connection.pool")
             .level(OptionLevel.CLIENT)
@@ -122,7 +130,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_CLIENT_CONNECTION_POOL_CAPACITY = IntHttpOption.builder()
-            .id(1L << 13)
+            .id(1L << 14)
             .key("HTTP_CLIENT_CONNECTION_POOL_CAPACITY")
             .propertyKey("solpic.http.client.connection.pool.capacity")
             .level(OptionLevel.CLIENT)
@@ -130,7 +138,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_CLIENT_CONNECTION_TTL = IntHttpOption.builder()
-            .id(1L << 14)
+            .id(1L << 15)
             .key("HTTP_CLIENT_CONNECTION_TTL")
             .propertyKey("solpic.http.client.connection.ttl")
             .level(OptionLevel.CLIENT)
@@ -140,7 +148,7 @@ public final class HttpOptions {
     // ##################### OTHER OPTIONS, FOR SPECIFIED CLIENT TYPE #####################
 
     public static final HttpOption<Integer> HTTP_CONNECT_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 15)
+            .id(1L << 16)
             .key("HTTP_CONNECT_TIMEOUT")
             .propertyKey("solpic.http.connect.timeout")
             .level(OptionLevel.CLIENT)
@@ -148,7 +156,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_CONNECT_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 16)
+            .id(1L << 17)
             .key("HTTP_REQUEST_CONNECT_TIMEOUT")
             .propertyKey("solpic.http.request.connect.timeout")
             .level(OptionLevel.REQUEST)
@@ -156,7 +164,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_SOCKET_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 17)
+            .id(1L << 18)
             .key("HTTP_SOCKET_TIMEOUT")
             .propertyKey("solpic.http.socket.timeout")
             .level(OptionLevel.CLIENT)
@@ -164,7 +172,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_SOCKET_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 18)
+            .id(1L << 19)
             .key("HTTP_REQUEST_SOCKET_TIMEOUT")
             .propertyKey("solpic.http.request.socket.timeout")
             .level(OptionLevel.REQUEST)
@@ -172,7 +180,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_READ_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 19)
+            .id(1L << 20)
             .key("HTTP_READ_TIMEOUT")
             .propertyKey("solpic.http.read.timeout")
             .level(OptionLevel.CLIENT)
@@ -180,7 +188,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_WRITE_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 20)
+            .id(1L << 21)
             .key("HTTP_WRITE_TIMEOUT")
             .propertyKey("solpic.http.write.timeout")
             .level(OptionLevel.CLIENT)
@@ -188,7 +196,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 21)
+            .id(1L << 22)
             .key("HTTP_TIMEOUT")
             .propertyKey("solpic.http.timeout")
             .level(OptionLevel.CLIENT)
@@ -196,7 +204,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_CHUNK_SIZE = IntHttpOption.builder()
-            .id(1L << 22)
+            .id(1L << 23)
             .key("HTTP_CHUNK_SIZE")
             .propertyKey("solpic.http.chunk.size")
             .level(OptionLevel.CLIENT)
@@ -204,7 +212,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Boolean> HTTP_REQUEST_FORCE_WRITE = BoolHttpOption.builder()
-            .id(1L << 23)
+            .id(1L << 24)
             .key("HTTP_REQUEST_FORCE_WRITE")
             .propertyKey("solpic.http.request.force.write")
             .defaultValue(false)
@@ -212,7 +220,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_CHUNK_SIZE = IntHttpOption.builder()
-            .id(1L << 24)
+            .id(1L << 25)
             .key("HTTP_REQUEST_CHUNK_SIZE")
             .propertyKey("solpic.http.request.chunk.size")
             .level(OptionLevel.REQUEST)
@@ -220,7 +228,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_READ_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 25)
+            .id(1L << 26)
             .key("HTTP_REQUEST_READ_TIMEOUT")
             .propertyKey("solpic.http.request.read.timeout")
             .level(OptionLevel.REQUEST)
@@ -228,7 +236,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 26)
+            .id(1L << 27)
             .key("HTTP_REQUEST_WRITE_TIMEOUT")
             .propertyKey("solpic.http.request.timeout")
             .level(OptionLevel.REQUEST)
@@ -236,7 +244,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_CONNECTION_REQUEST_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 27)
+            .id(1L << 28)
             .key("HTTP_CONNECTION_REQUEST_TIMEOUT")
             .propertyKey("solpic.http.connection.request.timeout")
             .level(OptionLevel.CLIENT)
@@ -244,7 +252,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_CONNECTION_REQUEST_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 28)
+            .id(1L << 29)
             .key("HTTP_CONNECTION_REQUEST_TIMEOUT")
             .propertyKey("solpic.http.request.connection.request.timeout")
             .level(OptionLevel.REQUEST)
@@ -252,7 +260,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_RESPONSE_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 29)
+            .id(1L << 30)
             .key("HTTP_RESPONSE_TIMEOUT")
             .propertyKey("solpic.http.response.timeout")
             .level(OptionLevel.CLIENT)
@@ -260,7 +268,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_RESPONSE_TIMEOUT = IntHttpOption.builder()
-            .id(1L << 30)
+            .id(1L << 31)
             .key("HTTP_REQUEST_RESPONSE_TIMEOUT")
             .propertyKey("solpic.http.request.response.timeout")
             .level(OptionLevel.REQUEST)
@@ -268,7 +276,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_CONNECTION_KEEPALIVE = IntHttpOption.builder()
-            .id(1L << 31)
+            .id(1L << 32)
             .key("HTTP_CONNECTION_KEEPALIVE")
             .propertyKey("solpic.http.connection.keepalive")
             .level(OptionLevel.CLIENT)
@@ -276,7 +284,7 @@ public final class HttpOptions {
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_CONNECTION_KEEPALIVE = IntHttpOption.builder()
-            .id(1L << 32)
+            .id(1L << 33)
             .key("HTTP_REQUEST_CONNECTION_KEEPALIVE")
             .propertyKey("solpic.http.request.connection.keepalive")
             .level(OptionLevel.REQUEST)
@@ -340,6 +348,7 @@ public final class HttpOptions {
         OPTIONS.add(HTTP_ENABLE_EXECUTE_TRACING);
         OPTIONS.add(HTTP_FORCE_WRITE);
         OPTIONS.add(HTTP_RESPONSE_COPY_ATTACHMENTS);
+        OPTIONS.add(HTTP_CLIENT_METRICS);
         OPTIONS.add(HTTP_CLIENT_ENABLE_CONNECTION_POOL);
         OPTIONS.add(HTTP_CLIENT_CONNECTION_POOL_CAPACITY);
         OPTIONS.add(HTTP_CLIENT_CONNECTION_TTL);
