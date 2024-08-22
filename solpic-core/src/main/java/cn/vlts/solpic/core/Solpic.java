@@ -173,7 +173,8 @@ public abstract class Solpic {
         @Override
         public HttpClient build() {
             String httpClientName = Optional.ofNullable(spiName)
-                    .orElse(Optional.ofNullable(optionClientType).orElse(clientType.getCode()));
+                    .orElse(Optional.ofNullable(optionClientType)
+                            .orElse(Optional.ofNullable(clientType).map(HttpClientType::getCode).orElse(null)));
             HttpClient httpClient = HttpClientFactory.X.loadHttpClient(httpClientName);
             options.forEach(httpClient::addHttpOption);
             if (httpClient instanceof BaseHttpClient) {

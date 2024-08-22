@@ -1,5 +1,7 @@
 package cn.vlts.solpic.core.http.bind.annotation;
 
+import cn.vlts.solpic.core.config.HttpOption;
+
 import java.lang.annotation.*;
 
 /**
@@ -14,9 +16,18 @@ import java.lang.annotation.*;
 @Repeatable(Opts.class)
 public @interface Opt {
 
+    /**
+     * option id
+     */
     long id() default -1;
 
+    /**
+     * option key
+     */
     String key() default "";
 
+    /**
+     * option string value
+     */
     String value() default "";
 }

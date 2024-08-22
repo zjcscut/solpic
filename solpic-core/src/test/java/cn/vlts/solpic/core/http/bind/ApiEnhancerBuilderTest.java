@@ -196,4 +196,13 @@ public class ApiEnhancerBuilderTest {
         HttpResponse<HttpBinResult> response = r.get();
         System.out.println(response.getPayload());
     }
+
+    @Test
+    public void testApiWithOpts() throws Exception {
+        ApiEnhancer apiEnhancer = Solpic.newApiEnhancerBuilder()
+                .baseUrl("https://httpbin.org")
+                .addConverterFactory(new HttpBinConverterFactory())
+                .build();
+        HttpBinOptApi httpBinOptApi = apiEnhancer.enhance(HttpBinOptApi.class);
+    }
 }

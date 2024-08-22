@@ -55,10 +55,13 @@ public class SpiLoader<T> {
 
     private final Box<Map<String, Class<?>>> cachedServiceTypes = new Box<>();
 
+    private final boolean accessOrder;
+
     private SpiLoader(Class<?> type,
                       InstanceFactory instanceFactory,
                       List<LoadingStrategy> loadingStrategyList,
-                      List<SpiPostProcessor> postProcessorList) {
+                      List<SpiPostProcessor> postProcessorList,
+                      boolean accessOrder) {
         this.type = type;
         this.instanceFactory = instanceFactory;
         this.loadingStrategyList.addAll(LOADING_STRATEGY_LIST);
@@ -68,28 +71,31 @@ public class SpiLoader<T> {
         if (Objects.nonNull(postProcessorList) && !postProcessorList.isEmpty()) {
             this.postProcessorList.addAll(postProcessorList);
         }
+        this.accessOrder = accessOrder;
         getServiceClasses();
     }
 
     public static <T> SpiLoader<T> getSpiLoader(Class<T> type) {
-        return getSpiLoader(type, null, null);
+        return getSpiLoader(type, null, null, true);
     }
 
     public static <T> SpiLoader<T> getSpiLoader(Class<T> type, List<SpiPostProcessor> postProcessorList) {
-        return getSpiLoader(type, null, postProcessorList);
+        return getSpiLoader(type, null, postProcessorList, true);
     }
 
     @SuppressWarnings("unchecked")
     public static <T> SpiLoader<T> getSpiLoader(Class<T> type,
                                                 List<LoadingStrategy> loadingStrategyList,
-                                                List<SpiPostProcessor> postProcessorList) {
+                                                List<SpiPostProcessor> postProcessorList,
+                                                boolean accessOrder) {
         return (SpiLoader<T>) SPI_LOADER_CACHE.computeIfAbsent(type, clazz -> newSpiLoader(type, loadingStrategyList,
-                postProcessorList));
+                postProcessorList, accessOrder));
     }
 
     static <T> SpiLoader<T> newSpiLoader(Class<T> type,
                                          List<LoadingStrategy> loadingStrategyList,
-                                         List<SpiPostProcessor> postProcessorList) {
+                                         List<SpiPostProcessor> postProcessorList,
+                                         boolean accessOrder) {
         List<LoadingStrategy> loadingStrategyListToUse = Optional.ofNullable(loadingStrategyList)
                 .orElse(Collections.emptyList());
         List<SpiPostProcessor> postProcessorListToUse = Optional.ofNullable(postProcessorList)
@@ -98,7 +104,7 @@ public class SpiLoader<T> {
                 .stream(ServiceLoader.load(InstanceFactory.class).spliterator(), false)
                 .min(Ordered.COMPARATOR)
                 .orElse(new DefaultInstanceFactory());
-        return new SpiLoader<>(type, instanceFactory, loadingStrategyListToUse, postProcessorListToUse);
+        return new SpiLoader<>(type, instanceFactory, loadingStrategyListToUse, postProcessorListToUse, accessOrder);
     }
 
     public static void setDefaultLoadingStrategies(List<LoadingStrategy> loadingStrategyList) {
@@ -149,6 +155,7 @@ public class SpiLoader<T> {
         for (String serviceName : availableServiceNames) {
             services.add(getService(serviceName));
         }
+        services.sort(Ordered.COMPARATOR);
         return Collections.unmodifiableList(services);
     }
 
@@ -236,7 +243,7 @@ public class SpiLoader<T> {
     private Map<String, Class<?>> loadServiceClasses() {
         checkDestroyed();
         cacheDefaultServiceName();
-        Map<String, Class<?>> servicesClasses = new HashMap<>();
+        Map<String, Class<?>> servicesClasses = accessOrder ? new LinkedHashMap<>() : new HashMap<>();
         ClassLoader spiLoaderClassLoader = SpiLoader.class.getClassLoader();
         for (LoadingStrategy loadingStrategy : loadingStrategyList) {
             String fileName = loadingStrategy.location() + type.getName();

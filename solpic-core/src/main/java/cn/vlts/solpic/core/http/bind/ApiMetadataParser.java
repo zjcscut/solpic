@@ -9,6 +9,8 @@ import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.bind.annotation.*;
 import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.logging.Logger;
+import cn.vlts.solpic.core.logging.LoggerFactory;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.Pair;
 import cn.vlts.solpic.core.util.ReflectionUtils;
@@ -33,6 +35,8 @@ import java.util.function.Function;
  */
 public enum ApiMetadataParser {
     X;
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public ApiMetadata parse(ApiEnhanceSupport enhancerSupport, Class<?> type, Method m) {
         ApiMetadata apiMetadata = new ApiMetadata();
@@ -105,6 +109,8 @@ public enum ApiMetadataParser {
         if (!ArgumentUtils.X.hasLength(apiMetadata.getPath()) &&
                 !ArgumentUtils.X.hasLength(apiMetadata.getAbsoluteUrl())) {
             // both absolute url and path are empty, use method name as path
+            logger.warn(String.format("Both absolute url and path are empty, use method name as path," +
+                    " type: %s, method: %s", type, method.getName()));
             apiMetadata.setPath(method.getName());
         }
     }
@@ -140,13 +146,23 @@ public enum ApiMetadataParser {
             } else if (ArgumentUtils.X.hasLength(opt.key())) {
                 httpOption = HttpOptions.getByKey(opt.key());
             }
+            final HttpOption httpOptionToUse = httpOption;
             // only apply request level options
-            if (Objects.nonNull(httpOption) && Objects.equals(httpOption.level(), OptionLevel.REQUEST)) {
+            if (Objects.nonNull(httpOptionToUse) && Objects.equals(httpOptionToUse.level(), OptionLevel.REQUEST)) {
                 Object configValue = Optional.ofNullable(opt.value())
-                        .map(httpOption::parseValueFromString)
+                        .filter(ArgumentUtils.X::hasLength)
+                        .map(v -> {
+                            try {
+                                return httpOptionToUse.parseValueFromString(v);
+                            } catch (Throwable e) {
+                                logger.warn(String.format("Parse @Opt failed, option: %s, type: %s, method: %s, " +
+                                        "message: %s", httpOptionToUse.key(), type, method.getName(), e.getMessage()));
+                            }
+                            return null;
+                        })
                         .orElse(null);
                 Object optionValue = HttpOptionParser.X.parseOptionValue(httpOption, configValue);
-                apiMetadata.addHttpOption(httpOption, optionValue);
+                apiMetadata.addHttpOption(httpOptionToUse, optionValue);
             }
         };
         if (Objects.nonNull(typeOpts)) {

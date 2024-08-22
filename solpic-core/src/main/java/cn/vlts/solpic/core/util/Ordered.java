@@ -36,7 +36,7 @@ public interface Ordered extends Comparable<Ordered> {
     }
 
     @Override
-    default int compareTo(Ordered that) {
-        return Integer.compare(this.getOrder(), that.getOrder());
+    default int compareTo(Ordered other) {
+        return Integer.compare(this.getOrder(), other.getOrder());
     }
 }
