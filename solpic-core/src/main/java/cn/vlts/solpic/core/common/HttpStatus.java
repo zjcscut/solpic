@@ -19,11 +19,55 @@ public enum HttpStatus implements HttpStatusCode {
 
     OK(200, HttpStatusSeries.SUCCESSFUL, "OK"),
 
+    CREATED(201, HttpStatusSeries.SUCCESSFUL, "Created"),
+
+    ACCEPTED(202, HttpStatusSeries.SUCCESSFUL, "Accepted"),
+
+    NON_AUTHORITATIVE_INFORMATION(203, HttpStatusSeries.SUCCESSFUL, "Non Authoritative Information"),
+
+    NO_CONTENT(204, HttpStatusSeries.SUCCESSFUL, "No Content"),
+
+    RESET_CONTENT(205, HttpStatusSeries.SUCCESSFUL, "Reset Content"),
+
     MULTIPLE_CHOICES(300, HttpStatusSeries.REDIRECTION, "Multiple Choices"),
+
+    MOVED_PERMANENTLY(301, HttpStatusSeries.REDIRECTION, "Moved Permanently"),
+
+    MOVED_TEMPORARILY(302, HttpStatusSeries.REDIRECTION, "Moved Temporarily"),
+
+    SEE_OTHER(303, HttpStatusSeries.REDIRECTION, "See Other"),
+
+    NOT_MODIFIED(304, HttpStatusSeries.REDIRECTION, "Not Modified"),
+
+    USE_PROXY(305, HttpStatusSeries.REDIRECTION, "Use Proxy"),
+
+    TEMPORARY_REDIRECT(307, HttpStatusSeries.REDIRECTION, "Temporary Redirect"),
+
+    PERMANENT_REDIRECT(308, HttpStatusSeries.REDIRECTION, "Permanent Redirect"),
 
     BAD_REQUEST(400, HttpStatusSeries.CLIENT_ERROR, "Bad Request"),
 
+    UNAUTHORIZED(401, HttpStatusSeries.CLIENT_ERROR, "Unauthorized"),
+
+    PAYMENT_REQUIRED(402, HttpStatusSeries.CLIENT_ERROR, "Payment Required"),
+
+    FORBIDDEN(403, HttpStatusSeries.CLIENT_ERROR, "Forbidden"),
+
+    NOT_FOUND(404, HttpStatusSeries.CLIENT_ERROR, "Not Found"),
+
+    METHOD_NOT_ALLOWED(405, HttpStatusSeries.CLIENT_ERROR, "Method Not Allowed"),
+
     INTERNAL_SERVER_ERROR(500, HttpStatusSeries.SERVER_ERROR, "Internal Server Error"),
+
+    NOT_IMPLEMENTED(501, HttpStatusSeries.SERVER_ERROR, "Not Implemented"),
+
+    BAD_GATEWAY(502, HttpStatusSeries.SERVER_ERROR, "Bad Gateway"),
+
+    SERVICE_UNAVAILABLE(503, HttpStatusSeries.SERVER_ERROR, "Service Unavailable"),
+
+    GATEWAY_TIMEOUT(504, HttpStatusSeries.SERVER_ERROR, "Gateway Timeout"),
+
+    HTTP_VERSION_NOT_SUPPORTED(505, HttpStatusSeries.SERVER_ERROR, "HTTP Version Not Supported"),
 
     ;
 

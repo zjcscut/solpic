@@ -61,10 +61,7 @@ public abstract class HttpOptionSupport implements HttpOptional {
         }
         Class<T> type = httpOption.valueType();
         T configValue = type.cast(options.get(httpOption));
-        if (Objects.nonNull(configValue)) {
-            return HttpOptionParser.X.parseOptionValue(httpOption, configValue);
-        }
-        return null;
+        return HttpOptionParser.X.parseOptionValue(httpOption, configValue);
     }
 
     public void addHttpVersion(HttpVersion httpVersion) {

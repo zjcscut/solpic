@@ -139,11 +139,11 @@ public abstract class Solpic {
         public <T> HttpClientBuilder option(HttpOption<T> option, T optionValue) {
             ArgumentUtils.X.notNull("option", option);
             ArgumentUtils.X.notNull("optionValue", optionValue);
+            ArgumentUtils.X.isTrue(option.level() != OptionLevel.REQUEST,
+                    "Option level must be CLIENT or GLOBAL for option: " + option.key());
             if (option.id() == HttpOptions.HTTP_CLIENT_TYPE.id()) {
                 this.optionClientType = (String) HttpOptionParser.X.parseOptionValue(option, optionValue);
                 return this;
-            } else {
-                ArgumentUtils.X.isTrue(Objects.equals(option.level(), OptionLevel.CLIENT), "The level of HttpOption must be client");
             }
             this.options.put(option, optionValue);
             return this;
@@ -152,6 +152,8 @@ public abstract class Solpic {
         @Override
         public HttpClientBuilder addMinimumOption(HttpOption<?> option) {
             ArgumentUtils.X.notNull("option", option);
+            ArgumentUtils.X.isTrue(option.level() != OptionLevel.REQUEST,
+                    "Option level must be CLIENT or GLOBAL for option: " + option.key());
             this.minimumOptions.add(option);
             return this;
         }
@@ -159,6 +161,8 @@ public abstract class Solpic {
         @Override
         public HttpClientBuilder addAvailableOption(HttpOption<?> option) {
             ArgumentUtils.X.notNull("option", option);
+            ArgumentUtils.X.isTrue(option.level() != OptionLevel.REQUEST,
+                    "Option level must be CLIENT or GLOBAL for option: " + option.key());
             this.availableOptions.add(option);
             return this;
         }

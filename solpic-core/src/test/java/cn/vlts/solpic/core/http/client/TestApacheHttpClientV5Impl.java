@@ -29,10 +29,10 @@ public class TestApacheHttpClientV5Impl {
     @Test
     public void testSimpleSend() {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), apacheHttpClientV5Impl);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
-        request.setPayloadPublisher(PayloadPublishers.X.discarding());
+        apacheHttpClientV5Impl.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
+        apacheHttpClientV5Impl.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         apacheHttpClientV5Impl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
         HttpResponse<String> response = apacheHttpClientV5Impl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());

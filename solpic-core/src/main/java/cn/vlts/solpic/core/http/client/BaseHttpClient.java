@@ -82,11 +82,13 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         if (!isRunning()) {
             throw new IllegalStateException(String.format("[%s] - Http client is not running", id()));
         }
-        RequestPayloadSupport payloadPublisher = request.getPayloadPublisher();
+        // validate client minimum options
+        validateMinimumHttpOptions();
         // validate request minimum options
         request.validateMinimumHttpOptions();
         // preferred request payload content type
         // if the content type provided by RequestPayloadSupport is not null, use it as the request Content-Type
+        RequestPayloadSupport payloadPublisher = request.getPayloadPublisher();
         ContentType requestContentType = payloadPublisher.contentType();
         if (Objects.nonNull(requestContentType)) {
             request.setContentType(requestContentType);
@@ -376,8 +378,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                 .orElse(this.proxy);
     }
 
-    public boolean isForceWriteRequestPayload() {
-        return Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_REQUEST_FORCE_WRITE)) ||
+    public boolean isForceWriteRequestPayload(HttpRequest request) {
+        return Objects.equals(Boolean.TRUE, request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_FORCE_WRITE)) ||
                 Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_FORCE_WRITE));
     }
 

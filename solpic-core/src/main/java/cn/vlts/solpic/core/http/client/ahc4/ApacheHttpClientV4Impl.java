@@ -180,7 +180,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         if (Objects.nonNull(contentTypeValue)) {
             contentType = org.apache.http.entity.ContentType.parse(contentTypeValue);
         }
-        if (request.supportPayload() || isForceWriteRequestPayload()) {
+        if (request.supportPayload() || isForceWriteRequestPayload(request)) {
             long contentLength = request.getContentLength();
             if (contentLength <= 0) {
                 contentLength = payloadPublisher.contentLength();
@@ -316,6 +316,10 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
 
     public void setConnectionManager(HttpClientConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    public CloseableHttpClient getRealHttpClient() {
+        return this.realHttpClient;
     }
 
     @Override

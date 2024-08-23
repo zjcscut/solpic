@@ -38,10 +38,10 @@ public class TestDefaultHttpClient {
     @Test
     public void testSimpleSend() {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), defaultHttpClientImpl);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
-        request.setPayloadPublisher(PayloadPublishers.X.discarding());
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
+        defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         defaultHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
+        request.setPayloadPublisher(PayloadPublishers.X.discarding());
         HttpResponse<String> response = defaultHttpClientImpl.send(request, PayloadSubscribers.X.ofString());
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getPayload());

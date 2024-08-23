@@ -117,7 +117,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         MediaType mediaType = Objects.nonNull(contentTypeValue) ? MediaType.parse(contentTypeValue) : null;
         Request.Builder requestBuilder = new Request.Builder().url(request.getUri().toURL());
         RequestBody requestBody = null;
-        if (request.supportPayload() || isForceWriteRequestPayload()) {
+        if (request.supportPayload() || isForceWriteRequestPayload(request)) {
             boolean useHeaderContentLength = true;
             long contentLength = request.getContentLength();
             if (contentLength < 0) {
@@ -233,6 +233,10 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
             return new ConnectionPool(max, ttl, TimeUnit.MILLISECONDS);
         }
         return this.connectionPool;
+    }
+
+    public OkHttpClient getRealHttpClient() {
+        return this.realHttpClient;
     }
 
     private static class OkHttpRequestBody extends RequestBody {

@@ -38,8 +38,8 @@ public class TestOkHttpClientImpl {
     @Test
     public void testSimpleSend() {
         DefaultHttpRequest request = new DefaultHttpRequest(HttpMethod.GET, URI.create("https://httpbin.org/get"), okHttpClientImpl);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
-        request.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
+        okHttpClientImpl.addHttpOption(HttpOptions.HTTP_ENABLE_LOGGING, true);
+        okHttpClientImpl.addHttpOption(HttpOptions.HTTP_ENABLE_EXECUTE_PROFILE, true);
         okHttpClientImpl.addHttpOption(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS, true);
         request.setPayloadPublisher(PayloadPublishers.X.discarding());
         HttpResponse<String> response = okHttpClientImpl.send(request, PayloadSubscribers.X.ofString());

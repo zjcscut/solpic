@@ -85,7 +85,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
             if (contentLength >= 0) {
                 httpConnection.setFixedLengthStreamingMode(contentLength);
             } else {
-                int chunkSizeToUse = getChunkSize();
+                int chunkSizeToUse = getChunkSize(request);
                 httpConnection.setChunkedStreamingMode(chunkSizeToUse);
             }
         }
@@ -152,17 +152,17 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
                 httpsConnection.setHostnameVerifier(hostnameVerifier);
             }
         }
-        int connectTimeoutToUse = getConnectTimeout();
+        int connectTimeoutToUse = getConnectTimeout(request);
         if (connectTimeoutToUse > 0) {
             httpConnection.setConnectTimeout(connectTimeoutToUse);
         }
-        int readTimeoutToUse = getReadTimeout();
+        int readTimeoutToUse = getReadTimeout(request);
         if (readTimeoutToUse > 0) {
             httpConnection.setReadTimeout(readTimeoutToUse);
         }
         httpConnection.setRequestMethod(request.getRawMethod());
         httpConnection.setDoInput(true);
-        if (request.supportPayload() || isForceWriteRequestPayload()) {
+        if (request.supportPayload() || isForceWriteRequestPayload(request)) {
             httpConnection.setDoOutput(true);
         }
         httpConnection.setInstanceFollowRedirects(Objects.equals(request.getMethod(), HttpMethod.GET));
@@ -218,8 +218,8 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         this.connectTimeout = connectTimeout;
     }
 
-    public int getConnectTimeout() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_CONNECT_TIMEOUT))
+    public int getConnectTimeout(HttpRequest request) {
+        return Optional.ofNullable(request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_CONNECT_TIMEOUT))
                 .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CONNECT_TIMEOUT))
                         .orElse(this.connectTimeout));
     }
@@ -228,8 +228,8 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         this.readTimeout = readTimeout;
     }
 
-    public int getReadTimeout() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_READ_TIMEOUT))
+    public int getReadTimeout(HttpRequest request) {
+        return Optional.ofNullable(request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_READ_TIMEOUT))
                 .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_READ_TIMEOUT))
                         .orElse(this.readTimeout));
     }
@@ -238,8 +238,8 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         this.chunkSize = chunkSize;
     }
 
-    public int getChunkSize() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_CHUNK_SIZE))
+    public int getChunkSize(HttpRequest request) {
+        return Optional.ofNullable(request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_CHUNK_SIZE))
                 .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_CHUNK_SIZE))
                         .orElse(this.chunkSize));
     }

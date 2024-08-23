@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum HttpStatusSeries {
 
+    UNKNOWN((byte) 0),
+
     INFORMATIONAL((byte) 1),
 
     SUCCESSFUL((byte) 2),
@@ -36,6 +38,6 @@ public enum HttpStatusSeries {
                 return series;
             }
         }
-        return null;
+        return UNKNOWN;
     }
 }

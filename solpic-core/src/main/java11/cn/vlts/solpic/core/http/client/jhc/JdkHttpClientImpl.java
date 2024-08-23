@@ -141,11 +141,11 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         ResponsePayloadSupport<T> responsePayloadSupport = (ResponsePayloadSupport<T>) payloadSubscriber;
         java.net.http.HttpRequest.Builder requestBuilder = java.net.http.HttpRequest.newBuilder();
         requestBuilder.uri(request.getUri());
-        int requestTimeoutToUse = getRequestTimeout();
+        int requestTimeoutToUse = getRequestTimeout(request);
         if (requestTimeoutToUse > 0) {
             requestBuilder.timeout(Duration.ofMillis(requestTimeoutToUse));
         }
-        if (request.supportPayload() || isForceWriteRequestPayload()) {
+        if (request.supportPayload() || isForceWriteRequestPayload(request)) {
             BodyPublisherAdapter bodyPublisherAdapter = BodyPublisherAdapter.newInstance(payloadPublisher);
             requestBuilder.method(request.getRawMethod(), bodyPublisherAdapter);
         } else {
@@ -208,8 +208,8 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         this.requestTimeout = requestTimeout;
     }
 
-    public int getRequestTimeout() {
-        return Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_REQUEST_TIMEOUT))
+    public int getRequestTimeout(HttpRequest request) {
+        return Optional.ofNullable(request.getHttpOptionValue(HttpOptions.HTTP_REQUEST_TIMEOUT))
                 .orElse(Optional.ofNullable(getHttpOptionValue(HttpOptions.HTTP_TIMEOUT)).orElse(this.requestTimeout));
     }
 

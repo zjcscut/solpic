@@ -11,6 +11,8 @@
     </parent>
     <artifactId>solpic</artifactId>
     <packaging>pom</packaging>
+    <name>solpic ${project.version}</name>
+    <description>parent for Solpic built with Maven</description>
     <modules>
         <module>solpic-core</module>
         <module>solpic-build</module>

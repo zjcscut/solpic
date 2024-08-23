@@ -4,6 +4,7 @@ import cn.vlts.solpic.core.common.HttpRequestStatus;
 import cn.vlts.solpic.core.config.HttpOption;
 import cn.vlts.solpic.core.config.HttpOptionParser;
 import cn.vlts.solpic.core.config.HttpOptions;
+import cn.vlts.solpic.core.config.OptionLevel;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.AttachmentKey;
@@ -110,12 +111,15 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
 
     @Override
     public <T> T getHttpOptionValue(HttpOption<T> httpOption) {
-        Class<T> type = httpOption.valueType();
-        T configValue = type.cast(options.get(httpOption));
-        if (Objects.nonNull(configValue)) {
+        if (!supportHttpOption(httpOption)) {
+            return null;
+        }
+        if (OptionLevel.REQUEST == httpOption.level()) {
+            Class<T> type = httpOption.valueType();
+            T configValue = type.cast(options.get(httpOption));
             return HttpOptionParser.X.parseOptionValue(httpOption, configValue);
         }
-        return null;
+        return Optional.ofNullable(httpClient).map(hc -> hc.getHttpOptionValue(httpOption)).orElse(null);
     }
 
     public void addHttpVersion(HttpVersion httpVersion) {
@@ -129,23 +133,27 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
     }
 
     public void addAvailableHttpOption(HttpOption<?> httpOption) {
+        ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                "Option level must be REQUEST for option: " + httpOption.key());
         this.availableOpts |= httpOption.id();
     }
 
     public void addMinimumHttpOption(HttpOption<?> httpOption) {
+        ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                "Option level must be REQUEST for option: " + httpOption.key());
         this.minimumOpts |= httpOption.id();
     }
 
     public <T> void addHttpOption(HttpOption<T> httpOption, T configValue) {
+        ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                "Option level must be REQUEST for option: " + httpOption.key());
         this.options.putIfAbsent(httpOption, configValue);
     }
 
     public <T> void setHttpOption(HttpOption<T> httpOption, T configValue) {
+        ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                "Option level must be REQUEST for option: " + httpOption.key());
         this.options.put(httpOption, configValue);
-    }
-
-    public void addHttpOptionRaw(HttpOption httpOption, Object configValue) {
-        this.options.putIfAbsent(httpOption, configValue);
     }
 
     @Override
@@ -209,6 +217,8 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         @Override
         public HttpRequest.Builder minimumOption(HttpOption<?> httpOption) {
             ArgumentUtils.X.notNull("httpOption", httpOption);
+            ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                    "Option level must be REQUEST for option: " + httpOption.id());
             this.minimumOptions.add(httpOption);
             return this;
         }
@@ -216,6 +226,8 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         @Override
         public HttpRequest.Builder availableOption(HttpOption<?> httpOption) {
             ArgumentUtils.X.notNull("httpOption", httpOption);
+            ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                    "Option level must be REQUEST for option: " + httpOption.id());
             this.availableOptions.add(httpOption);
             return this;
         }
@@ -224,6 +236,8 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         public <H> HttpRequest.Builder option(HttpOption<H> httpOption, H value) {
             ArgumentUtils.X.notNull("httpOption", httpOption);
             ArgumentUtils.X.notNull("value", value);
+            ArgumentUtils.X.isTrue(httpOption.level() == OptionLevel.REQUEST,
+                    "Option level must be REQUEST for option: " + httpOption.id());
             this.options.put(httpOption, value);
             return this;
         }
@@ -306,7 +320,8 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
                 request.addAvailableHttpOption(option);
             }
             for (Map.Entry<HttpOption<?>, Object> option : options.entrySet()) {
-                request.addHttpOptionRaw(option.getKey(), option.getValue());
+                HttpOption httpOption = option.getKey();
+                request.addHttpOption(httpOption, option.getValue());
             }
             for (Map.Entry<AttachmentKey, Object> attachment : attachments.entrySet()) {
                 request.addAttachment(attachment.getKey(), attachment.getValue());
