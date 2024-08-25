@@ -73,6 +73,7 @@ public class SpiLoader<T> {
         }
         this.accessOrder = accessOrder;
         getServiceClasses();
+        preInitIfNecessary();
     }
 
     public static <T> SpiLoader<T> getSpiLoader(Class<T> type) {
@@ -223,6 +224,19 @@ public class SpiLoader<T> {
             return instance;
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Failed to create instance of " + serviceType.getName(), e);
+        }
+    }
+
+    private void preInitIfNecessary() {
+        boolean singleton = true;
+        boolean lazy = false;
+        Spi spi = this.type.getAnnotation(Spi.class);
+        if (Objects.nonNull(spi)) {
+            singleton = spi.singleton();
+            lazy = spi.lazy();
+        }
+        if (singleton && lazy) {
+            getAvailableServices();
         }
     }
 
@@ -434,5 +448,15 @@ public class SpiLoader<T> {
         private boolean defaultService;
 
         private Supplier<?> holder;
+    }
+
+    private static class LazySupplier<T> implements Supplier<T> {
+
+        private Supplier<T> supplier;
+
+        @Override
+        public T get() {
+            return null;
+        }
     }
 }

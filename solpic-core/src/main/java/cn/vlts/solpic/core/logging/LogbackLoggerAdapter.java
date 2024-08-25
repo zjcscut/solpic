@@ -1,7 +1,12 @@
 package cn.vlts.solpic.core.logging;
 
 import ch.qos.logback.classic.Level;
-import org.slf4j.impl.StaticLoggerBinder;
+import ch.qos.logback.classic.LoggerContext;
+import cn.vlts.solpic.core.util.ArgumentUtils;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
  * Logback logger adapter.
@@ -10,6 +15,10 @@ import org.slf4j.impl.StaticLoggerBinder;
  * @since 2024/7/20 23:56
  */
 public class LogbackLoggerAdapter implements LoggerAdapter {
+
+    private static final String BINDER_CLASS = "org.slf4j.impl.StaticLoggerBinder";
+
+    private static ILoggerFactory BINDER_LOGGER_FACTORY = null;
 
     private static final String ROOT_LOGGER_NAME = "ROOT";
 
@@ -20,8 +29,7 @@ public class LogbackLoggerAdapter implements LoggerAdapter {
     private LogLevel logLevel;
 
     public LogbackLoggerAdapter() {
-        StaticLoggerBinder loggerBinder = StaticLoggerBinder.getSingleton();
-        this.loggerContext = (ch.qos.logback.classic.LoggerContext) loggerBinder.getLoggerFactory();
+        this.loggerContext = (LoggerContext) getLoggerFactory();
         this.logLevel = fromLogbackLevel(loggerContext.getLogger(ROOT_LOGGER_NAME).getLevel());
     }
 
@@ -94,5 +102,27 @@ public class LogbackLoggerAdapter implements LoggerAdapter {
             return Level.ERROR;
         }
         return Level.OFF;
+    }
+
+    private ILoggerFactory getLoggerFactory() {
+        ILoggerFactory loggerFactory;
+        if (Objects.nonNull(BINDER_LOGGER_FACTORY)) {
+            loggerFactory = BINDER_LOGGER_FACTORY;
+        } else {
+            loggerFactory = LoggerFactory.getILoggerFactory();
+        }
+        ArgumentUtils.X.isTrue(loggerFactory instanceof LoggerContext, "LoggerFactory is not a Logback " +
+                "LoggerContext but Logback is on classpath");
+        return loggerFactory;
+    }
+
+    static {
+        try {
+            Class<?> type = Class.forName(BINDER_CLASS);
+            Object binder = type.getDeclaredMethod("getSingleton").invoke(null);
+            BINDER_LOGGER_FACTORY = (ILoggerFactory) type.getDeclaredMethod("getLoggerFactory").invoke(binder);
+        } catch (Throwable ignore) {
+
+        }
     }
 }

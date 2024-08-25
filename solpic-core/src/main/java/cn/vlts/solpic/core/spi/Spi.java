@@ -19,7 +19,12 @@ public @interface Spi {
     String value() default "";
 
     /**
-     * The SPI services should be singleton or not.
+     * The SPI service should be singleton or not.
      */
     boolean singleton() default true;
+
+    /**
+     * The SPI service should be lazy initialized for singleton.
+     */
+    boolean lazy() default false;
 }

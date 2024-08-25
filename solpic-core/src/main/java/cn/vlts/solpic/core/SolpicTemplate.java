@@ -216,6 +216,7 @@ public interface SolpicTemplate {
     }
 
     default <T> HttpResponse<T> upload(String url,
+                                       HttpMethod requestMethod,
                                        String name,
                                        Path sourceFile,
                                        Charset charset,
@@ -225,7 +226,7 @@ public interface SolpicTemplate {
         MultipartData multipartData = MultipartData.newBuilder(charset)
                 .addFilePart(name, sourceFile, partContentType)
                 .build();
-        return exchange(url, HttpMethod.PUT, null, requestHeaders, multipartData, responsePayloadType);
+        return exchange(url, requestMethod, null, requestHeaders, multipartData, responsePayloadType);
     }
 
     // ##################### BASE METHOD #####################

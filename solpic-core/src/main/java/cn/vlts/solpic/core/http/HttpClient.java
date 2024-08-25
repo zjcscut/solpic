@@ -25,6 +25,8 @@ public interface HttpClient extends HttpOptional, MetricsSupport, Closeable, Ini
 
     String id();
 
+    String spec();
+
     <T> HttpResponse<T> send(HttpRequest request,
                              ResponsePayloadSupport<?> payloadSubscriber);
 

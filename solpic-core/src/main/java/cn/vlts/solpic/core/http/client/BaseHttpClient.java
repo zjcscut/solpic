@@ -63,6 +63,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
 
     private String id;
 
+    private String spec;
+
     private Proxy proxy;
 
     public BaseHttpClient() {
@@ -74,6 +76,11 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public String id() {
         return id;
+    }
+
+    @Override
+    public String spec() {
+        return spec;
     }
 
     @Override
@@ -327,6 +334,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         } else {
             this.id = getClass().getSimpleName() + "-" + INDEX.incrementAndGet();
         }
+        this.spec = getClass().getName() + " - (" + this.id + ")";
     }
 
     @Override
