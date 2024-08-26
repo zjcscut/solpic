@@ -166,7 +166,7 @@ public abstract class HttpMessageSupport extends AttachmentSupport implements Ht
     @Override
     public long getContentLength() {
         return Optional.ofNullable(getFirstHeaderValue(HttpHeaderConstants.CONTENT_LENGTH_KEY)).map(Long::parseLong)
-                .orElse(0L);
+                .orElse(-1L);
     }
 
     @Override

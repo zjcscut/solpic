@@ -3,10 +3,7 @@ package cn.vlts.solpic.core.spi;
 import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.logging.Logger;
 import cn.vlts.solpic.core.logging.LoggerFactory;
-import cn.vlts.solpic.core.util.Box;
-import cn.vlts.solpic.core.util.Ordered;
-import cn.vlts.solpic.core.util.ReflectionUtils;
-import cn.vlts.solpic.core.util.ResourceLoader;
+import cn.vlts.solpic.core.util.*;
 import lombok.Data;
 
 import java.io.BufferedReader;
@@ -229,13 +226,13 @@ public class SpiLoader<T> {
 
     private void preInitIfNecessary() {
         boolean singleton = true;
-        boolean lazy = false;
+        boolean lazy = true;
         Spi spi = this.type.getAnnotation(Spi.class);
         if (Objects.nonNull(spi)) {
             singleton = spi.singleton();
             lazy = spi.lazy();
         }
-        if (singleton && lazy) {
+        if (singleton && !lazy) {
             getAvailableServices();
         }
     }
@@ -386,7 +383,7 @@ public class SpiLoader<T> {
             return;
         }
         String value = spi.value().trim();
-        if (!value.isEmpty()) {
+        if (ArgumentUtils.X.hasLength(value)) {
             String[] names = value.split(",");
             if (names.length > 1) {
                 throw new IllegalArgumentException("More than 1 default service for type: '" + type.getName() + "'.");
@@ -448,15 +445,5 @@ public class SpiLoader<T> {
         private boolean defaultService;
 
         private Supplier<?> holder;
-    }
-
-    private static class LazySupplier<T> implements Supplier<T> {
-
-        private Supplier<T> supplier;
-
-        @Override
-        public T get() {
-            return null;
-        }
     }
 }

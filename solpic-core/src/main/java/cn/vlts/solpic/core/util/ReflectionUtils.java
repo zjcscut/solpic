@@ -28,7 +28,7 @@ public enum ReflectionUtils {
 
     private static Method PRIVATE_LOOKUP_IN_METHOD = null;
 
-    private static Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
+    private static Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR = null;
 
     private static final int ALLOWED_MODES;
 
@@ -145,7 +145,10 @@ public enum ReflectionUtils {
         });
     }
 
-    private void parseParameterizedTypeInfo(ParameterizedTypeInfo info, ParameterizedType pt, AtomicInteger depth, int position) {
+    private void parseParameterizedTypeInfo(ParameterizedTypeInfo info,
+                                            ParameterizedType pt,
+                                            AtomicInteger depth,
+                                            int position) {
         int d = depth.incrementAndGet();
         ParameterizedTypeItem item = new ParameterizedTypeItem();
         info.getItems().add(item);
@@ -271,11 +274,15 @@ public enum ReflectionUtils {
         }
         if (Objects.isNull(PRIVATE_LOOKUP_IN_METHOD)) {
             try {
+                // for jdk8, constructor 'private Lookup(Class<?> lookupClass, int allowedModes)'
                 LOOKUP_CONSTRUCTOR = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
                 LOOKUP_CONSTRUCTOR.setAccessible(true);
             } catch (Throwable e) {
                 throw new IllegalStateException(e);
             }
+        }
+        if (Objects.isNull(PRIVATE_LOOKUP_IN_METHOD) && Objects.isNull(LOOKUP_CONSTRUCTOR)) {
+            throw new IllegalStateException("Failed to find Lookup constructor");
         }
         // all modes
         ALLOWED_MODES = MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PROTECTED

@@ -17,6 +17,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Multipart data.
@@ -25,6 +26,8 @@ import java.util.Optional;
  * @since 2024/8/9 星期五 12:03
  */
 public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
+
+    private final AtomicBoolean written = new AtomicBoolean();
 
     private final ContentType contentType;
 
@@ -58,13 +61,15 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
 
     @Override
     public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
-        try {
-            for (Part part : parts) {
-                part.writeTo(outputStream);
-            }
-        } finally {
-            if (autoClose) {
-                IoUtils.X.closeQuietly(outputStream);
+        if (written.compareAndSet(false, true)) {
+            try {
+                for (Part part : parts) {
+                    part.writeTo(outputStream);
+                }
+            } finally {
+                if (autoClose) {
+                    IoUtils.X.closeQuietly(outputStream);
+                }
             }
         }
     }
@@ -138,7 +143,7 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
 
         @Override
         public void request(long n) {
-            if (n > 0) {
+            if (n > 0 && written.compareAndSet(false, true)) {
                 boolean success = true;
                 try {
                     for (Part part : parts) {
@@ -158,7 +163,7 @@ public class MultipartData implements PayloadPublisher, FlowPayloadPublisher {
 
         @Override
         public void cancel() {
-
+            // no-op
         }
     }
 }

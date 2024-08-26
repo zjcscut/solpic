@@ -26,5 +26,5 @@ public @interface Spi {
     /**
      * The SPI service should be lazy initialized for singleton.
      */
-    boolean lazy() default false;
+    boolean lazy() default true;
 }

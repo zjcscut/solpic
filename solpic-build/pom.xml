@@ -96,7 +96,7 @@
                                 <Multi-Release>true</Multi-Release>
                                 <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
                                 <Build-Jdk>${java.version} (${java.vendor})</Build-Jdk>
-                                <Build-Os>${os.name} (${os.version}; (${os.arch})</Build-Os>
+                                <Build-Os>${os.name} (${os.version}; (${os.arch}))</Build-Os>
                                 <Implementation-Title>${project.artifactId}</Implementation-Title>
                                 <Implementation-Version>${project.version}</Implementation-Version>
                             </manifestEntries>

@@ -19,6 +19,8 @@ import java.util.Optional;
  */
 class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
 
+    private boolean writeContentTypeCharset = false;
+
     private final Charset charset;
 
     private final List<Pair> pairs = new ArrayList<>();
@@ -28,18 +30,24 @@ class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
     }
 
     @Override
-    public UrlEncodedForm.Builder add(String name, String value) {
-        ArgumentUtils.X.notNull("name", name);
-        ArgumentUtils.X.notNull("value", value);
-        pairs.add(Pair.of(HttpCodecUtils.X.encodeValue(name, charset), HttpCodecUtils.X.encodeValue(value, charset)));
+    public UrlEncodedFormBuilder writeContentTypeCharset() {
+        this.writeContentTypeCharset = true;
         return this;
     }
 
     @Override
-    public UrlEncodedForm.Builder addEncoded(String encodedName, String encodedValue) {
+    public UrlEncodedFormBuilder add(String name, String value) {
+        ArgumentUtils.X.notNull("name", name);
+        ArgumentUtils.X.notNull("value", value);
+        this.pairs.add(Pair.of(HttpCodecUtils.X.encodeValue(name, charset), HttpCodecUtils.X.encodeValue(value, charset)));
+        return this;
+    }
+
+    @Override
+    public UrlEncodedFormBuilder addEncoded(String encodedName, String encodedValue) {
         ArgumentUtils.X.notNull("encodedName", encodedName);
         ArgumentUtils.X.notNull("encodedValue", encodedValue);
-        pairs.add(Pair.of(encodedName, encodedValue));
+        this.pairs.add(Pair.of(encodedName, encodedValue));
         return this;
     }
 
@@ -61,7 +69,8 @@ class UrlEncodedFormBuilder implements UrlEncodedForm.Builder {
 
     public UrlEncodedForm build() {
         long contentLength = computeContentLength();
-        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE, charset);
+        ContentType contentType = ContentType.newInstance(HttpHeaderConstants.APPLICATION_FORM_URLENCODED_VALUE,
+                writeContentTypeCharset ? charset : null);
         return new UrlEncodedForm(charset, contentType, contentLength, pairs);
     }
 }

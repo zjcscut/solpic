@@ -41,18 +41,31 @@ public class BodyPublisherAdapter implements HttpRequest.BodyPublisher {
         if (requestPayloadSupport instanceof PayloadPublisher) {
             PayloadPublisher publisher = (PayloadPublisher) requestPayloadSupport;
             ByteBufferConsumerOutputStream outputStream = new ByteBufferConsumerOutputStream(subscriber::onNext);
-            boolean success = true;
-            try {
-                publisher.writeTo(outputStream);
-            } catch (IOException e) {
-                success = false;
-                subscriber.onError(e);
-            } finally {
-                IoUtils.X.closeQuietly(outputStream);
-                if (success) {
-                    subscriber.onComplete();
+            Flow.Subscription subscription = new Flow.Subscription() {
+                @Override
+                public void request(long n) {
+                    if (n > 0) {
+                        boolean success = true;
+                        try {
+                            publisher.writeTo(outputStream);
+                        } catch (IOException e) {
+                            success = false;
+                            subscriber.onError(e);
+                        } finally {
+                            IoUtils.X.closeQuietly(outputStream);
+                            if (success) {
+                                subscriber.onComplete();
+                            }
+                        }
+                    }
                 }
-            }
+
+                @Override
+                public void cancel() {
+                    // no-op
+                }
+            };
+            subscriber.onSubscribe(subscription);
         } else if (requestPayloadSupport instanceof FlowPayloadPublisher) {
             FlowPayloadPublisher flowPublisher = (FlowPayloadPublisher) requestPayloadSupport;
             flowPublisher.subscribe(new Subscriber<>() {

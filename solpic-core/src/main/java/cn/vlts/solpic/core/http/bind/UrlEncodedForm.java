@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -24,6 +25,8 @@ import java.util.function.Consumer;
  * @since 2024/8/9 星期五 12:02
  */
 public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
+
+    private final AtomicBoolean written = new AtomicBoolean();
 
     private final Charset charset;
 
@@ -83,12 +86,14 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
 
     @Override
     public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
-        byte[] content = format().getBytes(charset);
-        try {
-            outputStream.write(content);
-        } finally {
-            if (autoClose) {
-                IoUtils.X.closeQuietly(outputStream);
+        if (written.compareAndSet(false, true)) {
+            byte[] content = format().getBytes(charset);
+            try {
+                outputStream.write(content);
+            } finally {
+                if (autoClose) {
+                    IoUtils.X.closeQuietly(outputStream);
+                }
             }
         }
     }
@@ -112,6 +117,8 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
 
     public interface Builder {
 
+        Builder writeContentTypeCharset();
+
         Builder add(String name, String value);
 
         Builder addEncoded(String name, String value);
@@ -129,7 +136,7 @@ public class UrlEncodedForm implements PayloadPublisher, FlowPayloadPublisher {
 
         @Override
         public void request(long n) {
-            if (n > 0) {
+            if (n > 0 && written.compareAndSet(false, true)) {
                 byte[] content = format().getBytes(charset);
                 try {
                     subscriber.onNext(ByteBuffer.wrap(content));

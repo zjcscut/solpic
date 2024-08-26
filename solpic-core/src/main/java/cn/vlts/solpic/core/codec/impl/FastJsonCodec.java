@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  * Fastjson codec.
@@ -22,11 +20,6 @@ public class FastJsonCodec<S, T> implements Codec<S, T> {
     @Override
     public byte[] toByteArray(S s) {
         return JSON.toJSONBytes(s);
-    }
-
-    @Override
-    public List<ByteBuffer> toByteBuffers(S s) {
-        return Codec.super.toByteBuffers(s);
     }
 
     @Override

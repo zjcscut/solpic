@@ -68,6 +68,33 @@ public interface Codec<S, T> {
 
     T read(InputStream inputStream, Type targetType) throws IOException;
 
+    default PayloadPublisher createFixedPayloadPublisher(S s) {
+        byte[] bytes = toByteArray(s);
+
+        return new PayloadPublisher() {
+
+            private final AtomicBoolean written = new AtomicBoolean();
+
+            @Override
+            public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
+                if (written.compareAndSet(false, true)) {
+                    try {
+                        outputStream.write(bytes);
+                    } finally {
+                        if (autoClose) {
+                            IoUtils.X.closeQuietly(outputStream);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public long contentLength() {
+                return bytes.length;
+            }
+        };
+    }
+
     default PayloadPublisher createPayloadPublisher(S s) {
         return new PayloadPublisher() {
 
@@ -104,7 +131,7 @@ public interface Codec<S, T> {
 
             @Override
             public void readFrom(InputStream inputStream, boolean autoClose) {
-                if (this.read.compareAndSet(false, true)) {
+                if (read.compareAndSet(false, true)) {
                     try {
                         T result = read(inputStream, targetType);
                         future.complete(result);
@@ -121,6 +148,54 @@ public interface Codec<S, T> {
             @Override
             public CompletionStage<T> getPayload() {
                 return this.future;
+            }
+        };
+    }
+
+    default FlowPayloadPublisher createFixedFlowPayloadPublisher(S s) {
+        ByteBuffer buf = toByteBuffer(s);
+
+        class FixedPayloadPublisherSubscription implements Subscription {
+
+            private volatile boolean canceled;
+
+            private final Subscriber<? super ByteBuffer> subscriber;
+
+            private final AtomicBoolean published = new AtomicBoolean();
+
+            public FixedPayloadPublisherSubscription(Subscriber<? super ByteBuffer> subscriber) {
+                this.subscriber = subscriber;
+            }
+
+            @Override
+            public void request(long n) {
+                if (!canceled && published.compareAndSet(false, true)) {
+                    try {
+                        subscriber.onNext(buf);
+                    } catch (Throwable e) {
+                        subscriber.onError(e);
+                    }
+                    subscriber.onComplete();
+                }
+            }
+
+            @Override
+            public void cancel() {
+                canceled = true;
+            }
+        }
+
+        return new FlowPayloadPublisher() {
+
+            @Override
+            public long contentLength() {
+                return buf.remaining();
+            }
+
+            @Override
+            public void subscribe(Subscriber<? super ByteBuffer> subscriber) {
+                FixedPayloadPublisherSubscription subscription = new FixedPayloadPublisherSubscription(subscriber);
+                subscriber.onSubscribe(subscription);
             }
         };
     }
