@@ -32,6 +32,7 @@ import java.util.Map;
  * @author throwable
  * @since 2024/8/26 星期一 10:13
  */
+@SuppressWarnings("unchecked")
 public class HttpClientApiTest {
 
     private static final String GET_STRING_RESULT = "Result of getString";

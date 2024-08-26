@@ -25,12 +25,12 @@ import java.util.function.Supplier;
  * @author throwable
  * @since 2024/7/28 22:29
  */
+@SuppressWarnings("unchecked")
 public enum PayloadSubscribers {
     X;
 
     private static final ConcurrentMap<Type, Supplier<PayloadSubscriber<?>>> CACHE = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("unchecked")
     public <T> PayloadSubscriber<T> getPayloadSubscriber(Type type) {
         return Objects.isNull(type) ? discarding() : Optional.ofNullable(CACHE.get(type))
                 .map(supplier -> (PayloadSubscriber<T>) supplier.get())
@@ -39,6 +39,10 @@ public enum PayloadSubscribers {
 
     public boolean containsPayloadSubscriber(Type type) {
         return CACHE.containsKey(type);
+    }
+
+    public void putPayloadSubscriberIfAbsent(Type type, Supplier<PayloadSubscriber<?>> responsePayloadSubscriber) {
+        CACHE.putIfAbsent(type, responsePayloadSubscriber);
     }
 
     public <T> PayloadSubscriber<T> discarding() {

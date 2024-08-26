@@ -70,7 +70,6 @@ public interface Codec<S, T> {
 
     default PayloadPublisher createFixedPayloadPublisher(S s) {
         byte[] bytes = toByteArray(s);
-
         return new PayloadPublisher() {
 
             private final AtomicBoolean written = new AtomicBoolean();
@@ -154,7 +153,6 @@ public interface Codec<S, T> {
 
     default FlowPayloadPublisher createFixedFlowPayloadPublisher(S s) {
         ByteBuffer buf = toByteBuffer(s);
-
         class FixedPayloadPublisherSubscription implements Subscription {
 
             private volatile boolean canceled;
@@ -201,7 +199,6 @@ public interface Codec<S, T> {
     }
 
     default FlowPayloadPublisher createFlowPayloadPublisher(S s) {
-
         class PayloadPublisherSubscription implements Subscription {
 
             private final ByteBufferConsumerOutputStream bcos;
@@ -257,7 +254,6 @@ public interface Codec<S, T> {
     }
 
     default FlowPayloadSubscriber<T> createFlowPayloadSubscriber(Type targetType) {
-
         return new FlowPayloadSubscriber<T>() {
 
             private final AtomicBoolean subscribed = new AtomicBoolean();

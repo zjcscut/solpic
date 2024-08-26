@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.http.PayloadPublisher;
+import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.*;
@@ -10,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -27,13 +29,18 @@ public enum PayloadPublishers {
 
     private static final ConcurrentMap<Type, Function<?, PayloadPublisher>> CACHE = new ConcurrentHashMap<>();
 
-
     public <T> Function<T, PayloadPublisher> getPayloadPublisher(Type type) {
-        return Objects.nonNull(type) ? (Function<T, PayloadPublisher>) CACHE.get(type) : s -> discarding();
+        return Objects.isNull(type) ? s -> discarding() : Optional.ofNullable(CACHE.get(type))
+                .map(function -> (Function<T, PayloadPublisher>) function)
+                .orElse(null);
     }
 
     public boolean containsPayloadPublisher(Type type) {
         return CACHE.containsKey(type);
+    }
+
+    public void putPayloadPublisherIfAbsent(Type type, Function<?, PayloadPublisher> payloadPublisherFunction) {
+        CACHE.put(type, payloadPublisherFunction);
     }
 
     private static class DiscardingPayloadPublisher implements PayloadPublisher {

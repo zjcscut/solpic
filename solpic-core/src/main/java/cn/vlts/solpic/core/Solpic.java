@@ -9,16 +9,17 @@ import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.bind.ApiEnhancerBuilder;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.client.HttpClientFactory;
-import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
-import cn.vlts.solpic.core.http.impl.HttpOptionSupport;
-import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
-import cn.vlts.solpic.core.http.impl.ReadOnlyHttpResponse;
+import cn.vlts.solpic.core.http.impl.*;
 import cn.vlts.solpic.core.http.interceptor.HttpInterceptor;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 
+import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * The solpic.
@@ -86,6 +87,20 @@ public abstract class Solpic {
 
     public static ApiEnhancerBuilder newApiEnhancerBuilder() {
         return ApiEnhancerBuilder.newBuilder();
+    }
+
+    public static void registerRequestPublisher(Type type,
+                                                Function<?, PayloadPublisher> function) {
+        ArgumentUtils.X.notNull("type", type);
+        ArgumentUtils.X.notNull("function", function);
+        PayloadPublishers.X.putPayloadPublisherIfAbsent(type, function);
+    }
+
+    public static void registerResponseSubscriber(Type type,
+                                                  Supplier<PayloadSubscriber<?>> supplier) {
+        ArgumentUtils.X.notNull("type", type);
+        ArgumentUtils.X.notNull("supplier", supplier);
+        PayloadSubscribers.X.putPayloadSubscriberIfAbsent(type, supplier);
     }
 
     public interface HttpClientBuilder {
