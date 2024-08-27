@@ -33,6 +33,8 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class HttpClientApiTest {
 
+    private static final int PORT = 18080;
+
     private static final String GET_STRING_RESULT = "Result of getString";
 
     private static ClientAndServer MOCK_SERVER;
@@ -48,7 +50,7 @@ public class HttpClientApiTest {
         API_RESULT.setName("Tome");
         API_RESULT.setCreateTime(LocalDateTime.now());
         CODEC = new FastJson2Codec<>();
-        MOCK_SERVER = ClientAndServer.startClientAndServer(18080);
+        MOCK_SERVER = ClientAndServer.startClientAndServer(PORT);
         initMockClient(MOCK_SERVER);
     }
 
@@ -88,6 +90,15 @@ public class HttpClientApiTest {
         client.when(HttpRequest.request()
                         .withMethod("TRACE").withPath("/api/trace"))
                 .respond(HttpResponse.response().withStatusCode(200));
+        client.when(HttpRequest.request()
+                        .withMethod("DELETE").withPath("/api/delete"))
+                .respond(HttpResponse.response().withStatusCode(200));
+        client.when(HttpRequest.request()
+                        .withMethod("OPTIONS").withPath("/api/options"))
+                .respond(HttpResponse.response().withStatusCode(200));
+        client.when(HttpRequest.request()
+                        .withMethod("HEAD").withPath("/api/head"))
+                .respond(HttpResponse.response().withStatusCode(200));
     }
 
     @Test
@@ -102,8 +113,11 @@ public class HttpClientApiTest {
             // HTTPUrlConnection不支持PATCH方法
             if (!hc.spec().contains("DefaultHttpClient")) {
                 processPatchJson(hc);
-                processTrace(hc);
             }
+            processTrace(hc);
+            processDelete(hc);
+            processOptions(hc);
+            processHead(hc);
         }
     }
 
@@ -238,13 +252,45 @@ public class HttpClientApiTest {
     }
 
     private void processTrace(HttpClient hc) {
-        ApiResult apiResult = new ApiResult();
-        apiResult.setId(2L);
-        apiResult.setCreateTime(LocalDateTime.now());
-        apiResult.setName("Jerry");
         cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:18080/api/trace"))
                 .method(HttpMethod.TRACE)
+                .payloadPublisher(PayloadPublishers.X.discarding())
+                .build();
+        cn.vlts.solpic.core.http.HttpResponse<?> response = hc.send(request, PayloadSubscribers.X.discarding());
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    private void processDelete(HttpClient hc) {
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/delete"))
+                .method(HttpMethod.DELETE)
+                .payloadPublisher(PayloadPublishers.X.discarding())
+                .build();
+        cn.vlts.solpic.core.http.HttpResponse<?> response = hc.send(request, PayloadSubscribers.X.discarding());
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    private void processOptions(HttpClient hc) {
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/options"))
+                .method(HttpMethod.OPTIONS)
+                .payloadPublisher(PayloadPublishers.X.discarding())
+                .build();
+        cn.vlts.solpic.core.http.HttpResponse<?> response = hc.send(request, PayloadSubscribers.X.discarding());
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    private void processHead(HttpClient hc) {
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/head"))
+                .method(HttpMethod.HEAD)
                 .payloadPublisher(PayloadPublishers.X.discarding())
                 .build();
         cn.vlts.solpic.core.http.HttpResponse<?> response = hc.send(request, PayloadSubscribers.X.discarding());

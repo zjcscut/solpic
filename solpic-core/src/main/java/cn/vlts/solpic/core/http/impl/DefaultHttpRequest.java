@@ -200,6 +200,7 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
         this.httpClient = httpClient;
     }
 
+    @SuppressWarnings("unchecked")
     public static class Builder implements HttpRequest.Builder {
 
         private final List<Pair> queryParams = new ArrayList<>();
