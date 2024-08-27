@@ -180,12 +180,20 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
     }
 
     public void changeStatus(HttpRequestStatus status) {
-        this.status = status;
+        if (!Objects.equals(this.status, HttpRequestStatus.ABORTED)) {
+            this.status = status;
+        }
     }
 
     @Override
     public HttpRequestStatus getStatus() {
         return this.status;
+    }
+
+    @Override
+    public void abort() {
+        // only change request status to 'ABORTED', check it before send
+        changeStatus(HttpRequestStatus.ABORTED);
     }
 
     public void setHttpClient(HttpClient httpClient) {

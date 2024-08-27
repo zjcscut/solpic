@@ -107,6 +107,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         triggerBeforeSend(request);
         HttpResponse<T> response = null;
         try {
+            if (Objects.equals(HttpRequestStatus.ABORTED, request.getStatus())) {
+                throw new SolpicHttpException(String.format("[%s] - HTTP request was aborted", id()), true);
+            }
             response = sendInternal(request, payloadPublisher, payloadSubscriber);
             if (logger.isDebugEnabled()) {
                 logger.debug(String.format("[%s] - Receive HTTP response, method: %s, uri: %s, status: %d",
@@ -119,6 +122,9 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
                         id(), request.getMethod(), request.getRawUri()), e);
             }
             triggerOnError(request, e);
+            if (e instanceof SolpicHttpException) {
+                throw (SolpicHttpException) e;
+            }
             throw new SolpicHttpException(String.format("[%s] - Send HTTP request failed", id()), e);
         } finally {
             triggerAfterCompletion(request, response);

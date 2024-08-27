@@ -7,6 +7,7 @@ import cn.vlts.solpic.core.http.HttpMethod;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.http.bind.MultipartData;
 import cn.vlts.solpic.core.http.bind.UrlEncodedForm;
+import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
 import cn.vlts.solpic.core.spi.SpiLoader;
 import lombok.Data;
@@ -18,13 +19,10 @@ import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.*;
-import org.mockserver.templates.ResponseTemplateTester;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * HttpClient API test.
@@ -61,14 +59,14 @@ public class HttpClientApiTest {
         client.when(HttpRequest.request().withMethod("GET").withPath("/api/getObject"))
                 .respond(HttpResponse.response().withStatusCode(200)
                         .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(API_RESULT)));
-        ApiResult postResult = new ApiResult();
-        postResult.setId(2L);
-        postResult.setCreateTime(LocalDateTime.now());
-        postResult.setName("Jerry");
+        ApiResult bodyResult = new ApiResult();
+        bodyResult.setId(2L);
+        bodyResult.setCreateTime(LocalDateTime.now());
+        bodyResult.setName("Jerry");
         client.when(HttpRequest.request()
                         .withMethod("POST").withPath("/api/postJson"))
                 .respond(HttpResponse.response().withStatusCode(200)
-                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(postResult)));
+                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(bodyResult)));
         client.when(HttpRequest.request()
                         .withMethod("POST").withPath("/api/postForm").
                         withContentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -78,7 +76,18 @@ public class HttpClientApiTest {
                         ))
                 )
                 .respond(HttpResponse.response().withStatusCode(200)
-                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(postResult)));
+                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(bodyResult)));
+        client.when(HttpRequest.request()
+                        .withMethod("PUT").withPath("/api/putJson"))
+                .respond(HttpResponse.response().withStatusCode(200)
+                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(bodyResult)));
+        client.when(HttpRequest.request()
+                        .withMethod("PATCH").withPath("/api/patchJson"))
+                .respond(HttpResponse.response().withStatusCode(200)
+                        .withContentType(MediaType.APPLICATION_JSON).withBody(CODEC.toByteArray(bodyResult)));
+        client.when(HttpRequest.request()
+                        .withMethod("TRACE").withPath("/api/trace"))
+                .respond(HttpResponse.response().withStatusCode(200));
     }
 
     @Test
@@ -89,6 +98,12 @@ public class HttpClientApiTest {
             processGetObject(hc);
             processPostJson(hc);
             processPostForm(hc);
+            processPutJson(hc);
+            // HTTPUrlConnection不支持PATCH方法
+            if (!hc.spec().contains("DefaultHttpClient")) {
+                processPatchJson(hc);
+                processTrace(hc);
+            }
         }
     }
 
@@ -182,6 +197,60 @@ public class HttpClientApiTest {
         Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
         Assertions.assertThat(response.getPayload()).isNotNull();
         Assertions.assertThat(response.getPayload()).isEqualTo(apiResult);
+    }
+
+    private void processPutJson(HttpClient hc) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setId(2L);
+        apiResult.setCreateTime(LocalDateTime.now());
+        apiResult.setName("Jerry");
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/putJson"))
+                .method(HttpMethod.PUT)
+                .payloadPublisher(CODEC.createPayloadPublisher(apiResult))
+                .build();
+        PayloadSubscriber payloadSubscriber = CODEC.createPayloadSubscriber(ApiResult.class);
+        cn.vlts.solpic.core.http.HttpResponse<ApiResult> response = hc.send(request, payloadSubscriber);
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+        Assertions.assertThat(response.getPayload()).isNotNull();
+        Assertions.assertThat(response.getPayload()).isEqualTo(apiResult);
+    }
+
+    private void processPatchJson(HttpClient hc) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setId(2L);
+        apiResult.setCreateTime(LocalDateTime.now());
+        apiResult.setName("Jerry");
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/patchJson"))
+                .method(HttpMethod.PATCH)
+                .payloadPublisher(CODEC.createPayloadPublisher(apiResult))
+                .build();
+        PayloadSubscriber payloadSubscriber = CODEC.createPayloadSubscriber(ApiResult.class);
+        cn.vlts.solpic.core.http.HttpResponse<ApiResult> response = hc.send(request, payloadSubscriber);
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+        Assertions.assertThat(response.getPayload()).isNotNull();
+        Assertions.assertThat(response.getPayload()).isEqualTo(apiResult);
+    }
+
+    private void processTrace(HttpClient hc) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setId(2L);
+        apiResult.setCreateTime(LocalDateTime.now());
+        apiResult.setName("Jerry");
+        cn.vlts.solpic.core.http.HttpRequest request = cn.vlts.solpic.core.http.HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:18080/api/trace"))
+                .method(HttpMethod.TRACE)
+                .payloadPublisher(PayloadPublishers.X.discarding())
+                .build();
+        cn.vlts.solpic.core.http.HttpResponse<?> response = hc.send(request, PayloadSubscribers.X.discarding());
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isNotNull();
+        Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
     }
 
     @AfterClass

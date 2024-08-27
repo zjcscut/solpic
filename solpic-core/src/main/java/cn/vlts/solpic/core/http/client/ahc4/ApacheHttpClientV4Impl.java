@@ -165,7 +165,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         HttpUriRequest httpUriRequest = createHttpUriRequest(request, payloadPublisher);
         CloseableHttpResponse closeableHttpResponse = realHttpClient.execute(httpUriRequest);
         try {
-            return parseFromCloseableHttpResponse(closeableHttpResponse, responsePayloadSupport);
+            return parseFromCloseableHttpResponse(request, closeableHttpResponse, responsePayloadSupport);
         } finally {
             IoUtils.X.closeQuietly(closeableHttpResponse);
         }
@@ -219,7 +219,8 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         return builder.build();
     }
 
-    private <T> HttpResponse<T> parseFromCloseableHttpResponse(CloseableHttpResponse closeableHttpResponse,
+    private <T> HttpResponse<T> parseFromCloseableHttpResponse(HttpRequest request,
+                                                               CloseableHttpResponse closeableHttpResponse,
                                                                ResponsePayloadSupport<T> responsePayloadSupport) throws IOException {
         HttpEntity responseEntity = closeableHttpResponse.getEntity();
         if (Objects.nonNull(responseEntity) && Objects.nonNull(responseEntity.getContent())) {
@@ -250,6 +251,8 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
             Header responseHeader = headerIterator.nextHeader();
             httpResponse.addHeader(responseHeader.getName(), responseHeader.getValue());
         }
+        httpResponse.setHttpClient(this);
+        httpResponse.setHttpRequest(request);
         return httpResponse;
     }
 

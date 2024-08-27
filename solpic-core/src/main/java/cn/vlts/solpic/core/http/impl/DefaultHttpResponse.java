@@ -38,7 +38,6 @@ public class DefaultHttpResponse<T> extends BaseHttpResponse<T> implements HttpR
         }
     }
 
-    @Override
     public void setPayload(T payload) {
         if (this.manual.compareAndSet(false, true)) {
             this.manualPayload = payload;

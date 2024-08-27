@@ -14,5 +14,7 @@ public enum HttpRequestStatus {
 
     COMPLETED,
 
-    FAILED
+    FAILED,
+
+    ABORTED
 }

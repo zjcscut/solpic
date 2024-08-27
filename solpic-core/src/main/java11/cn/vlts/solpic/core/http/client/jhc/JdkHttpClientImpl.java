@@ -159,6 +159,8 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         java.net.http.HttpResponse<T> httpResponse = realHttpClient.send(httpRequest, bodyHandlerAdapter);
         DefaultHttpResponse<T> response = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(),
                 httpResponse.statusCode());
+        response.setHttpClient(this);
+        response.setHttpRequest(request);
         java.net.http.HttpClient.Version version = httpResponse.version();
         HttpVersion httpVersion = HttpVersion.defaultVersion();
         if (Objects.equals(java.net.http.HttpClient.Version.HTTP_1_1, version)) {

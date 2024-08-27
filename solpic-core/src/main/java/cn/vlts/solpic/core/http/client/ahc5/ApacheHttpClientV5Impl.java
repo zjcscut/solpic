@@ -179,7 +179,7 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
         ClassicHttpRequest classicHttpRequest = createClassicHttpRequest(request, payloadPublisher);
         return realHttpClient.execute(classicHttpRequest, classicHttpResponse -> {
             try {
-                return parseFromClassicHttpResponse(classicHttpResponse, responsePayloadSupport);
+                return parseFromClassicHttpResponse(request, classicHttpResponse, responsePayloadSupport);
             } finally {
                 IoUtils.X.closeQuietly(classicHttpResponse);
             }
@@ -236,7 +236,8 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
         return base;
     }
 
-    private <T> HttpResponse<T> parseFromClassicHttpResponse(ClassicHttpResponse classicHttpResponse,
+    private <T> HttpResponse<T> parseFromClassicHttpResponse(HttpRequest request,
+                                                             ClassicHttpResponse classicHttpResponse,
                                                              ResponsePayloadSupport<T> responsePayloadSupport) throws IOException {
         HttpEntity responseEntity = classicHttpResponse.getEntity();
         if (Objects.nonNull(responseEntity) && Objects.nonNull(responseEntity.getContent())) {
@@ -267,6 +268,8 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
                 httpResponse.addHeader(responseHeader.getName(), responseHeader.getValue());
             }
         }
+        httpResponse.setHttpClient(this);
+        httpResponse.setHttpRequest(request);
         return httpResponse;
     }
 

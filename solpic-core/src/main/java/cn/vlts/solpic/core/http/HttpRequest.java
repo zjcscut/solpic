@@ -21,7 +21,7 @@ import java.util.Objects;
 public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
 
     List<HttpMethod> METHODS_WITH_BODY = new ArrayList<>(Arrays.asList(HttpMethod.POST,
-            HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.TRACE));
+            HttpMethod.PUT, HttpMethod.PATCH));
 
     String getScheme();
 
@@ -49,6 +49,8 @@ public interface HttpRequest extends HttpMessage, HttpOptional, Attachable {
     HttpClient getHttpClient();
 
     HttpRequestStatus getStatus();
+
+    void abort();
 
     static Builder newBuilder() {
         return new DefaultHttpRequest.Builder();

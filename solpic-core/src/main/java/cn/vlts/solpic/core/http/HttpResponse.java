@@ -22,8 +22,6 @@ public interface HttpResponse<T> extends HttpMessage, Attachable {
         return null;
     }
 
-    void setPayload(T payload);
-
     T getPayload();
 
     HttpRequest getHttpRequest();

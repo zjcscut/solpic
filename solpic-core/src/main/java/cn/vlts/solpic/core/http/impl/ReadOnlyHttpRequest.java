@@ -299,4 +299,9 @@ public final class ReadOnlyHttpRequest implements HttpRequest {
     public void validateMinimumHttpOptions() {
 
     }
+
+    @Override
+    public void abort() {
+
+    }
 }

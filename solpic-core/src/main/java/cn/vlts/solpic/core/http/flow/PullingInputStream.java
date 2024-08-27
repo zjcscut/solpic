@@ -57,7 +57,7 @@ public class PullingInputStream extends InputStream {
     }
 
     private void tryRequestMore() {
-        if (!closed && Objects.isNull(buffer) && queue.isEmpty()) {
+        if (!closed && (Objects.isNull(buffer) || queue.isEmpty())) {
             subscription.request(1);
         }
     }

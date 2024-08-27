@@ -184,11 +184,6 @@ public class ReadOnlyHttpResponse<T> implements HttpResponse<T> {
     }
 
     @Override
-    public void setPayload(T payload) {
-
-    }
-
-    @Override
     public Map<AttachmentKey, Object> getAttachments() {
         return this.response.getAttachments();
     }

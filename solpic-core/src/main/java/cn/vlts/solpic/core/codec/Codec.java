@@ -70,6 +70,7 @@ public interface Codec<S, T> {
 
     default PayloadPublisher createFixedPayloadPublisher(S s) {
         byte[] bytes = toByteArray(s);
+        long length = bytes.length;
         return new PayloadPublisher() {
 
             private final AtomicBoolean written = new AtomicBoolean();
@@ -89,7 +90,7 @@ public interface Codec<S, T> {
 
             @Override
             public long contentLength() {
-                return bytes.length;
+                return length;
             }
         };
     }
@@ -153,6 +154,7 @@ public interface Codec<S, T> {
 
     default FlowPayloadPublisher createFixedFlowPayloadPublisher(S s) {
         ByteBuffer buf = toByteBuffer(s);
+        long length = buf.remaining();
         class FixedPayloadPublisherSubscription implements Subscription {
 
             private volatile boolean canceled;
@@ -187,7 +189,7 @@ public interface Codec<S, T> {
 
             @Override
             public long contentLength() {
-                return buf.remaining();
+                return length;
             }
 
             @Override

@@ -173,6 +173,8 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
             httpVersion = HttpVersion.HTTP_2;
         }
         httpResponse.setProtocolVersion(httpVersion);
+        httpResponse.setHttpRequest(request);
+        httpResponse.setHttpClient(this);
         return httpResponse;
     }
 
