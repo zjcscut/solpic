@@ -120,8 +120,6 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
                     httpClientBuilder.version(java.net.http.HttpClient.Version.HTTP_2);
                 }
             }
-            ThreadPool executor = getThreadPool();
-            httpClientBuilder.executor(executor);
             realHttpClient = httpClientBuilder.build();
         } finally {
             if (modifyConnectionPoolCapacity) {

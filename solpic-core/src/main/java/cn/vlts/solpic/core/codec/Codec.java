@@ -170,12 +170,16 @@ public interface Codec<S, T> {
             @Override
             public void request(long n) {
                 if (!canceled && published.compareAndSet(false, true)) {
+                    boolean failed = false;
                     try {
                         subscriber.onNext(buf);
                     } catch (Throwable e) {
+                        failed = true;
                         subscriber.onError(e);
                     }
-                    subscriber.onComplete();
+                    if (!failed) {
+                        subscriber.onComplete();
+                    }
                 }
             }
 
@@ -223,14 +227,18 @@ public interface Codec<S, T> {
             @Override
             public void request(long n) {
                 if (!canceled && published.compareAndSet(false, true)) {
+                    boolean failed = false;
                     try {
                         write(bcos, payload);
                     } catch (IOException e) {
+                        failed = true;
                         subscriber.onError(e);
                     } finally {
                         IoUtils.X.closeQuietly(bcos);
                     }
-                    subscriber.onComplete();
+                    if (!failed) {
+                        subscriber.onComplete();
+                    }
                 }
             }
 
