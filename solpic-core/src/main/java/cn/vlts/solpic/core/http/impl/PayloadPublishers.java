@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.http.PayloadPublisher;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
+import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.*;
@@ -39,8 +40,11 @@ public enum PayloadPublishers {
         return CACHE.containsKey(type);
     }
 
-    public void putPayloadPublisherIfAbsent(Type type, Function<?, PayloadPublisher> payloadPublisherFunction) {
-        CACHE.put(type, payloadPublisherFunction);
+    public static void registerPayloadPublisher(Type type,
+                                                Function<?, PayloadPublisher> function) {
+        ArgumentUtils.X.notNull("type", type);
+        ArgumentUtils.X.notNull("function", function);
+        CACHE.putIfAbsent(type, function);
     }
 
     private static class DiscardingPayloadPublisher implements PayloadPublisher {

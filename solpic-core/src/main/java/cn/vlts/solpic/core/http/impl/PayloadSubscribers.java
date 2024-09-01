@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.flow.MinimalFuture;
 import cn.vlts.solpic.core.http.PayloadSubscriber;
+import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.*;
@@ -41,8 +42,11 @@ public enum PayloadSubscribers {
         return CACHE.containsKey(type);
     }
 
-    public void putPayloadSubscriberIfAbsent(Type type, Supplier<PayloadSubscriber<?>> responsePayloadSubscriber) {
-        CACHE.putIfAbsent(type, responsePayloadSubscriber);
+    public static void registerPayloadSubscriber(Type type,
+                                                 Supplier<PayloadSubscriber<?>> supplier) {
+        ArgumentUtils.X.notNull("type", type);
+        ArgumentUtils.X.notNull("supplier", supplier);
+        CACHE.putIfAbsent(type, supplier);
     }
 
     public <T> PayloadSubscriber<T> discarding() {
