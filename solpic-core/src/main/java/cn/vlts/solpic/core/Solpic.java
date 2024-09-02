@@ -40,7 +40,7 @@ public abstract class Solpic {
     public static SolpicTemplate newSolpicTemplate() {
         return new DefaultSolpicTemplateBuilder()
                 .httpClient(newHttpClient())
-                .codec(newCodec())
+                .codec(loadCodec())
                 .build();
     }
 
@@ -51,7 +51,7 @@ public abstract class Solpic {
     public static OneWaySolpicTemplate newOneWaySolpicTemplate() {
         return new DefaultOneWaySolpicTemplateBuilder()
                 .httpClient(newHttpClient())
-                .codec(newCodec())
+                .codec(loadCodec())
                 .build();
     }
 
@@ -59,7 +59,7 @@ public abstract class Solpic {
         return new DefaultOneWaySolpicTemplateBuilder();
     }
 
-    public static <S, T> Codec<S, T> newCodec(String codecName) {
+    public static <S, T> Codec<S, T> loadCodec(String codecName) {
         ArgumentUtils.X.notNull("codecName", codecName);
         CodecType codecTypeToUse = null;
         for (CodecType codecType : CodecType.values()) {
@@ -71,7 +71,7 @@ public abstract class Solpic {
         return CodecFactory.X.loadCodec(codecTypeToUse, codecName);
     }
 
-    public static <S, T> Codec<S, T> newCodec() {
+    public static <S, T> Codec<S, T> loadCodec() {
         return CodecFactory.X.loadBestMatchedCodec();
     }
 

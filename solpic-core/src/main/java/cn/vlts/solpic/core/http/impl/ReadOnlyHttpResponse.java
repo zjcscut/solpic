@@ -195,12 +195,12 @@ public class ReadOnlyHttpResponse<T> implements HttpResponse<T> {
 
     @Override
     public <S> void addAttachment(AttachmentKey key, S value) {
-
+        this.response.addAttachment(key, value);
     }
 
     @Override
     public <S> void setAttachment(AttachmentKey key, S value) {
-
+        this.response.setAttachment(key, value);
     }
 
     @Override

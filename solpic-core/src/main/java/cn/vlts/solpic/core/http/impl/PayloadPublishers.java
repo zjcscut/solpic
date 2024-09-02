@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -40,8 +41,8 @@ public enum PayloadPublishers {
         return CACHE.containsKey(type);
     }
 
-    public static void registerPayloadPublisher(Type type,
-                                                Function<?, PayloadPublisher> function) {
+    public void registerPayloadPublisher(Type type,
+                                         Function<?, PayloadPublisher> function) {
         ArgumentUtils.X.notNull("type", type);
         ArgumentUtils.X.notNull("function", function);
         CACHE.putIfAbsent(type, function);
@@ -49,10 +50,14 @@ public enum PayloadPublishers {
 
     private static class DiscardingPayloadPublisher implements PayloadPublisher {
 
+        private final AtomicBoolean written = new AtomicBoolean(false);
+
         @Override
         public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
-            if (autoClose) {
-                IoUtils.X.closeQuietly(outputStream);
+            if (written.compareAndSet(false, true)) {
+                if (autoClose) {
+                    IoUtils.X.closeQuietly(outputStream);
+                }
             }
         }
 
@@ -70,6 +75,8 @@ public enum PayloadPublishers {
 
         private final int length;
 
+        private final AtomicBoolean written = new AtomicBoolean(false);
+
         public ByteArrayPayloadPublisher(byte[] bytes) {
             this(bytes, 0, bytes.length);
         }
@@ -82,11 +89,13 @@ public enum PayloadPublishers {
 
         @Override
         public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
-            try {
-                outputStream.write(bytes, offset, length);
-            } finally {
-                if (autoClose) {
-                    IoUtils.X.closeQuietly(outputStream);
+            if (written.compareAndSet(false, true)) {
+                try {
+                    outputStream.write(bytes, offset, length);
+                } finally {
+                    if (autoClose) {
+                        IoUtils.X.closeQuietly(outputStream);
+                    }
                 }
             }
         }
@@ -101,21 +110,25 @@ public enum PayloadPublishers {
 
         private final Supplier<? extends InputStream> supplier;
 
+        private final AtomicBoolean written = new AtomicBoolean(false);
+
         public InputStreamPayloadPublisher(Supplier<? extends InputStream> supplier) {
             this.supplier = supplier;
         }
 
         @Override
         public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
-            try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(supplier.get(),
-                    StandardCharsets.UTF_8))) {
-                int b;
-                while (-1 != (b = reader.read())) {
-                    outputStream.write(b);
-                }
-            } finally {
-                if (autoClose) {
-                    IoUtils.X.closeQuietly(outputStream);
+            if (written.compareAndSet(false, true)) {
+                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(supplier.get(),
+                        StandardCharsets.UTF_8))) {
+                    int b;
+                    while (-1 != (b = reader.read())) {
+                        outputStream.write(b);
+                    }
+                } finally {
+                    if (autoClose) {
+                        IoUtils.X.closeQuietly(outputStream);
+                    }
                 }
             }
         }

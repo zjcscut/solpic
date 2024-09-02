@@ -52,7 +52,6 @@ public class BodyPublisherAdapter implements HttpRequest.BodyPublisher {
                             success = false;
                             subscriber.onError(e);
                         } finally {
-                            IoUtils.X.closeQuietly(outputStream);
                             if (success) {
                                 subscriber.onComplete();
                             }

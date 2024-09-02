@@ -11,7 +11,7 @@ import java.io.InputStream;
  */
 public interface PayloadSubscriber<T> extends ResponsePayloadSupport<T> {
 
-    void readFrom(InputStream inputStream, boolean autoClose);
+    void readFrom(InputStream inputStream, boolean autoClose) throws IOException;
 
     default void readFrom(InputStream inputStream) throws IOException {
         readFrom(inputStream, true);

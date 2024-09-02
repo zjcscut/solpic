@@ -22,13 +22,13 @@ public enum CodecFactory {
     private final ConcurrentMap<CodecType, Codec> cache = new ConcurrentHashMap<>();
 
     public <S, T> Codec<S, T> loadCodec(CodecType codecType, String codecName) {
-        if (Objects.nonNull(codecName)) {
-            return (Codec<S, T>) getSpiLoader().getService(codecName);
-        }
         if (Objects.nonNull(codecType) && CodecType.checkAvailableCodecType(codecType)) {
             return (Codec<S, T>)
                     cache.computeIfAbsent(codecType,
                             k -> (Codec) ReflectionUtils.X.createInstance(ReflectionUtils.X.forName(k.getType())));
+        }
+        if (Objects.nonNull(codecName)) {
+            return (Codec<S, T>) getSpiLoader().getService(codecName);
         }
         Codec<S, T> matchedCodec = loadBestMatchedCodec();
         if (Objects.nonNull(matchedCodec)) {

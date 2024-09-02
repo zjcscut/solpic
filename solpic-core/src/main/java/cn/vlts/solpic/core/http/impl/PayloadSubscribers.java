@@ -42,8 +42,8 @@ public enum PayloadSubscribers {
         return CACHE.containsKey(type);
     }
 
-    public static void registerPayloadSubscriber(Type type,
-                                                 Supplier<PayloadSubscriber<?>> supplier) {
+    public void registerPayloadSubscriber(Type type,
+                                          Supplier<PayloadSubscriber<?>> supplier) {
         ArgumentUtils.X.notNull("type", type);
         ArgumentUtils.X.notNull("supplier", supplier);
         CACHE.putIfAbsent(type, supplier);
@@ -82,7 +82,7 @@ public enum PayloadSubscribers {
         private final CompletableFuture<byte[]> result = new MinimalFuture<>();
 
         @Override
-        public void readFrom(InputStream inputStream, boolean autoClose) {
+        public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream))) {
@@ -126,7 +126,7 @@ public enum PayloadSubscribers {
         }
 
         @Override
-        public void readFrom(InputStream inputStream, boolean autoClose) {
+        public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
@@ -157,7 +157,7 @@ public enum PayloadSubscribers {
         private final CompletableFuture<T> cf = new MinimalFuture<>();
 
         @Override
-        public void readFrom(InputStream inputStream, boolean autoClose) {
+        public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             cf.complete(null);
         }
 
@@ -187,7 +187,7 @@ public enum PayloadSubscribers {
         }
 
         @Override
-        public void readFrom(InputStream inputStream, boolean autoClose) {
+        public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
                 try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
                      BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset)) {

@@ -111,9 +111,6 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
 
     @Override
     public <T> T getHttpOptionValue(HttpOption<T> httpOption) {
-        if (!supportHttpOption(httpOption)) {
-            return null;
-        }
         if (OptionLevel.REQUEST == httpOption.level()) {
             Class<T> type = httpOption.valueType();
             T configValue = type.cast(options.get(httpOption));

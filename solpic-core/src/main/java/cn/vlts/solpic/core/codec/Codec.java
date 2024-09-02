@@ -130,7 +130,7 @@ public interface Codec<S, T> {
             private final CompletableFuture<T> future = new MinimalFuture<>();
 
             @Override
-            public void readFrom(InputStream inputStream, boolean autoClose) {
+            public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
                 if (read.compareAndSet(false, true)) {
                     try {
                         T result = read(inputStream, targetType);
