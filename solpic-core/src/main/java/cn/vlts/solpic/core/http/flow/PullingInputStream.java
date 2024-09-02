@@ -31,7 +31,7 @@ public class PullingInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         if (closed) {
-            throw new IOException("Stream is closed");
+            return -1;
         }
         if (Objects.isNull(buffer) || !buffer.hasRemaining()) {
             tryRequestMore();
@@ -45,8 +45,10 @@ public class PullingInputStream extends InputStream {
 
     @Override
     public void close() throws IOException {
-        closed = true;
-        queue.clear();
+        if (!closed) {
+            closed = true;
+            queue.clear();
+        }
     }
 
     public void offer(ByteBuffer byteBuffer) throws IOException {
@@ -56,7 +58,7 @@ public class PullingInputStream extends InputStream {
         queue.offer(byteBuffer);
     }
 
-    private void tryRequestMore() {
+    public void tryRequestMore() {
         if (!closed && (Objects.isNull(buffer) || queue.isEmpty())) {
             subscription.request(1);
         }

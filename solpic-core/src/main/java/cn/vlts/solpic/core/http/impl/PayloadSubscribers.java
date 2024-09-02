@@ -85,7 +85,8 @@ public enum PayloadSubscribers {
         public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
-                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream))) {
+                try {
+                    BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream));
                     int b;
                     while (-1 != (b = reader.read())) {
                         bos.write(b);
@@ -129,8 +130,9 @@ public enum PayloadSubscribers {
         public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(IoUtils.READ_BUF_SIZE);
-                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
-                        StandardCharsets.UTF_8))) {
+                try {
+                    BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream,
+                            StandardCharsets.UTF_8));
                     int b;
                     while (-1 != (b = reader.read())) {
                         bos.write(b);
@@ -154,11 +156,15 @@ public enum PayloadSubscribers {
 
     private static class DiscardingPayloadSubscriber<T> implements PayloadSubscriber<T> {
 
+        private final AtomicBoolean read = new AtomicBoolean();
+
         private final CompletableFuture<T> cf = new MinimalFuture<>();
 
         @Override
         public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
-            cf.complete(null);
+            if (read.compareAndSet(false, true)) {
+                cf.complete(null);
+            }
         }
 
         @Override
@@ -189,8 +195,9 @@ public enum PayloadSubscribers {
         @Override
         public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
-                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
-                     BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset)) {
+                BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset);
+                BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
+                try {
                     int b;
                     while (-1 != (b = reader.read())) {
                         bufferedWriter.write(b);
@@ -200,8 +207,10 @@ public enum PayloadSubscribers {
                 } finally {
                     if (autoClose) {
                         IoUtils.X.closeQuietly(inputStream);
+                        IoUtils.X.closeQuietly(bufferedWriter);
                     }
                 }
+                result.complete(null);
             }
         }
 

@@ -5,6 +5,7 @@ import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.http.ResponsePayloadSupport;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.flow.PullingInputStream;
+import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * BodyHandler adapter.
@@ -34,31 +36,13 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
     @Override
     public HttpResponse.BodySubscriber<T> apply(HttpResponse.ResponseInfo responseInfo) {
         if (responsePayloadSupport instanceof PayloadSubscriber) {
-            Flow.Subscription nop = new Flow.Subscription() {
-                @Override
-                public void request(long n) {
-
-                }
-
-                @Override
-                public void cancel() {
-
-                }
-            };
-            Subscription bodySubscriberSubscription = new Subscription() {
-                @Override
-                public void request(long n) {
-                    nop.request(n);
-                }
-
-                @Override
-                public void cancel() {
-                    nop.cancel();
-                }
-            };
-            PullingInputStream pullingInputStream = new PullingInputStream(bodySubscriberSubscription);
             PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) responsePayloadSupport;
             return new HttpResponse.BodySubscriber<>() {
+
+                private PullingInputStream pullingInputStream;
+
+                private final AtomicBoolean subscribed = new AtomicBoolean(false);
+
                 @Override
                 public CompletionStage<T> getBody() {
                     return subscriber.getPayload();
@@ -66,6 +50,21 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
 
                 @Override
                 public void onSubscribe(Flow.Subscription subscription) {
+                    if (!subscribed.compareAndSet(false, true)) {
+                        subscription.cancel();
+                        return;
+                    }
+                    pullingInputStream = new PullingInputStream(new Subscription() {
+                        @Override
+                        public void request(long n) {
+                            subscription.request(n);
+                        }
+
+                        @Override
+                        public void cancel() {
+                            subscription.cancel();
+                        }
+                    });
                     subscription.request(1);
                 }
 
@@ -78,10 +77,12 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
                             onError(e);
                         }
                     }
+                    pullingInputStream.tryRequestMore();
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
+                    IoUtils.X.closeQuietly(pullingInputStream);
                     throw new IllegalStateException(throwable);
                 }
 
@@ -97,6 +98,9 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
         } else if (responsePayloadSupport instanceof FlowPayloadSubscriber) {
             FlowPayloadSubscriber<T> flowSubscriber = (FlowPayloadSubscriber<T>) responsePayloadSupport;
             return new HttpResponse.BodySubscriber<>() {
+
+                private final AtomicBoolean subscribed = new AtomicBoolean(false);
+
                 @Override
                 public CompletionStage<T> getBody() {
                     return flowSubscriber.getPayload();
@@ -104,6 +108,10 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
 
                 @Override
                 public void onSubscribe(Flow.Subscription subscription) {
+                    if (!subscribed.compareAndSet(false, true)) {
+                        subscription.cancel();
+                        return;
+                    }
                     flowSubscriber.onSubscribe(new Subscription() {
                         @Override
                         public void request(long n) {
@@ -115,6 +123,7 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
                             subscription.cancel();
                         }
                     });
+                    subscription.request(1);
                 }
 
                 @Override
