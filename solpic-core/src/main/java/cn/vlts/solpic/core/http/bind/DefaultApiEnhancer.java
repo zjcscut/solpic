@@ -180,6 +180,10 @@ class DefaultApiEnhancer extends ApiEnhanceSupport implements ApiEnhancer {
                 }
             }
             HttpRequest httpRequest = requestBuilder.build();
+            // request content type
+            if (Objects.isNull(httpRequest.getContentTypeValue()) && Objects.nonNull(consume)) {
+                httpRequest.setContentType(consume);
+            }
             ApiMetadata.SendMode sendMode = apiMetadata.getSendMode();
             // async mode
             if (ApiMetadata.SendMode.ASYNC == sendMode) {
