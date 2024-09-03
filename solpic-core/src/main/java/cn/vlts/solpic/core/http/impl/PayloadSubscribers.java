@@ -65,11 +65,7 @@ public enum PayloadSubscribers {
         return new ByteArrayPayloadSubscriber();
     }
 
-    public PayloadSubscriber<Void> ofFile(Path path, Charset charset) {
-        return new FilePayloadSubscriber(path, charset);
-    }
-
-    public PayloadSubscriber<Void> ofFile(Path path) {
+    public PayloadSubscriber<Path> ofFile(Path path) {
         return new FilePayloadSubscriber(path);
     }
 
@@ -173,49 +169,41 @@ public enum PayloadSubscribers {
         }
     }
 
-    private static class FilePayloadSubscriber implements PayloadSubscriber<Void> {
+    private static class FilePayloadSubscriber implements PayloadSubscriber<Path> {
 
         private final AtomicBoolean read = new AtomicBoolean();
 
-        private final CompletableFuture<Void> result = new MinimalFuture<>();
+        private final CompletableFuture<Path> result = new MinimalFuture<>();
 
         private final Path targetPath;
 
-        private final Charset charset;
-
         public FilePayloadSubscriber(Path targetPath) {
-            this(targetPath, StandardCharsets.UTF_8);
-        }
-
-        public FilePayloadSubscriber(Path targetPath, Charset charset) {
             this.targetPath = targetPath;
-            this.charset = charset;
         }
 
         @Override
         public void readFrom(InputStream inputStream, boolean autoClose) throws IOException {
             if (read.compareAndSet(false, true)) {
-                BufferedWriter bufferedWriter = Files.newBufferedWriter(targetPath, charset);
-                BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(inputStream, charset));
+                OutputStream outputStream = Files.newOutputStream(targetPath);
                 try {
                     int b;
-                    while (-1 != (b = reader.read())) {
-                        bufferedWriter.write(b);
+                    while (-1 != (b = inputStream.read())) {
+                        outputStream.write(b);
                     }
                 } catch (IOException e) {
                     result.completeExceptionally(e);
                 } finally {
                     if (autoClose) {
                         IoUtils.X.closeQuietly(inputStream);
-                        IoUtils.X.closeQuietly(bufferedWriter);
+                        IoUtils.X.closeQuietly(outputStream);
                     }
                 }
-                result.complete(null);
+                result.complete(targetPath);
             }
         }
 
         @Override
-        public CompletionStage<Void> getPayload() {
+        public CompletionStage<Path> getPayload() {
             return result;
         }
     }

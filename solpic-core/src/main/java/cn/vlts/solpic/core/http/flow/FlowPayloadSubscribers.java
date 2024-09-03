@@ -5,9 +5,12 @@ import cn.vlts.solpic.core.flow.Subscriber;
 import cn.vlts.solpic.core.flow.Subscription;
 import cn.vlts.solpic.core.util.IoUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +40,14 @@ public enum FlowPayloadSubscribers {
 
     public FlowPayloadSubscriber<String> ofString(Charset charset) {
         return new ByteArrayFlowPayloadSubscriber<>(bytes -> new String(bytes, charset));
+    }
+
+    public FlowPayloadSubscriber<byte[]> ofByteArray() {
+        return new ByteArrayFlowPayloadSubscriber<>(Function.identity());
+    }
+
+    public FlowPayloadSubscriber<Path> ofFile(Path path) {
+        return new FileFlowPayloadSubscriber(path);
     }
 
     public static class EmptyFlowPayloadSubscriber implements FlowPayloadSubscriber<Void> {
@@ -271,6 +282,78 @@ public enum FlowPayloadSubscribers {
         @Override
         public void onComplete() {
             upstream.onComplete();
+        }
+    }
+
+    public static class FileFlowPayloadSubscriber implements FlowPayloadSubscriber<Path> {
+
+        private final AtomicBoolean subscribed = new AtomicBoolean();
+
+        private final CompletableFuture<Path> result = new MinimalFuture<>();
+
+        private volatile Subscription subscription;
+
+        private volatile FileChannel fileChannel;
+
+        private final Path targetPath;
+
+        public FileFlowPayloadSubscriber(Path targetPath) {
+            this.targetPath = targetPath;
+        }
+
+        @Override
+        public void onSubscribe(Subscription subscription) {
+            if (!subscribed.compareAndSet(false, true)) {
+                subscription.cancel();
+                return;
+            }
+            this.subscription = subscription;
+            try {
+                this.fileChannel = FileChannel.open(targetPath);
+            } catch (IOException e) {
+                this.subscription.cancel();
+                result.completeExceptionally(e);
+            }
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> items) {
+            try {
+                ByteBuffer[] byteBuffers = items.toArray(new ByteBuffer[0]);
+                do {
+                    fileChannel.write(byteBuffers);
+                } while (hasRemaining(byteBuffers));
+            } catch (IOException e) {
+                IoUtils.X.closeQuietly(fileChannel);
+                subscription.cancel();
+                result.completeExceptionally(e);
+            }
+            subscription.request(1);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            result.completeExceptionally(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            IoUtils.X.closeQuietly(fileChannel);
+            result.complete(targetPath);
+        }
+
+        @Override
+        public CompletionStage<Path> getPayload() {
+            return result;
+        }
+
+        private boolean hasRemaining(ByteBuffer[] byteBuffers) {
+            for (ByteBuffer byteBuffer : byteBuffers) {
+                if (byteBuffer.hasRemaining()) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

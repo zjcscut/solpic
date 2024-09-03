@@ -1,11 +1,13 @@
 package cn.vlts.solpic.core.http.impl;
 
 import cn.vlts.solpic.core.http.PayloadPublisher;
-import cn.vlts.solpic.core.http.PayloadSubscriber;
 import cn.vlts.solpic.core.util.ArgumentUtils;
 import cn.vlts.solpic.core.util.IoUtils;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -110,24 +112,28 @@ public enum PayloadPublishers {
 
         private final Supplier<? extends InputStream> supplier;
 
+        private final long length;
+
         private final AtomicBoolean written = new AtomicBoolean(false);
 
-        public InputStreamPayloadPublisher(Supplier<? extends InputStream> supplier) {
+        public InputStreamPayloadPublisher(Supplier<? extends InputStream> supplier, long length) {
             this.supplier = supplier;
+            this.length = length;
         }
 
         @Override
         public void writeTo(OutputStream outputStream, boolean autoClose) throws IOException {
             if (written.compareAndSet(false, true)) {
-                try (BufferedReader reader = IoUtils.X.newBufferedReader(new InputStreamReader(supplier.get(),
-                        StandardCharsets.UTF_8))) {
+                InputStream inputStream = supplier.get();
+                try {
                     int b;
-                    while (-1 != (b = reader.read())) {
+                    while (-1 != (b = inputStream.read())) {
                         outputStream.write(b);
                     }
                 } finally {
                     if (autoClose) {
                         IoUtils.X.closeQuietly(outputStream);
+                        IoUtils.X.closeQuietly(inputStream);
                     }
                 }
             }
@@ -135,7 +141,7 @@ public enum PayloadPublishers {
 
         @Override
         public long contentLength() {
-            return -1;
+            return this.length;
         }
     }
 
@@ -164,17 +170,19 @@ public enum PayloadPublishers {
     }
 
     public PayloadPublisher ofInputStream(InputStream in) {
-        return new InputStreamPayloadPublisher(() -> in);
+        return new InputStreamPayloadPublisher(() -> in, -1);
     }
 
     public PayloadPublisher ofFile(Path path) {
         InputStream inputStream;
+        long length;
         try {
             inputStream = Files.newInputStream(path);
+            length = Files.size(path);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new InputStreamPayloadPublisher(() -> inputStream);
+        return new InputStreamPayloadPublisher(() -> inputStream, length);
     }
 
     static {

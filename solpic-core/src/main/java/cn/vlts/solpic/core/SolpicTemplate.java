@@ -184,7 +184,7 @@ public interface SolpicTemplate {
 
     // ##################### ADVANCED METHOD #####################
 
-    default <S> HttpResponse<Void> download(String url, Path targetFile) {
+    default <S> HttpResponse<Path> download(String url, Path targetFile) {
         return exchange(url, HttpMethod.GET, null, null, null,
                 PayloadSubscribers.X.ofFile(targetFile));
     }
@@ -194,15 +194,14 @@ public interface SolpicTemplate {
                 PayloadSubscribers.X.ofByteArray());
     }
 
-    default <S> HttpResponse<Void> download(String url,
+    default <S> HttpResponse<Path> download(String url,
                                             HttpMethod requestMethod,
                                             List<HttpHeader> requestHeaders,
                                             ContentType requestContentType,
                                             Path targetFile,
-                                            Charset charset,
                                             S requestPayload) {
         return exchange(url, requestMethod, requestContentType, requestHeaders, requestPayload,
-                PayloadSubscribers.X.ofFile(targetFile, charset));
+                PayloadSubscribers.X.ofFile(targetFile));
     }
 
     default <S> HttpResponse<Void> upload(String url, String name, Path sourceFile) {

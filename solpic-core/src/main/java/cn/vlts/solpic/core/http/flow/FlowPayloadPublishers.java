@@ -3,14 +3,13 @@ package cn.vlts.solpic.core.http.flow;
 import cn.vlts.solpic.core.flow.Publisher;
 import cn.vlts.solpic.core.flow.PullPublisher;
 import cn.vlts.solpic.core.flow.Subscriber;
-import cn.vlts.solpic.core.http.PayloadPublisher;
-import cn.vlts.solpic.core.http.impl.PayloadPublishers;
 import cn.vlts.solpic.core.util.IoUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -29,6 +28,22 @@ public enum FlowPayloadPublishers {
 
     public FlowPayloadPublisher discarding() {
         return new EmptyFlowPayloadPublisher();
+    }
+
+    public FlowPayloadPublisher ofByteArray(byte[] bytes) {
+        return new ByteArrayFlowPayloadPublisher(bytes);
+    }
+
+    public FlowPayloadPublisher ofByteArray(byte[] bytes, int offset, int length) {
+        return new ByteArrayFlowPayloadPublisher(bytes, offset, length);
+    }
+
+    public FlowPayloadPublisher ofString(String content) {
+        return new StringFlowPayloadPublisher(content, StandardCharsets.UTF_8);
+    }
+
+    public FlowPayloadPublisher ofString(String content, Charset charset) {
+        return new StringFlowPayloadPublisher(content, charset);
     }
 
     public FlowPayloadPublisher ofInputStream(InputStream inputStream) {
