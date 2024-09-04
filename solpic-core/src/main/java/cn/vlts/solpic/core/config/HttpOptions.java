@@ -280,7 +280,7 @@ public final class HttpOptions {
             .key("HTTP_CONNECTION_KEEPALIVE")
             .propertyKey("solpic.http.connection.keepalive")
             .level(OptionLevel.CLIENT)
-            .defaultValue(5000)
+            .defaultValue(180000)
             .build();
 
     public static final HttpOption<Integer> HTTP_REQUEST_CONNECTION_KEEPALIVE = IntHttpOption.builder()
@@ -288,7 +288,7 @@ public final class HttpOptions {
             .key("HTTP_REQUEST_CONNECTION_KEEPALIVE")
             .propertyKey("solpic.http.request.connection.keepalive")
             .level(OptionLevel.REQUEST)
-            .defaultValue(5000)
+            .defaultValue(180000)
             .build();
 
     public static List<HttpOption<?>> getAllOptions() {
