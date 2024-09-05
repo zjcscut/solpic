@@ -16,5 +16,11 @@ public enum HttpRequestStatus {
 
     FAILED,
 
-    ABORTED
+    ABORTED,
+
+    ;
+
+    public boolean isTerminated() {
+        return this != INIT && this != ACTIVE;
+    }
 }

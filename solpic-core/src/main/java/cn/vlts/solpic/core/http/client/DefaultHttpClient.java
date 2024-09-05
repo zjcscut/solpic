@@ -1,6 +1,7 @@
 package cn.vlts.solpic.core.http.client;
 
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
+import cn.vlts.solpic.core.common.HttpStatus;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
 import cn.vlts.solpic.core.http.*;
@@ -106,10 +107,10 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         } else {
             httpConnection.getResponseCode();
         }
+        int responseCode = httpConnection.getResponseCode();
         // read response body
-        InputStream errorStream = httpConnection.getErrorStream();
-        InputStream inputStream = httpConnection.getInputStream();
-        InputStream responseStream = Objects.nonNull(errorStream) ? errorStream : inputStream;
+        InputStream responseStream = responseCode >= HttpStatus.BAD_REQUEST.value() ? httpConnection.getErrorStream() :
+                httpConnection.getInputStream();
         if (Objects.nonNull(responseStream)) {
             if (responsePayloadSupport instanceof PayloadSubscriber) {
                 PayloadSubscriber<T> subscriber = (PayloadSubscriber<T>) responsePayloadSupport;
@@ -122,7 +123,6 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
             // force to discard
             responsePayloadSupport = PayloadSubscribers.X.discarding();
         }
-        int responseCode = httpConnection.getResponseCode();
         DefaultHttpResponse<T> httpResponse = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(), responseCode);
         // process response
         populateResponse(httpResponse, httpConnection, request);

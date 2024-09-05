@@ -177,7 +177,7 @@ public class DefaultHttpRequest extends BaseHttpRequest implements HttpRequest {
     }
 
     public void changeStatus(HttpRequestStatus status) {
-        if (!Objects.equals(this.status, HttpRequestStatus.ABORTED)) {
+        if (!this.status.isTerminated()) {
             this.status = status;
         }
     }

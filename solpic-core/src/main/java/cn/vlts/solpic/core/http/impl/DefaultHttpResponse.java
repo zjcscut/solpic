@@ -32,9 +32,11 @@ public class DefaultHttpResponse<T> extends BaseHttpResponse<T> implements HttpR
             return this.manual.get() ? this.manualPayload : this.completionStage.toCompletableFuture().get();
         } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
-            throw new SolpicHttpException("Interrupted while getting response payload", interruptedException);
+            throw new SolpicHttpException("Interrupted while getting response payload", interruptedException,
+                    ReadOnlyHttpRequest.of(getHttpRequest()));
         } catch (ExecutionException executionException) {
-            throw new SolpicHttpException("Failed to get response payload", executionException);
+            throw new SolpicHttpException("Failed to get response payload", executionException,
+                    ReadOnlyHttpRequest.of(getHttpRequest()));
         }
     }
 

@@ -108,13 +108,16 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
         HttpResponse<T> response = null;
         try {
             if (Objects.equals(HttpRequestStatus.ABORTED, request.getStatus())) {
-                throw new SolpicHttpException(String.format("[%s] - HTTP request was aborted", id()), true);
+                throw new SolpicHttpException(String.format("[%s] - HTTP request was aborted", id()),
+                        ReadOnlyHttpRequest.of(request), true);
             }
             response = sendInternal(request, payloadPublisher, payloadSubscriber);
             if (logger.isDebugEnabled()) {
                 logger.debug(String.format("[%s] - Receive HTTP response, method: %s, uri: %s, status: %d",
                         id(), request.getMethod(), request.getRawUri(), response.getStatusCode().value()));
             }
+            // marked completed status
+            Optional.ofNullable(response).ifPresent(r -> changeRequestStatus(request, HttpRequestStatus.COMPLETED));
             triggerAfterSend(request, response);
         } catch (Throwable e) {
             if (logger.isDebugEnabled()) {
@@ -125,7 +128,8 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
             if (e instanceof SolpicHttpException) {
                 throw (SolpicHttpException) e;
             }
-            throw new SolpicHttpException(String.format("[%s] - Send HTTP request failed", id()), e);
+            throw new SolpicHttpException(String.format("[%s] - Send HTTP request failed", id()), e,
+                    ReadOnlyHttpRequest.of(request));
         } finally {
             triggerAfterCompletion(request, response);
         }
@@ -308,8 +312,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     protected void triggerAfterCompletion(HttpRequest request, HttpResponse<?> response) {
         triggerInterceptorsAfterCompletion(request, response);
         if (Objects.nonNull(response)) {
-            // mark request finished
-            changeRequestStatus(request, HttpRequestStatus.COMPLETED);
             // copy request attachments to response
             if (Objects.equals(Boolean.TRUE, getHttpOptionValue(HttpOptions.HTTP_RESPONSE_COPY_ATTACHMENTS))) {
                 response.copyAttachable(request);
