@@ -92,6 +92,8 @@ public class BodyHandlerAdapter<T> implements HttpResponse.BodyHandler<T> {
                         subscriber.readFrom(pullingInputStream);
                     } catch (IOException e) {
                         onError(e);
+                    } finally {
+                        IoUtils.X.closeQuietly(pullingInputStream);
                     }
                 }
             };

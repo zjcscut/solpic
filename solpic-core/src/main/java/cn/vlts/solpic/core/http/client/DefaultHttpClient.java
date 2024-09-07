@@ -11,6 +11,7 @@ import cn.vlts.solpic.core.http.flow.FlowPayloadPublisher;
 import cn.vlts.solpic.core.http.flow.FlowPayloadSubscriber;
 import cn.vlts.solpic.core.http.impl.DefaultHttpResponse;
 import cn.vlts.solpic.core.http.impl.PayloadSubscribers;
+import cn.vlts.solpic.core.util.ArgumentUtils;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -198,7 +199,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         // process response headers - first line should be status text line
         String firstName = connection.getHeaderFieldKey(0);
         String statusLine = connection.getHeaderField(0);
-        if (Objects.isNull(firstName) && Objects.nonNull(statusLine)) {
+        if (ArgumentUtils.X.hasLength(firstName) && ArgumentUtils.X.hasLength(statusLine)) {
             httpResponse.addHeader(HttpHeaderConstants.HTTP_URL_CONNECTION_STATUS_LINE_KEY, statusLine);
             HttpVersion httpVersion = HttpVersion.fromStatusLine(statusLine);
             httpResponse.setProtocolVersion(httpVersion);
@@ -206,7 +207,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
         int index = 1;
         for (; ; ) {
             String headerName = connection.getHeaderFieldKey(index);
-            if (Objects.isNull(headerName) || headerName.isEmpty()) {
+            if (!ArgumentUtils.X.hasLength(headerName)) {
                 break;
             }
             httpResponse.addHeader(headerName, connection.getHeaderField(headerName));
