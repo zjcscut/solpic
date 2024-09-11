@@ -64,7 +64,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
 
     private HttpClientConnectionManager connectionManager;
 
-    private CloseableHttpClient realHttpClient;
+    private volatile CloseableHttpClient realHttpClient;
 
     public ApacheHttpClientV4Impl() {
         super();
@@ -99,8 +99,6 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
                 HttpOptions.HTTP_SOCKET_TIMEOUT,
                 HttpOptions.HTTP_CONNECTION_REQUEST_TIMEOUT
         );
-        // build real client
-        rebuildRealClient();
     }
 
     public void rebuildRealClient() {
@@ -154,7 +152,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
         if (connectionIdleTimeToUse > 0) {
             httpClientBuilder.evictIdleConnections(connectionIdleTimeToUse, TimeUnit.MILLISECONDS);
         }
-        realHttpClient = httpClientBuilder.build();
+        this.realHttpClient = httpClientBuilder.build();
     }
 
     @Override
@@ -163,7 +161,7 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
                                                ResponsePayloadSupport<?> payloadSubscriber) throws IOException {
         ResponsePayloadSupport<T> responsePayloadSupport = (ResponsePayloadSupport<T>) payloadSubscriber;
         HttpUriRequest httpUriRequest = createHttpUriRequest(request, payloadPublisher);
-        CloseableHttpResponse closeableHttpResponse = realHttpClient.execute(httpUriRequest);
+        CloseableHttpResponse closeableHttpResponse = getRealHttpClient().execute(httpUriRequest);
         try {
             return parseFromCloseableHttpResponse(request, closeableHttpResponse, responsePayloadSupport);
         } finally {
@@ -322,6 +320,13 @@ public class ApacheHttpClientV4Impl extends BaseHttpClient implements HttpClient
     }
 
     public CloseableHttpClient getRealHttpClient() {
+        if (Objects.isNull(this.realHttpClient)) {
+            synchronized (this) {
+                if (Objects.isNull(this.realHttpClient)) {
+                    rebuildRealClient();
+                }
+            }
+        }
         return this.realHttpClient;
     }
 

@@ -1,7 +1,5 @@
 package cn.vlts.solpic.core.http.bind.annotation;
 
-import cn.vlts.solpic.core.config.HttpOption;
-
 import java.lang.annotation.*;
 
 /**

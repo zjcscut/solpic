@@ -1,6 +1,5 @@
 package cn.vlts.solpic.core.http.client.jhc;
 
-import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
 import cn.vlts.solpic.core.http.*;
@@ -41,7 +40,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
 
     private int requestTimeout = -1;
 
-    private java.net.http.HttpClient realHttpClient;
+    private volatile java.net.http.HttpClient realHttpClient;
 
     public JdkHttpClientImpl() {
         super();
@@ -75,8 +74,6 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
                 HttpOptions.HTTP_CONNECT_TIMEOUT,
                 HttpOptions.HTTP_TIMEOUT
         );
-        // build real client
-        rebuildRealClient();
     }
 
     public void rebuildRealClient() {
@@ -154,7 +151,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
         request.consumeHeaders(httpHeader -> requestBuilder.header(httpHeader.name(), httpHeader.value()));
         java.net.http.HttpRequest httpRequest = requestBuilder.build();
         BodyHandlerAdapter<T> bodyHandlerAdapter = BodyHandlerAdapter.newInstance(responsePayloadSupport);
-        java.net.http.HttpResponse<T> httpResponse = realHttpClient.send(httpRequest, bodyHandlerAdapter);
+        java.net.http.HttpResponse<T> httpResponse = getRealHttpClient().send(httpRequest, bodyHandlerAdapter);
         DefaultHttpResponse<T> response = new DefaultHttpResponse<>(responsePayloadSupport.getPayload(),
                 httpResponse.statusCode());
         response.setHttpClient(this);
@@ -214,6 +211,13 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
     }
 
     public java.net.http.HttpClient getRealHttpClient() {
+        if (Objects.isNull(this.realHttpClient)) {
+            synchronized (this) {
+                if (Objects.isNull(this.realHttpClient)) {
+                    rebuildRealClient();
+                }
+            }
+        }
         return this.realHttpClient;
     }
 

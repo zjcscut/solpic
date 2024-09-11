@@ -42,7 +42,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
 
     private ConnectionPool connectionPool;
 
-    private OkHttpClient realHttpClient;
+    private volatile OkHttpClient realHttpClient;
 
     public OkHttpClientImpl() {
         super();
@@ -77,6 +77,9 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
                 HttpOptions.HTTP_READ_TIMEOUT,
                 HttpOptions.HTTP_WRITE_TIMEOUT
         );
+    }
+
+    public void rebuildRealClient() {
         int connectTimeoutToUse = getConnectTimeout();
         int readTimeoutToUse = getReadTimeout();
         int writeTimeoutToUse = getWriteTimeout();
@@ -140,7 +143,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
         requestBuilder.method(method, requestBody);
         request.consumeHeaders(httpHeader -> requestBuilder.addHeader(httpHeader.name(), httpHeader.value()));
         Request okHttpRequest = requestBuilder.build();
-        Response okHttpResponse = realHttpClient.newCall(okHttpRequest).execute();
+        Response okHttpResponse = getRealHttpClient().newCall(okHttpRequest).execute();
         ResponseBody responseBody = okHttpResponse.body();
         if (Objects.nonNull(responseBody)) {
             if (responsePayloadSupport instanceof PayloadSubscriber) {
@@ -181,14 +184,18 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     @Override
     public void setProxy(Proxy proxy) {
         super.setProxy(proxy);
-        this.realHttpClient = this.realHttpClient.newBuilder().proxy(proxy).build();
+        synchronized (this) {
+            this.realHttpClient = this.realHttpClient.newBuilder().proxy(proxy).build();
+        }
     }
 
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
-        this.realHttpClient = this.realHttpClient.newBuilder()
-                .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
-                .build();
+        synchronized (this) {
+            this.realHttpClient = this.realHttpClient.newBuilder()
+                    .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                    .build();
+        }
     }
 
     public int getConnectTimeout() {
@@ -198,9 +205,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
 
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
-        this.realHttpClient = this.realHttpClient.newBuilder()
-                .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
-                .build();
+        synchronized (this) {
+            this.realHttpClient = this.realHttpClient.newBuilder()
+                    .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                    .build();
+        }
     }
 
     public int getReadTimeout() {
@@ -210,9 +219,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
 
     public void setWriteTimeout(int writeTimeout) {
         this.writeTimeout = writeTimeout;
-        this.realHttpClient = this.realHttpClient.newBuilder()
-                .writeTimeout(writeTimeout, TimeUnit.MILLISECONDS)
-                .build();
+        synchronized (this) {
+            this.realHttpClient = this.realHttpClient.newBuilder()
+                    .writeTimeout(writeTimeout, TimeUnit.MILLISECONDS)
+                    .build();
+        }
     }
 
     public int getWriteTimeout() {
@@ -222,9 +233,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
 
     public void setConnectionPool(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
-        this.realHttpClient = this.realHttpClient.newBuilder()
-                .connectionPool(connectionPool)
-                .build();
+        synchronized (this) {
+            this.realHttpClient = this.realHttpClient.newBuilder()
+                    .connectionPool(connectionPool)
+                    .build();
+        }
     }
 
     public ConnectionPool getConnectionPool() {
@@ -238,6 +251,13 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     }
 
     public OkHttpClient getRealHttpClient() {
+        if (Objects.isNull(this.realHttpClient)) {
+            synchronized (this) {
+                if (Objects.isNull(this.realHttpClient)) {
+                    rebuildRealClient();
+                }
+            }
+        }
         return this.realHttpClient;
     }
 
