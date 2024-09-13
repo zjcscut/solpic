@@ -3,6 +3,7 @@ package cn.vlts.solpic.core.http.client.okhttp;
 import cn.vlts.solpic.core.common.HttpHeaderConstants;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.flow.FlowInputStreamPublisher;
@@ -80,6 +81,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     }
 
     public void rebuildRealClient() {
+        validateMinimumHttpOptions();
         int connectTimeoutToUse = getConnectTimeout();
         int readTimeoutToUse = getReadTimeout();
         int writeTimeoutToUse = getWriteTimeout();
@@ -185,16 +187,20 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     public void setProxy(Proxy proxy) {
         super.setProxy(proxy);
         synchronized (this) {
-            this.realHttpClient = this.realHttpClient.newBuilder().proxy(proxy).build();
+            if (Objects.nonNull(this.realHttpClient)) {
+                this.realHttpClient = this.realHttpClient.newBuilder().proxy(proxy).build();
+            }
         }
     }
 
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
         synchronized (this) {
-            this.realHttpClient = this.realHttpClient.newBuilder()
-                    .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
-                    .build();
+            if (Objects.nonNull(this.realHttpClient)) {
+                this.realHttpClient = this.realHttpClient.newBuilder()
+                        .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                        .build();
+            }
         }
     }
 
@@ -206,9 +212,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
         synchronized (this) {
-            this.realHttpClient = this.realHttpClient.newBuilder()
-                    .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
-                    .build();
+            if (Objects.nonNull(this.realHttpClient)) {
+                this.realHttpClient = this.realHttpClient.newBuilder()
+                        .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+                        .build();
+            }
         }
     }
 
@@ -220,9 +228,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     public void setWriteTimeout(int writeTimeout) {
         this.writeTimeout = writeTimeout;
         synchronized (this) {
-            this.realHttpClient = this.realHttpClient.newBuilder()
-                    .writeTimeout(writeTimeout, TimeUnit.MILLISECONDS)
-                    .build();
+            if (Objects.nonNull(this.realHttpClient)) {
+                this.realHttpClient = this.realHttpClient.newBuilder()
+                        .writeTimeout(writeTimeout, TimeUnit.MILLISECONDS)
+                        .build();
+            }
         }
     }
 
@@ -234,9 +244,11 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
     public void setConnectionPool(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
         synchronized (this) {
-            this.realHttpClient = this.realHttpClient.newBuilder()
-                    .connectionPool(connectionPool)
-                    .build();
+            if (Objects.nonNull(this.realHttpClient)) {
+                this.realHttpClient = this.realHttpClient.newBuilder()
+                        .connectionPool(connectionPool)
+                        .build();
+            }
         }
     }
 
@@ -255,6 +267,7 @@ public class OkHttpClientImpl extends BaseHttpClient implements HttpClient {
             synchronized (this) {
                 if (Objects.isNull(this.realHttpClient)) {
                     rebuildRealClient();
+                    SolpicShutdownHook.registerShutdownHookAction(this::close);
                 }
             }
         }

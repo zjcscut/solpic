@@ -2,6 +2,7 @@ package cn.vlts.solpic.core.http.client.jhc;
 
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.client.BaseHttpClient;
 import cn.vlts.solpic.core.http.flow.FlowPayloadPublishers;
@@ -77,6 +78,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
     }
 
     public void rebuildRealClient() {
+        validateMinimumHttpOptions();
         String capturedConnectionPoolCapacityVal = System.getProperty(CONNECTION_POOL_CAPACITY_PROPERTY_KEY);
         String capturedConnectionKeepaliveVal = System.getProperty(CONNECTION_KEEPALIVE_TIMEOUT_KEY);
         boolean modifyConnectionPoolCapacity = false;
@@ -215,6 +217,7 @@ public class JdkHttpClientImpl extends BaseHttpClient implements HttpClient, Htt
             synchronized (this) {
                 if (Objects.isNull(this.realHttpClient)) {
                     rebuildRealClient();
+                    SolpicShutdownHook.registerShutdownHookAction(this::close);
                 }
             }
         }

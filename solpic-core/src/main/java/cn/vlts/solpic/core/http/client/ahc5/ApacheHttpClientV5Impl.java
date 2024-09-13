@@ -3,6 +3,7 @@ package cn.vlts.solpic.core.http.client.ahc5;
 import cn.vlts.solpic.core.common.UriScheme;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.SSLConfig;
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.http.HttpRequest;
 import cn.vlts.solpic.core.http.HttpResponse;
 import cn.vlts.solpic.core.http.HttpVersion;
@@ -107,6 +108,7 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
     }
 
     public void rebuildRealClient() {
+        validateMinimumHttpOptions();
         // default connection config
         ConnectionConfig.Builder connectionConfigBuilder = ConnectionConfig.custom();
         int connectTimeoutToUse = getConnectTimeout();
@@ -359,6 +361,7 @@ public class ApacheHttpClientV5Impl extends BaseHttpClient implements HttpClient
             synchronized (this) {
                 if (Objects.isNull(this.realHttpClient)) {
                     rebuildRealClient();
+                    SolpicShutdownHook.registerShutdownHookAction(this::close);
                 }
             }
         }

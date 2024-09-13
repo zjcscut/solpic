@@ -76,6 +76,7 @@ public class DefaultHttpClient extends BaseHttpClient implements HttpClient, Htt
     protected <T> HttpResponse<T> sendInternal(HttpRequest request,
                                                RequestPayloadSupport payloadPublisher,
                                                ResponsePayloadSupport<?> payloadSubscriber) throws IOException {
+        validateMinimumHttpOptions();
         ResponsePayloadSupport<T> responsePayloadSupport = (ResponsePayloadSupport<T>) payloadSubscriber;
         // create connection
         HttpURLConnection httpConnection = createHttpConnection(request);

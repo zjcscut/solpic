@@ -8,6 +8,7 @@ import cn.vlts.solpic.core.concurrent.ScheduledThreadPool;
 import cn.vlts.solpic.core.concurrent.ThreadPool;
 import cn.vlts.solpic.core.config.HttpOptions;
 import cn.vlts.solpic.core.config.ProxyConfig;
+import cn.vlts.solpic.core.config.SolpicShutdownHook;
 import cn.vlts.solpic.core.exception.SolpicHttpException;
 import cn.vlts.solpic.core.http.*;
 import cn.vlts.solpic.core.http.impl.DefaultHttpRequest;
@@ -331,6 +332,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     }
 
     protected void baseInit() {
+        // load internal interceptors
         List<HttpInterceptor> interceptorList = SpiLoader.getSpiLoader(HttpInterceptor.class).getAvailableServices();
         if (Objects.nonNull(interceptorList)) {
             this.interceptors.addAll(interceptorList);
@@ -353,8 +355,6 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public void init() {
         initInternal();
-        // validate minimum options
-        validateMinimumHttpOptions();
     }
 
     protected void initInternal() {
@@ -369,6 +369,7 @@ public abstract class BaseHttpClient extends HttpOptionSupport implements HttpOp
     @Override
     public void close() throws IOException {
         if (running.compareAndSet(true, false)) {
+            logger.debug("Close HTTP client, id: " + id());
             try {
                 closeInternal();
             } finally {

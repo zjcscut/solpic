@@ -9,5 +9,8 @@ package cn.vlts.solpic.core.config;
 @FunctionalInterface
 public interface ShutdownHookAction {
 
-    void doOnShutdown();
+    /**
+     * Callback on shutdown.
+     */
+    void doOnShutdown() throws Exception;
 }
