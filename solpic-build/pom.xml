@@ -31,7 +31,7 @@
         <url>https://github.com/zjcscut/solpic/tree/main</url>
     </scm>
     <properties>
-        <revision>0.0.2</revision>
+        <revision>0.0.3</revision>
         <java.version>22</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
