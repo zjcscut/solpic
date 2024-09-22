@@ -17,6 +17,7 @@
         <module>solpic-core</module>
         <module>solpic-build</module>
         <module>solpic-dependencies</module>
+        <module>solpic-benchmark</module>
     </modules>
     <dependencyManagement>
         <dependencies>
